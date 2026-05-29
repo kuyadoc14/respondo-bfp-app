@@ -29,9 +29,6 @@
             android:name=".FirstAidDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".FirstAidActivity"
-            android:exported="false" />
-        <activity
             android:name=".AlertDetailActivity"
             android:exported="false" />
         <activity
