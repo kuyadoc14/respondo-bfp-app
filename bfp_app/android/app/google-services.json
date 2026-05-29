@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "973871830139",
+    "project_id": "bfp-emergency",
+    "storage_bucket": "bfp-emergency.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973871830139:android:cd6896cbc364f98621fede",
+        "android_client_info": {
+          "package_name": "com.example.bfp_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkEUi5J6S1h4taoouekYwV5KBguQ_6Amg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

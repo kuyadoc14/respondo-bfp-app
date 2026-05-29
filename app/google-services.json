@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "213714872271",
+    "firebase_url": "https://bfp-alert-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "bfp-alert",
+    "storage_bucket": "bfp-alert.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213714872271:android:f9f67cfe9b40c607c594ba",
+        "android_client_info": {
+          "package_name": "com.bfp.alert"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRbJj8P_JAqhvRUcjEh_98PBvawbJxngI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213714872271:android:4f3a35ec6d843e60c594ba",
+        "android_client_info": {
+          "package_name": "com.example.respondo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRbJj8P_JAqhvRUcjEh_98PBvawbJxngI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

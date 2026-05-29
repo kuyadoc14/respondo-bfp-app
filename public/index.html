@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BFP Alert Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: #ffffff;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #16213e;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e63946;
+    }
+    .header h1 { font-size: 20px; }
+    .header p  { font-size: 12px; color: #aaaaaa; margin-top: 2px; }
+
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .login-box {
+      background: #16213e;
+      padding: 40px;
+      border-radius: 12px;
+      width: 340px;
+      border: 1px solid #333355;
+    }
+    .login-box h2 { margin-bottom: 24px; text-align: center; }
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      background: #1a1a2e;
+      border: 1px solid #333355;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 14px;
+      display: block;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: #e63946;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .login-box button:disabled {
+      background: #883333;
+      cursor: not-allowed;
+    }
+    #loginError {
+      color: #e63946;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      padding: 20px 24px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 16px 24px;
+      flex: 1;
+      min-width: 140px;
+      text-align: center;
+      border-left: 4px solid #e63946;
+    }
+    .stat-card.resolved { border-left-color: #2a9d8f; }
+    .stat-card.total    { border-left-color: #457b9d; }
+    .stat-card h2 { font-size: 32px; }
+    .stat-card p  { font-size: 12px; color: #aaaaaa; margin-top: 4px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar select, .toolbar input {
+      padding: 8px 12px;
+      background: #16213e;
+      border: 1px solid #333355;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 13px;
+    }
+    .toolbar button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ffffff;
+    }
+    .btn-export { background: #457b9d; }
+    .btn-pdf    { background: #c77dff; }
+    .btn-logout { background: #444466; margin-left: auto; }
+
+    .table-wrap {
+      padding: 0 24px 40px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      background: #16213e;
+      padding: 12px 16px;
+      text-align: left;
+      color: #aaaaaa;
+      font-weight: normal;
+      border-bottom: 1px solid #333355;
+    }
+    tbody tr { border-bottom: 1px solid #222244; }
+    tbody tr:hover { background: #16213e; }
+    tbody td { padding: 12px 16px; vertical-align: middle; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-active   { background: #e63946; color: #fff; }
+    .badge-resolved { background: #2a9d8f; color: #fff; }
+
+    .btn-resolve {
+      padding: 5px 12px;
+      background: #2a9d8f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-delete {
+      padding: 5px 12px;
+      background: #880000;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-resolve:hover { background: #21867a; }
+    .btn-delete:hover  { background: #aa0000; }
+
+    #emptyMsg {
+      text-align: center;
+      padding: 40px;
+      color: #555577;
+    }
+
+    /* Custom confirm dialog */
+    #confirmOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #confirmOverlay.show { display: flex; }
+    .confirm-box {
+      background: #16213e;
+      border: 1px solid #333355;
+      border-radius: 12px;
+      padding: 32px;
+      width: 300px;
+      text-align: center;
+    }
+    .confirm-box p { margin-bottom: 24px; color: #cccccc; font-size: 14px; }
+    .confirm-box div { display: flex; gap: 12px; justify-content: center; }
+    .confirm-box button {
+      padding: 8px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #fff;
+    }
+    #confirmYes { background: #880000; }
+    #confirmNo  { background: #444466; }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>BFP Admin Login</h2>
+    <input type="email"    id="loginEmail"    placeholder="Email"/>
+    <input type="password" id="loginPassword" placeholder="Password"/>
+    <button id="loginBtn" onclick="doLogin()">Login</button>
+    <p id="loginError"></p>
+  </div>
+</div>
+
+<!-- Custom confirm dialog -->
+<div id="confirmOverlay">
+  <div class="confirm-box">
+    <p>Delete this resolved alert?<br/>This cannot be undone.</p>
+    <div>
+      <button id="confirmYes">Delete</button>
+      <button id="confirmNo"  onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Dashboard -->
+<div id="mainApp" style="display:none;">
+
+  <div class="header">
+    <div>
+      <h1>BFP Alert Dashboard</h1>
+      <p>Bureau of Fire Protection — Live Monitoring</p>
+    </div>
+    <span id="adminEmail" style="font-size:13px;color:#aaaaaa;"></span>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <h2 id="countActive">0</h2>
+      <p>Active Alerts</p>
+    </div>
+    <div class="stat-card resolved">
+      <h2 id="countResolved">0</h2>
+      <p>Resolved</p>
+    </div>
+    <div class="stat-card total">
+      <h2 id="countTotal">0</h2>
+      <p>Total Alerts</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select id="filterStatus" onchange="applyFilter()">
+      <option value="all">All Alerts</option>
+      <option value="active">Active Only</option>
+      <option value="resolved">Resolved Only</option>
+    </select>
+    <input type="date" id="filterDate" onchange="applyFilter()"/>
+    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    <button class="btn-pdf"    onclick="exportPDF()">Export PDF</button>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+      <tr>
+        <th>#</th>
+        <th>Date &amp; Time</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+        <th>User ID</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody id="alertTableBody"></tbody>
+    </table>
+    <p id="emptyMsg" style="display:none;">No alerts found.</p>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // ── Paste your Firebase config here ──
+  const firebaseConfig = {
+  apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
+  authDomain: "bfp-alert.firebaseapp.com",
+  databaseURL: "https://bfp-alert-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "bfp-alert",
+  storageBucket: "bfp-alert.firebasestorage.app",
+  messagingSenderId: "213714872271",
+  appId: "1:213714872271:web:85adbecc75a8ad45c594ba",
+  measurementId: "G-1QTYKR8882"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
+
+  let allAlerts       = [];
+  let pendingDeleteId = null;
+
+  // ── Auth state ──
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      document.getElementById("loginScreen").style.display  = "none";
+      document.getElementById("mainApp").style.display      = "block";
+      document.getElementById("adminEmail").textContent     = user.email;
+      listenForAlerts();
+    } else {
+      document.getElementById("loginScreen").style.display  = "flex";
+      document.getElementById("mainApp").style.display      = "none";
+    }
+  });
+
+  // ── Login ──
+  function doLogin() {
+    const email    = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const errEl    = document.getElementById("loginError");
+    const btn      = document.getElementById("loginBtn");
+
+    errEl.textContent = "";
+
+    if (!email || !password) {
+      errEl.textContent = "Please enter email and password.";
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = "Logging in...";
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        btn.textContent = "Login";
+        btn.disabled    = false;
+      })
+      .catch(err => {
+        btn.textContent   = "Login";
+        btn.disabled      = false;
+        // Show a friendly message based on error code
+        if (err.code === "auth/user-not-found" ||
+            err.code === "auth/wrong-password" ||
+            err.code === "auth/invalid-credential") {
+          errEl.textContent = "Incorrect email or password.";
+        } else if (err.code === "auth/invalid-email") {
+          errEl.textContent = "Invalid email format.";
+        } else if (err.code === "auth/too-many-requests") {
+          errEl.textContent = "Too many attempts. Try again later.";
+        } else {
+          errEl.textContent = err.message;
+        }
+      });
+  }
+
+  // Allow pressing Enter to login
+  document.getElementById("loginPassword").addEventListener("keydown", e => {
+    if (e.key === "Enter") doLogin();
+  });
+
+  // ── Logout ──
+  function doLogout() {
+    auth.signOut();
+  }
+
+  // ── Real-time listener ──
+  function listenForAlerts() {
+    db.collection("sos_alerts")
+      .orderBy("timestamp", "desc")
+      .onSnapshot(snapshot => {
+        allAlerts = [];
+        snapshot.forEach(doc => {
+          allAlerts.push({ id: doc.id, ...doc.data() });
+        });
+        updateStats();
+        applyFilter();
+      }, err => {
+        console.error("Firestore error:", err.message);
+      });
+  }
+
+  // ── Stats ──
+  function updateStats() {
+    const active   = allAlerts.filter(a => a.status === "active").length;
+    const resolved = allAlerts.filter(a => a.status === "resolved").length;
+    document.getElementById("countActive").textContent   = active;
+    document.getElementById("countResolved").textContent = resolved;
+    document.getElementById("countTotal").textContent    = allAlerts.length;
+  }
+
+  // ── Filter ──
+  function applyFilter() {
+    const statusFilter = document.getElementById("filterStatus").value;
+    const dateFilter   = document.getElementById("filterDate").value;
+
+    let filtered = [...allAlerts];
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(a => a.status === statusFilter);
+    }
+    if (dateFilter) {
+      filtered = filtered.filter(a => {
+        if (!a.timestamp) return false;
+        const dateStr = a.timestamp.toDate().toISOString().split("T")[0];
+        return dateStr === dateFilter;
+      });
+    }
+
+    renderTable(filtered);
+  }
+
+  // ── Render table ──
+  function renderTable(alerts) {
+    const tbody    = document.getElementById("alertTableBody");
+    const emptyMsg = document.getElementById("emptyMsg");
+    tbody.innerHTML = "";
+
+    if (alerts.length === 0) {
+      emptyMsg.style.display = "block";
+      return;
+    }
+    emptyMsg.style.display = "none";
+
+    alerts.forEach((alert, index) => {
+      const isActive = alert.status === "active";
+      const time     = alert.timestamp
+        ? alert.timestamp.toDate().toLocaleString() : "—";
+
+      const actionBtn = isActive
+        ? `<button class="btn-resolve" onclick="resolveAlert('${alert.id}')">Resolve</button>`
+        : `<button class="btn-delete"  onclick="askDelete('${alert.id}')">✕ Delete</button>`;
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${time}</td>
+        <td>${alert.latitude  ?? "—"}</td>
+        <td>${alert.longitude ?? "—"}</td>
+        <td style="font-size:11px;color:#aaaaaa;">${alert.userId ?? "—"}</td>
+        <td><span class="badge ${isActive ? "badge-active" : "badge-resolved"}">
+          ${isActive ? "ACTIVE" : "RESOLVED"}
+        </span></td>
+        <td>${actionBtn}</td>`;
+      tbody.appendChild(row);
+    });
+  }
+
+  // ── Resolve ──
+  function resolveAlert(id) {
+    db.collection("sos_alerts").doc(id)
+      .update({ status: "resolved" })
+      .catch(err => console.error("Resolve error:", err.message));
+  }
+
+  // ── Delete (custom dialog) ──
+  function askDelete(id) {
+    pendingDeleteId = id;
+    document.getElementById("confirmOverlay").classList.add("show");
+    document.getElementById("confirmYes").onclick = confirmDelete;
+  }
+
+  function confirmDelete() {
+    if (!pendingDeleteId) return;
+    db.collection("sos_alerts").doc(pendingDeleteId)
+      .delete()
+      .then(() => { closeConfirm(); })
+      .catch(err => {
+        closeConfirm();
+        alert("Delete failed: " + err.message);
+      });
+  }
+
+  function closeConfirm() {
+    pendingDeleteId = null;
+    document.getElementById("confirmOverlay").classList.remove("show");
+  }
+
+  // ── Export CSV ──
+  function exportCSV() {
+    let csv = "No,Date & Time,Latitude,Longitude,User ID,Status\n";
+    allAlerts.forEach((a, i) => {
+      const time = a.timestamp ? a.timestamp.toDate().toLocaleString() : "";
+      csv += `${i+1},"${time}",${a.latitude ?? ""},${a.longitude ?? ""},"${a.userId ?? ""}",${a.status}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href     = url;
+    link.download = "bfp_alerts_" + new Date().toISOString().split("T")[0] + ".csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Export PDF ──
+  function exportPDF() { window.print(); }
+</script>
+
+</body>
+</html>
