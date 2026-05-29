@@ -6,20 +6,22 @@
     android:orientation="vertical"
     android:background="#1a1a2e">
 
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:background="#16213e">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Live Alerts"
+            android:text="BFP Admin Dashboard"
             android:textColor="#ffffff"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"/>
 
         <Button
@@ -33,6 +35,7 @@
 
     </LinearLayout>
 
+    <!-- Alert count -->
     <TextView
         android:id="@+id/tvAlertCount"
         android:layout_width="wrap_content"
@@ -41,12 +44,57 @@
         android:textColor="#e63946"
         android:textSize="13sp"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"/>
 
+    <!-- Tab buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnTabList"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="List View"
+            android:textSize="13sp"
+            android:textColor="#ffffff"
+            android:backgroundTint="#e63946"
+            android:layout_marginEnd="6dp"/>
+
+        <Button
+            android:id="@+id/btnTabMap"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="Map View"
+            android:textSize="13sp"
+            android:textColor="#ffffff"
+            android:backgroundTint="#444466"
+            android:layout_marginStart="6dp"/>
+
+    </LinearLayout>
+
+    <!-- List View -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"/>
+        android:padding="8dp"
+        android:visibility="visible"/>
+
+    <!-- Map View -->
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 
 </LinearLayout>
