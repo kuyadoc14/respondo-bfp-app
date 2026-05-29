@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,6 +15,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -34,12 +37,39 @@ public class MainActivity extends AppCompatActivity {
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         btnSOS = findViewById(R.id.btnSOS);
+        Animation pulse = AnimationUtils.loadAnimation(this, R.anim.pulse);
+        btnSOS.startAnimation(pulse);
         TextView btnAdminLogin = findViewById(R.id.btnAdminLogin);
 
         btnSOS.setOnClickListener(v -> sendSOSAlert());
 
         btnAdminLogin.setOnClickListener(v ->
                 startActivity(new Intent(this, AdminLoginActivity.class)));
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if(id == R.id.sos){
+
+
+                return true;
+            }
+
+            else if(id == R.id.firstAid){
+                startActivity(new Intent(this, FirstAidActivity.class));
+                return true;
+            }
+
+            else if(id == R.id.profile){
+                startActivity(new Intent(this, AdminLoginActivity.class));
+                return true;
+            }
+
+            return false;
+        });
     }
 
     private void sendSOSAlert() {

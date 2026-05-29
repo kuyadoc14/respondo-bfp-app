@@ -24,6 +24,17 @@
             android:textSize="18sp"
             android:textStyle="bold"/>
 
+
+        <Button
+            android:id="@+id/btnManageFirstAid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="First Aid"
+            android:textSize="11sp"
+            android:backgroundTint="#e63946"
+            android:textColor="#ffffff"
+            android:layout_marginEnd="6dp"/>
+
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="wrap_content"
@@ -32,6 +43,8 @@
             android:textSize="12sp"
             android:backgroundTint="#444466"
             android:textColor="#ffffff"/>
+
+
 
     </LinearLayout>
 

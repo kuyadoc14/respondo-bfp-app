@@ -13,11 +13,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg" />
 
 
+        <activity
+            android:name=".FirstAidEditorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminFirstAidActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FirstAidDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FirstAidActivity"
+            android:exported="false" />
         <activity
             android:name=".AlertDetailActivity"
             android:exported="false" />

@@ -81,12 +81,16 @@ public class AdminDashboardActivity extends AppCompatActivity
         btnTabList.setOnClickListener(v -> showListView());
         btnTabMap.setOnClickListener(v  -> showMapView());
 
+        findViewById(R.id.btnManageFirstAid).setOnClickListener(v ->
+                startActivity(new Intent(this, AdminFirstAidActivity.class)));
+
         // Logout
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(this, MainActivity.class));
             finish();
         });
+
 
         listenForAlerts();
     }
