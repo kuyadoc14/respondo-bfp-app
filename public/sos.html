@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="manifest" href="/manifest.json"/>
+    <meta name="theme-color" content="#e63946"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="apple-mobile-web-app-title" content="BFP SOS"/>
+    <link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+    <title>BFP SOS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+          font-family: Arial, sans-serif;
+          background: #1a1a2e;
+          color: #ffffff;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+
+        .logo {
+          font-size: 48px;
+          margin-bottom: 8px;
+        }
+
+        h1 {
+          font-size: 20px;
+          margin-bottom: 4px;
+          text-align: center;
+        }
+
+        .subtitle {
+          font-size: 13px;
+          color: #aaaaaa;
+          margin-bottom: 48px;
+          text-align: center;
+        }
+
+        /* SOS button */
+        #btnSOS {
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          background: #e63946;
+          border: none;
+          color: #ffffff;
+          font-size: 52px;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7);
+          animation: pulse 1.8s infinite;
+          transition: background 0.3s, transform 0.1s;
+          margin-bottom: 20px;
+        }
+
+        #btnSOS:disabled {
+          background: #883333;
+          animation: none;
+          cursor: not-allowed;
+        }
+
+        #btnSOS:active { transform: scale(0.96); }
+
+        @keyframes pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(230,57,70,0.7); }
+          70%  { box-shadow: 0 0 0 24px rgba(230,57,70,0); }
+          100% { box-shadow: 0 0 0 0 rgba(230,57,70,0); }
+        }
+
+        .instruction {
+          font-size: 13px;
+          color: #aaaaaa;
+          margin-bottom: 32px;
+          text-align: center;
+        }
+
+        /* Status card */
+        #statusCard {
+          display: none;
+          width: 100%;
+          max-width: 340px;
+          border-radius: 12px;
+          padding: 16px 20px;
+          text-align: center;
+          margin-top: 8px;
+        }
+
+        #statusCard.warning {
+          background: #2A1A00;
+          border: 1px solid #FFBB33;
+        }
+
+        #statusCard.resolved {
+          background: #0A2A1F;
+          border: 1px solid #2a9d8f;
+        }
+
+        .live-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        .dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #FFBB33;
+          animation: blink 0.8s infinite alternate;
+        }
+
+        .dot.green {
+          background: #2a9d8f;
+          animation: none;
+        }
+
+        @keyframes blink {
+          from { opacity: 1; }
+          to   { opacity: 0.2; }
+        }
+
+        .live-label {
+          font-size: 11px;
+          font-weight: bold;
+          color: #FFBB33;
+          letter-spacing: 1px;
+        }
+
+        .live-label.green { color: #2a9d8f; }
+
+        #statusText {
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        #statusText.warning  { color: #FFBB33; }
+        #statusText.resolved { color: #2a9d8f; }
+
+        /* Location status */
+        #locationStatus {
+          font-size: 11px;
+          color: #555577;
+          margin-top: 12px;
+          text-align: center;
+        }
+
+        /* Admin link */
+        .admin-link {
+          position: fixed;
+          bottom: 16px;
+          right: 16px;
+          font-size: 11px;
+          color: #333355;
+          text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="logo">🔥</div>
+<h1>Bureau of Fire Protection</h1>
+<p class="subtitle">Emergency Alert System</p>
+
+<button id="btnSOS" onclick="sendSOS()">SOS</button>
+<p class="instruction">Press to alert BFP immediately</p>
+
+<!-- Status card -->
+<div id="statusCard">
+    <div class="live-indicator">
+        <div class="dot" id="liveDot"></div>
+        <span class="live-label" id="liveLabel">LIVE</span>
+    </div>
+    <p id="statusText"></p>
+</div>
+
+<p id="locationStatus">📍 Waiting for location...</p>
+
+<a class="admin-link" href="/index.html">Admin</a>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+    // ── Paste your Firebase config here ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
+      authDomain: "bfp-alert.firebaseapp.com",
+      databaseURL: "https://bfp-alert-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "bfp-alert",
+      storageBucket: "bfp-alert.firebasestorage.app",
+      messagingSenderId: "213714872271",
+      appId: "1:213714872271:web:85adbecc75a8ad45c594ba",
+      measurementId: "G-1QTYKR8882"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let activeAlertId    = null;
+    let alertListener    = null;
+    let userCoords       = null;
+
+    // ── Get or create stable user ID ──
+    function getUserId() {
+      let uid = localStorage.getItem("bfp_user_id");
+      if (!uid) {
+        uid = "pwa_user_" + Date.now();
+        localStorage.setItem("bfp_user_id", uid);
+      }
+      return uid;
+    }
+
+    // ── Get location immediately on load ──
+    function initLocation() {
+      if (!navigator.geolocation) {
+        document.getElementById("locationStatus").textContent =
+          "⚠️ Location not supported on this browser";
+        return;
+      }
+
+      document.getElementById("locationStatus").textContent =
+        "📍 Getting your location...";
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          document.getElementById("locationStatus").textContent =
+            "📍 Location ready (" +
+            pos.coords.latitude.toFixed(4) + ", " +
+            pos.coords.longitude.toFixed(4) + ")";
+        },
+        err => {
+          document.getElementById("locationStatus").textContent =
+            "⚠️ Location denied — alert will be sent without coordinates";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    // ── Check for existing active alert on load ──
+    function checkExistingAlert() {
+      const userId = getUserId();
+      db.collection("sos_alerts")
+        .where("userId", "==", userId)
+        .where("status", "==", "active")
+        .limit(1)
+        .get()
+        .then(snap => {
+          if (!snap.empty) {
+            activeAlertId = snap.docs[0].id;
+            setSOSSentState();
+            listenForResolution(activeAlertId);
+          }
+        });
+    }
+
+    // ── Send SOS ──
+    function sendSOS() {
+      const btn = document.getElementById("btnSOS");
+      btn.disabled   = true;
+      btn.textContent = "...";
+
+      // Try to get fresh location if we don't have it
+      if (!userCoords) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            userCoords = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            };
+            saveAlert();
+          },
+          () => saveAlert(), // Send anyway even without location
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      } else {
+        saveAlert();
+      }
+    }
+
+    function saveAlert() {
+      const userId = getUserId();
+
+      db.collection("sos_alerts").add({
+        userId:      userId,
+        latitude:    userCoords ? userCoords.lat : 0,
+        longitude:   userCoords ? userCoords.lng : 0,
+        timestamp:   firebase.firestore.FieldValue.serverTimestamp(),
+        status:      "active",
+        source:      "pwa",          // marks it came from PWA
+        deviceToken: ""
+      })
+      .then(ref => {
+        activeAlertId = ref.id;
+        setSOSSentState();
+        listenForResolution(activeAlertId);
+      })
+      .catch(err => {
+        const btn = document.getElementById("btnSOS");
+        btn.disabled    = false;
+        btn.textContent = "SOS";
+        alert("Failed to send: " + err.message);
+      });
+    }
+
+    // ── Listen for admin resolving the alert ──
+    function listenForResolution(alertId) {
+      if (alertListener) alertListener();
+      alertListener = db.collection("sos_alerts")
+        .doc(alertId)
+        .onSnapshot(snap => {
+          if (!snap.exists) return;
+          if (snap.data().status === "resolved") {
+            setResolvedState();
+            activeAlertId = null;
+            if (alertListener) { alertListener(); alertListener = null; }
+          }
+        });
+    }
+
+    // ── UI states ──
+    function setSOSSentState() {
+      const btn  = document.getElementById("btnSOS");
+      const card = document.getElementById("statusCard");
+      const text = document.getElementById("statusText");
+      const dot  = document.getElementById("liveDot");
+      const lbl  = document.getElementById("liveLabel");
+
+      btn.disabled    = true;
+      btn.textContent = "SENT";
+
+      card.style.display = "block";
+      card.className     = "warning";
+
+      dot.className  = "dot";
+      lbl.className  = "live-label";
+      lbl.textContent = "LIVE";
+
+      text.className   = "warning";
+      text.textContent = "🚒 Help is on the way!\nBFP has received your alert.";
+      text.style.whiteSpace = "pre-line";
+    }
+
+    function setResolvedState() {
+      const btn  = document.getElementById("btnSOS");
+      const card = document.getElementById("statusCard");
+      const text = document.getElementById("statusText");
+      const dot  = document.getElementById("liveDot");
+      const lbl  = document.getElementById("liveLabel");
+
+      btn.disabled    = false;
+      btn.textContent = "SOS";
+
+      card.style.display = "block";
+      card.className     = "resolved";
+
+      dot.className  = "dot green";
+      lbl.className  = "live-label green";
+      lbl.textContent = "RESOLVED";
+
+      text.className   = "resolved";
+      text.textContent = "✅ Help has arrived!\nYour alert has been resolved.";
+      text.style.whiteSpace = "pre-line";
+
+      // Hide after 6 seconds
+      setTimeout(() => {
+        card.style.display = "none";
+      }, 6000);
+    }
+
+    // ── Init ──
+    initLocation();
+    checkExistingAlert();
+</script>
+
+<script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js");
+      });
+    }
+</script>
+
+</body>
+</html>
