@@ -14,17 +14,7 @@
       min-height: 100vh;
     }
 
-    .header {
-      background: #16213e;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid #e63946;
-    }
-    .header h1 { font-size: 20px; }
-    .header p  { font-size: 12px; color: #aaaaaa; margin-top: 2px; }
-
+    /* ── Login ── */
     #loginScreen {
       position: fixed;
       inset: 0;
@@ -57,16 +47,13 @@
       width: 100%;
       padding: 12px;
       background: #e63946;
-      color: #ffffff;
+      color: #fff;
       border: none;
       border-radius: 6px;
       font-size: 15px;
       cursor: pointer;
     }
-    .login-box button:disabled {
-      background: #883333;
-      cursor: not-allowed;
-    }
+    .login-box button:disabled { background: #883333; cursor: not-allowed; }
     #loginError {
       color: #e63946;
       font-size: 12px;
@@ -75,6 +62,45 @@
       min-height: 18px;
     }
 
+    /* ── Header ── */
+    .header {
+      background: #16213e;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e63946;
+    }
+    .header h1 { font-size: 18px; }
+    .header p  { font-size: 11px; color: #aaaaaa; margin-top: 2px; }
+
+    /* ── Tab bar ── */
+    .tabs {
+      display: flex;
+      background: #16213e;
+      border-bottom: 1px solid #333355;
+    }
+    .tab-btn {
+      padding: 12px 28px;
+      border: none;
+      background: transparent;
+      color: #aaaaaa;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #ffffff;
+      border-bottom-color: #e63946;
+    }
+    .tab-btn:hover { color: #ffffff; }
+
+    /* ── Tab panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Stats ── */
     .stats {
       display: flex;
       gap: 16px;
@@ -86,15 +112,16 @@
       border-radius: 10px;
       padding: 16px 24px;
       flex: 1;
-      min-width: 140px;
+      min-width: 130px;
       text-align: center;
       border-left: 4px solid #e63946;
     }
     .stat-card.resolved { border-left-color: #2a9d8f; }
     .stat-card.total    { border-left-color: #457b9d; }
-    .stat-card h2 { font-size: 32px; }
+    .stat-card h2 { font-size: 30px; }
     .stat-card p  { font-size: 12px; color: #aaaaaa; margin-top: 4px; }
 
+    /* ── Toolbar ── */
     .toolbar {
       display: flex;
       align-items: center;
@@ -122,6 +149,7 @@
     .btn-pdf    { background: #c77dff; }
     .btn-logout { background: #444466; margin-left: auto; }
 
+    /* ── Table ── */
     .table-wrap {
       padding: 0 24px 40px;
       overflow-x: auto;
@@ -176,7 +204,88 @@
       color: #555577;
     }
 
-    /* Custom confirm dialog */
+    /* ── Map ── */
+    #mapPanel { padding: 20px 24px; }
+
+    #map {
+      width: 100%;
+      height: 540px;
+      border-radius: 12px;
+      border: 1px solid #333355;
+    }
+
+    .map-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #aaaaaa;
+      align-items: center;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .dot-active   { background: #e63946; }
+    .dot-resolved { background: #2a9d8f; }
+
+    .map-alert-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .map-alert-item {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-left: 4px solid #e63946;
+      transition: background 0.2s;
+    }
+    .map-alert-item.resolved { border-left-color: #2a9d8f; }
+    .map-alert-item:hover { background: #1e2a4a; }
+    .map-alert-item .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .map-alert-info { flex: 1; }
+    .map-alert-info strong { font-size: 13px; color: #fff; }
+    .map-alert-info span   { font-size: 11px; color: #aaaaaa; display: block; }
+
+    .map-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .map-sidebar {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 16px;
+      max-height: 540px;
+      overflow-y: auto;
+    }
+    .map-sidebar h3 {
+      font-size: 14px;
+      color: #aaaaaa;
+      margin-bottom: 12px;
+    }
+
+    /* ── Info popup on map ── */
+    .gm-style-iw { background: #16213e !important; color: #fff; }
+    .gm-style-iw-d { color: #fff; }
+
+    /* ── Confirm dialog ── */
     #confirmOverlay {
       position: fixed;
       inset: 0;
@@ -211,7 +320,7 @@
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- Login -->
 <div id="loginScreen">
   <div class="login-box">
     <h2>BFP Admin Login</h2>
@@ -222,81 +331,121 @@
   </div>
 </div>
 
-<!-- Custom confirm dialog -->
+<!-- Confirm dialog -->
 <div id="confirmOverlay">
   <div class="confirm-box">
     <p>Delete this resolved alert?<br/>This cannot be undone.</p>
     <div>
       <button id="confirmYes">Delete</button>
-      <button id="confirmNo"  onclick="closeConfirm()">Cancel</button>
+      <button id="confirmNo" onclick="closeConfirm()">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Main Dashboard -->
+<!-- Main app -->
 <div id="mainApp" style="display:none;">
 
+  <!-- Header -->
   <div class="header">
     <div>
-      <h1>BFP Alert Dashboard</h1>
+      <h1>🔥 BFP Alert Dashboard</h1>
       <p>Bureau of Fire Protection — Live Monitoring</p>
     </div>
     <span id="adminEmail" style="font-size:13px;color:#aaaaaa;"></span>
   </div>
 
-  <div class="stats">
-    <div class="stat-card">
-      <h2 id="countActive">0</h2>
-      <p>Active Alerts</p>
-    </div>
-    <div class="stat-card resolved">
-      <h2 id="countResolved">0</h2>
-      <p>Resolved</p>
-    </div>
-    <div class="stat-card total">
-      <h2 id="countTotal">0</h2>
-      <p>Total Alerts</p>
-    </div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('alerts', this)">
+      🚨 Alerts
+    </button>
+    <button class="tab-btn" onclick="switchTab('map', this)">
+      🗺️ Live Map
+    </button>
   </div>
 
-  <div class="toolbar">
-    <select id="filterStatus" onchange="applyFilter()">
-      <option value="all">All Alerts</option>
-      <option value="active">Active Only</option>
-      <option value="resolved">Resolved Only</option>
-    </select>
-    <input type="date" id="filterDate" onchange="applyFilter()"/>
-    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
-    <button class="btn-pdf"    onclick="exportPDF()">Export PDF</button>
-    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  <!-- ── ALERTS TAB ── -->
+  <div id="tab-alerts" class="tab-panel active">
+
+    <div class="stats">
+      <div class="stat-card">
+        <h2 id="countActive">0</h2><p>Active Alerts</p>
+      </div>
+      <div class="stat-card resolved">
+        <h2 id="countResolved">0</h2><p>Resolved</p>
+      </div>
+      <div class="stat-card total">
+        <h2 id="countTotal">0</h2><p>Total Alerts</p>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <select id="filterStatus" onchange="applyFilter()">
+        <option value="all">All Alerts</option>
+        <option value="active">Active Only</option>
+        <option value="resolved">Resolved Only</option>
+      </select>
+      <input type="date" id="filterDate" onchange="applyFilter()"/>
+      <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+      <button class="btn-pdf"    onclick="exportPDF()">Export PDF</button>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>#</th>
+          <th>Date &amp; Time</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>User ID</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="alertTableBody"></tbody>
+      </table>
+      <p id="emptyMsg" style="display:none;">No alerts found.</p>
+    </div>
+
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-      <tr>
-        <th>#</th>
-        <th>Date &amp; Time</th>
-        <th>Latitude</th>
-        <th>Longitude</th>
-        <th>User ID</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-      </thead>
-      <tbody id="alertTableBody"></tbody>
-    </table>
-    <p id="emptyMsg" style="display:none;">No alerts found.</p>
+  <!-- ── MAP TAB ── -->
+  <div id="tab-map" class="tab-panel">
+    <div id="mapPanel">
+
+      <div class="map-layout">
+
+        <!-- Map -->
+        <div>
+          <div id="map"></div>
+          <div class="map-legend">
+            <span><span class="legend-dot dot-active"></span>Active alert</span>
+            <span><span class="legend-dot dot-resolved"></span>Resolved alert</span>
+            <span id="mapLastUpdated" style="margin-left:auto;font-size:11px;"></span>
+          </div>
+        </div>
+
+        <!-- Sidebar list -->
+        <div class="map-sidebar">
+          <h3>📍 Alert Locations</h3>
+          <div id="mapAlertList" class="map-alert-list"></div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // ── Paste your Firebase config here ──
+  // ── Firebase config — paste yours here ──
   const firebaseConfig = {
   apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
   authDomain: "bfp-alert.firebaseapp.com",
@@ -307,15 +456,18 @@
   appId: "1:213714872271:web:85adbecc75a8ad45c594ba",
   measurementId: "G-1QTYKR8882"
 };
-
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db   = firebase.firestore();
 
   let allAlerts       = [];
   let pendingDeleteId = null;
+  let googleMap       = null;
+  let markers         = {};   // alertId → google.maps.Marker
+  let infoWindow      = null;
+  let mapInitialized  = false;
 
-  // ── Auth state ──
+  // ── Auth ──
   auth.onAuthStateChanged(user => {
     if (user) {
       document.getElementById("loginScreen").style.display  = "none";
@@ -334,7 +486,6 @@
     const password = document.getElementById("loginPassword").value.trim();
     const errEl    = document.getElementById("loginError");
     const btn      = document.getElementById("loginBtn");
-
     errEl.textContent = "";
 
     if (!email || !password) {
@@ -346,39 +497,49 @@
     btn.textContent = "Logging in...";
 
     auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
+      .then(() => { btn.textContent = "Login"; btn.disabled = false; })
+      .catch(err => {
         btn.textContent = "Login";
         btn.disabled    = false;
-      })
-      .catch(err => {
-        btn.textContent   = "Login";
-        btn.disabled      = false;
-        // Show a friendly message based on error code
-        if (err.code === "auth/user-not-found" ||
-            err.code === "auth/wrong-password" ||
+        if (err.code === "auth/wrong-password" ||
+            err.code === "auth/user-not-found" ||
             err.code === "auth/invalid-credential") {
           errEl.textContent = "Incorrect email or password.";
         } else if (err.code === "auth/invalid-email") {
           errEl.textContent = "Invalid email format.";
-        } else if (err.code === "auth/too-many-requests") {
-          errEl.textContent = "Too many attempts. Try again later.";
         } else {
           errEl.textContent = err.message;
         }
       });
   }
 
-  // Allow pressing Enter to login
-  document.getElementById("loginPassword").addEventListener("keydown", e => {
-    if (e.key === "Enter") doLogin();
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("loginPassword")
+      .addEventListener("keydown", e => {
+        if (e.key === "Enter") doLogin();
+      });
   });
 
   // ── Logout ──
-  function doLogout() {
-    auth.signOut();
+  function doLogout() { auth.signOut(); }
+
+  // ── Tab switching ──
+  function switchTab(name, btn) {
+    document.querySelectorAll(".tab-panel").forEach(p =>
+      p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b =>
+      b.classList.remove("active"));
+
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+
+    // Init map the first time the map tab is opened
+    if (name === "map" && !mapInitialized) {
+      initMap();
+    }
   }
 
-  // ── Real-time listener ──
+  // ── Firestore real-time listener ──
   function listenForAlerts() {
     db.collection("sos_alerts")
       .orderBy("timestamp", "desc")
@@ -389,9 +550,11 @@
         });
         updateStats();
         applyFilter();
-      }, err => {
-        console.error("Firestore error:", err.message);
-      });
+        if (mapInitialized) updateMapMarkers();
+        updateMapSidebar();
+        document.getElementById("mapLastUpdated").textContent =
+          "Last updated: " + new Date().toLocaleTimeString();
+      }, err => console.error("Firestore:", err.message));
   }
 
   // ── Stats ──
@@ -407,7 +570,6 @@
   function applyFilter() {
     const statusFilter = document.getElementById("filterStatus").value;
     const dateFilter   = document.getElementById("filterDate").value;
-
     let filtered = [...allAlerts];
 
     if (statusFilter !== "all") {
@@ -416,15 +578,13 @@
     if (dateFilter) {
       filtered = filtered.filter(a => {
         if (!a.timestamp) return false;
-        const dateStr = a.timestamp.toDate().toISOString().split("T")[0];
-        return dateStr === dateFilter;
+        return a.timestamp.toDate().toISOString().split("T")[0] === dateFilter;
       });
     }
-
     renderTable(filtered);
   }
 
-  // ── Render table ──
+  // ── Table ──
   function renderTable(alerts) {
     const tbody    = document.getElementById("alertTableBody");
     const emptyMsg = document.getElementById("emptyMsg");
@@ -442,8 +602,10 @@
         ? alert.timestamp.toDate().toLocaleString() : "—";
 
       const actionBtn = isActive
-        ? `<button class="btn-resolve" onclick="resolveAlert('${alert.id}')">Resolve</button>`
-        : `<button class="btn-delete"  onclick="askDelete('${alert.id}')">✕ Delete</button>`;
+        ? `<button class="btn-resolve"
+             onclick="resolveAlert('${alert.id}')">Resolve</button>`
+        : `<button class="btn-delete"
+             onclick="askDelete('${alert.id}')">✕ Delete</button>`;
 
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -452,22 +614,21 @@
         <td>${alert.latitude  ?? "—"}</td>
         <td>${alert.longitude ?? "—"}</td>
         <td style="font-size:11px;color:#aaaaaa;">${alert.userId ?? "—"}</td>
-        <td><span class="badge ${isActive ? "badge-active" : "badge-resolved"}">
-          ${isActive ? "ACTIVE" : "RESOLVED"}
-        </span></td>
+        <td><span class="badge ${isActive
+          ? "badge-active" : "badge-resolved"}">
+          ${isActive ? "ACTIVE" : "RESOLVED"}</span></td>
         <td>${actionBtn}</td>`;
       tbody.appendChild(row);
     });
   }
 
-  // ── Resolve ──
+  // ── Resolve / Delete ──
   function resolveAlert(id) {
     db.collection("sos_alerts").doc(id)
       .update({ status: "resolved" })
-      .catch(err => console.error("Resolve error:", err.message));
+      .catch(err => console.error("Resolve:", err.message));
   }
 
-  // ── Delete (custom dialog) ──
   function askDelete(id) {
     pendingDeleteId = id;
     document.getElementById("confirmOverlay").classList.add("show");
@@ -478,11 +639,8 @@
     if (!pendingDeleteId) return;
     db.collection("sos_alerts").doc(pendingDeleteId)
       .delete()
-      .then(() => { closeConfirm(); })
-      .catch(err => {
-        closeConfirm();
-        alert("Delete failed: " + err.message);
-      });
+      .then(() => closeConfirm())
+      .catch(err => { closeConfirm(); alert("Delete failed: " + err.message); });
   }
 
   function closeConfirm() {
@@ -495,19 +653,235 @@
     let csv = "No,Date & Time,Latitude,Longitude,User ID,Status\n";
     allAlerts.forEach((a, i) => {
       const time = a.timestamp ? a.timestamp.toDate().toLocaleString() : "";
-      csv += `${i+1},"${time}",${a.latitude ?? ""},${a.longitude ?? ""},"${a.userId ?? ""}",${a.status}\n`;
+      csv += `${i+1},"${time}",${a.latitude ?? ""},`
+           + `${a.longitude ?? ""},"${a.userId ?? ""}",${a.status}\n`;
     });
     const blob = new Blob([csv], { type: "text/csv" });
     const url  = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href     = url;
-    link.download = "bfp_alerts_" + new Date().toISOString().split("T")[0] + ".csv";
+    link.download = "bfp_alerts_"
+      + new Date().toISOString().split("T")[0] + ".csv";
     link.click();
     URL.revokeObjectURL(url);
   }
 
-  // ── Export PDF ──
   function exportPDF() { window.print(); }
+
+  // ════════════════════════════════════════════
+  //  MAP
+  // ════════════════════════════════════════════
+
+  function initMap() {
+    googleMap = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 12.8797, lng: 121.7740 },  // Philippines
+      zoom: 6,
+      mapTypeId: "roadmap",
+      styles: [
+        { elementType: "geometry",
+          stylers: [{ color: "#1a1a2e" }] },
+        { elementType: "labels.text.stroke",
+          stylers: [{ color: "#16213e" }] },
+        { elementType: "labels.text.fill",
+          stylers: [{ color: "#aaaaaa" }] },
+        { featureType: "road",
+          elementType: "geometry",
+          stylers: [{ color: "#2a2a4a" }] },
+        { featureType: "road",
+          elementType: "geometry.stroke",
+          stylers: [{ color: "#212121" }] },
+        { featureType: "water",
+          elementType: "geometry",
+          stylers: [{ color: "#0e1626" }] },
+        { featureType: "poi",
+          stylers: [{ visibility: "off" }] }
+      ]
+    });
+
+    infoWindow    = new google.maps.InfoWindow();
+    mapInitialized = true;
+
+    // Place markers for already-loaded alerts
+    updateMapMarkers();
+    updateMapSidebar();
+  }
+
+  function updateMapMarkers() {
+    const currentIds = new Set();
+
+    allAlerts.forEach(alert => {
+      if (alert.latitude == null || alert.longitude == null) return;
+      currentIds.add(alert.id);
+
+      const isActive = alert.status === "active";
+      const pos      = { lat: alert.latitude, lng: alert.longitude };
+
+      const time = alert.timestamp
+        ? alert.timestamp.toDate().toLocaleString() : "—";
+
+      const infoContent = `
+        <div style="background:#16213e;padding:12px;border-radius:8px;
+                    min-width:200px;color:#fff;">
+          <div style="font-weight:bold;font-size:14px;margin-bottom:6px;">
+            ${isActive
+              ? '<span style="color:#e63946;">🔴 ACTIVE ALERT</span>'
+              : '<span style="color:#2a9d8f;">🟢 Resolved</span>'}
+          </div>
+          <div style="font-size:12px;color:#aaaaaa;margin-bottom:4px;">
+            📍 ${alert.latitude.toFixed(5)}, ${alert.longitude.toFixed(5)}
+          </div>
+          <div style="font-size:12px;color:#aaaaaa;margin-bottom:10px;">
+            🕐 ${time}
+          </div>
+          ${isActive
+            ? `<button onclick="resolveAlertFromMap('${alert.id}')"
+                 style="padding:6px 14px;background:#2a9d8f;color:#fff;
+                        border:none;border-radius:4px;cursor:pointer;
+                        font-size:12px;width:100%;">
+                 ✓ Mark Resolved
+               </button>`
+            : `<button onclick="deleteAlertFromMap('${alert.id}')"
+                 style="padding:6px 14px;background:#880000;color:#fff;
+                        border:none;border-radius:4px;cursor:pointer;
+                        font-size:12px;width:100%;">
+                 ✕ Delete
+               </button>`
+          }
+        </div>`;
+
+      if (markers[alert.id]) {
+        // Update existing marker
+        markers[alert.id].setPosition(pos);
+        markers[alert.id].setIcon(markerIcon(isActive));
+        markers[alert.id]._infoContent = infoContent;
+      } else {
+        // Create new marker
+        const marker = new google.maps.Marker({
+          position: pos,
+          map:      googleMap,
+          icon:     markerIcon(isActive),
+          title:    isActive ? "ACTIVE ALERT" : "Resolved",
+          animation: google.maps.Animation.DROP
+        });
+        marker._infoContent = infoContent;
+
+        marker.addListener("click", () => {
+          infoWindow.setContent(marker._infoContent);
+          infoWindow.open(googleMap, marker);
+        });
+
+        markers[alert.id] = marker;
+      }
+    });
+
+    // Remove markers for deleted alerts
+    Object.keys(markers).forEach(id => {
+      if (!currentIds.has(id)) {
+        markers[id].setMap(null);
+        delete markers[id];
+      }
+    });
+
+    // Auto-pan to latest active alert
+    const latest = allAlerts.find(a => a.status === "active"
+      && a.latitude != null);
+    if (latest) {
+      googleMap.panTo({ lat: latest.latitude, lng: latest.longitude });
+      if (googleMap.getZoom() < 12) googleMap.setZoom(13);
+    }
+  }
+
+  // Custom colored marker icons
+  function markerIcon(isActive) {
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale:       12,
+      fillColor:   isActive ? "#e63946" : "#2a9d8f",
+      fillOpacity: 1,
+      strokeColor: isActive ? "#ff8080" : "#80d4c8",
+      strokeWeight: 2
+    };
+  }
+
+  // Update sidebar list of alerts
+  function updateMapSidebar() {
+    const list = document.getElementById("mapAlertList");
+    list.innerHTML = "";
+
+    const sorted = [...allAlerts]
+      .filter(a => a.latitude != null)
+      .sort((a, b) => {
+        // Active first, then by time
+        if (a.status === "active" && b.status !== "active") return -1;
+        if (a.status !== "active" && b.status === "active") return  1;
+        return 0;
+      });
+
+    if (sorted.length === 0) {
+      list.innerHTML =
+        '<p style="color:#555577;font-size:13px;">No alerts with location.</p>';
+      return;
+    }
+
+    sorted.forEach(alert => {
+      const isActive = alert.status === "active";
+      const time     = alert.timestamp
+        ? alert.timestamp.toDate().toLocaleString() : "—";
+
+      const item = document.createElement("div");
+      item.className = "map-alert-item" + (isActive ? "" : " resolved");
+      item.innerHTML = `
+        <div class="dot"
+             style="background:${isActive ? "#e63946" : "#2a9d8f"}">
+        </div>
+        <div class="map-alert-info">
+          <strong>${isActive ? "🔴 Active Alert" : "🟢 Resolved"}</strong>
+          <span>📍 ${alert.latitude.toFixed(4)},
+                    ${alert.longitude.toFixed(4)}</span>
+          <span>🕐 ${time}</span>
+        </div>`;
+
+      // Click sidebar item → pan map and open info window
+      item.addEventListener("click", () => {
+        if (!mapInitialized) { switchTab("map",
+          document.querySelector(".tab-btn:nth-child(2)")); return; }
+        const marker = markers[alert.id];
+        if (marker) {
+          googleMap.panTo(marker.getPosition());
+          googleMap.setZoom(15);
+          infoWindow.setContent(marker._infoContent);
+          infoWindow.open(googleMap, marker);
+        }
+        // Switch to map tab if not already there
+        switchTab("map",
+          document.querySelectorAll(".tab-btn")[1]);
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  // Resolve/delete directly from map info window
+  function resolveAlertFromMap(id) {
+    db.collection("sos_alerts").doc(id)
+      .update({ status: "resolved" })
+      .then(() => infoWindow.close())
+      .catch(err => alert("Failed: " + err.message));
+  }
+
+  function deleteAlertFromMap(id) {
+    if (!confirm("Delete this resolved alert?")) return;
+    db.collection("sos_alerts").doc(id)
+      .delete()
+      .then(() => infoWindow.close())
+      .catch(err => alert("Failed: " + err.message));
+  }
+</script>
+
+<!-- Load Google Maps — replace YOUR_MAPS_API_KEY -->
+<script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&callback=Function.prototype"
+        async defer>
 </script>
 
 </body>

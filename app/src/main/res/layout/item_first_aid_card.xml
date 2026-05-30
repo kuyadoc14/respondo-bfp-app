@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="#16213e"
+    android:background="@drawable/firstaid_card_bg"
     android:padding="16dp"
     android:layout_margin="8dp"
     android:gravity="center_vertical"
@@ -17,7 +17,7 @@
         android:layout_height="52dp"
         android:textSize="28sp"
         android:gravity="center"
-        android:background="#1a1a2e"
+        android:background="@drawable/card_icon_bg"
         android:layout_marginEnd="16dp"/>
 
     <LinearLayout
@@ -30,7 +30,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#ffffff"
+            android:textColor="#000000"
             android:textSize="15sp"
             android:textStyle="bold"/>
 
