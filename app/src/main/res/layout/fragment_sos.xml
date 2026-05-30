@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#000000">
 
+    <!-- Title -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
@@ -14,7 +15,7 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="60dp"/>
+        android:layout_marginTop="48dp"/>
 
     <TextView
         android:id="@+id/tvSubtitle"
@@ -25,8 +26,9 @@
         android:textSize="14sp"
         android:layout_below="@id/tvTitle"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="6dp"/>
 
+    <!-- SOS Button -->
     <Button
         android:id="@+id/btnSOS"
         android:layout_width="200dp"
@@ -35,11 +37,11 @@
         android:textSize="48sp"
         android:textColor="#ffffff"
         android:textStyle="bold"
-        android:backgroundTint="#e63946"
-        android:background="@drawable/rounded_button"
+        android:background="@drawable/glow_button"
         android:layout_centerInParent="true"
         android:elevation="8dp"/>
 
+    <!-- Instruction -->
     <TextView
         android:id="@+id/tvInstruction"
         android:layout_width="wrap_content"
@@ -49,6 +51,57 @@
         android:textSize="13sp"
         android:layout_below="@id/btnSOS"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"/>
+        android:layout_marginTop="20dp"/>
+
+    <!-- Status card — hidden by default -->
+    <LinearLayout
+        android:id="@+id/statusCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:visibility="gone"
+        android:background="@drawable/bg_status_warning"
+        android:layout_below="@id/tvInstruction"
+        android:layout_centerHorizontal="true">
+
+        <!-- Pulsing dot + LIVE label -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="10dp">
+
+            <View
+                android:id="@+id/pulseDot"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/circle_dot"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LIVE"
+                android:textColor="#FFBB33"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="15sp"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"/>
+
+    </LinearLayout>
 
 </RelativeLayout>
