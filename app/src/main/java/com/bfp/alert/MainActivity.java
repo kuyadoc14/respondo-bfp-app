@@ -1,6 +1,7 @@
 package com.bfp.alert;
 
 import android.os.Bundle;
+import java.util.HashMap;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -15,6 +16,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Initialize Cloudinary
+        java.util.Map<String, Object> config = new java.util.HashMap<>();
+        config.put("cloud_name", "ds8c4o8q4");
+        config.put("api_key",    "986862986147198");
+        config.put("api_secret", "Xx2WgEGLTWMfGk_BlxIl71QKL5A");
+        com.cloudinary.android.MediaManager.init(this, config);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

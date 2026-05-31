@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#ffffff">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,12 +12,13 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="16dp">
 
             <ImageButton
                 android:id="@+id/btnBack"
@@ -26,7 +27,7 @@
                 android:src="@android:drawable/ic_media_previous"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:layout_marginEnd="12dp"
-                app:tint="#ffffff" />
+                app:tint="#000000" />
 
             <TextView
                 android:id="@+id/tvDetailIcon"
@@ -46,7 +47,7 @@
                     android:id="@+id/tvDetailTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#ffffff"
+                    android:textColor="#000000"
                     android:textSize="20sp"
                     android:textStyle="bold"/>
 
@@ -58,23 +59,52 @@
                     android:textSize="12sp"/>
 
             </LinearLayout>
-
         </LinearLayout>
 
+        <!-- Description -->
         <TextView
             android:id="@+id/tvDetailDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#cccccc"
+            android:textColor="#000000"
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:layout_marginBottom="20dp"/>
 
+        <!-- Photos -->
+        <TextView
+            android:id="@+id/tvPhotosLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Photos"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone"/>
+
+        <HorizontalScrollView
+            android:id="@+id/photoScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/photoContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="180dp"
+                android:orientation="horizontal"/>
+
+        </HorizontalScrollView>
+
+        <!-- Steps -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Step-by-Step Guide"
-            android:textColor="#ffffff"
+            android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="12dp"/>
@@ -86,45 +116,43 @@
             android:orientation="vertical"
             android:layout_marginBottom="24dp"/>
 
+        <!-- In-app video -->
+        <TextView
+            android:id="@+id/tvInAppVideoLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Video Guide"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone"/>
+
+        <VideoView
+            android:id="@+id/inAppVideoView"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"/>
+
+        <!-- YouTube -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Video Reference"
-            android:textColor="#ffffff"
+            android:text="YouTube Reference"
+            android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="10dp"/>
 
-        <LinearLayout
-            android:id="@+id/videoContainer"
+        <Button
+            android:id="@+id/btnWatchVideo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#16213e"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/tvVideoTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:text="Watch Video Guide"
-                android:textColor="#ffffff"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/btnWatchVideo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="#e63946"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:text="▶ Watch on YouTube"
-                android:textColor="#ffffff" />
-
-        </LinearLayout>
+            android:text="▶ Watch on YouTube"
+            android:backgroundTint="#e63946"
+            android:textColor="#ffffff"
+            android:padding="12dp"/>
 
     </LinearLayout>
-
 </ScrollView>

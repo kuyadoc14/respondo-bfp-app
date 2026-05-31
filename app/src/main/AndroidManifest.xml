@@ -18,6 +18,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg" />
 
+        <activity
+            android:name=".PhotoViewerActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"/>
 
         <activity
             android:name=".FirstAidEditorActivity"
@@ -43,8 +47,7 @@
         <activity
             android:name=".AdminLoginActivity"
             android:exported="false"
-            android:theme="@style/Theme.Dialog.Custom"/>
-
+            android:theme="@style/Theme.Dialog.Custom" />
         <activity
             android:name=".AdminDashboardActivity"
             android:exported="false" />

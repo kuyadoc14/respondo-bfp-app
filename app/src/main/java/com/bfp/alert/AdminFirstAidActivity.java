@@ -50,6 +50,11 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                     intent.putExtra("iconEmoji",   item.iconEmoji);
                     intent.putStringArrayListExtra("steps",
                             new ArrayList<>(item.steps != null ? item.steps : new ArrayList<>()));
+                    intent.putExtra("storageVideoUrl",
+                            item.storageVideoUrl != null ? item.storageVideoUrl : "");
+                    intent.putStringArrayListExtra("photoUrls",
+                            new ArrayList<>(item.photoUrls != null
+                                    ? item.photoUrls : new ArrayList<>()));
                     startActivity(intent);
                 },
                 // Delete
