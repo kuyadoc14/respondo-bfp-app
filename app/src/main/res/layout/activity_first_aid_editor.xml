@@ -142,7 +142,7 @@
         <!-- Video -->
         <TextView android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Video (MP4 — max 50MB)"
+            android:text="Video (MP4 recommended — up to 200MB)"
             android:textColor="#aaaaaa" android:textSize="12sp"
             android:layout_marginBottom="8dp"/>
 

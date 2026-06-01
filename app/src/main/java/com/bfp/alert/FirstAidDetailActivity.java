@@ -8,17 +8,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
 
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
 public class FirstAidDetailActivity extends AppCompatActivity {
+
+    private ExoPlayer exoPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +45,7 @@ public class FirstAidDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvDetailCategory)).setText(category);
         ((TextView) findViewById(R.id.tvDetailDescription)).setText(description);
 
-        // Photos
+        // ── Photos ───────────────────────────────────────────────
         if (photoUrls != null && !photoUrls.isEmpty()) {
             findViewById(R.id.tvPhotosLabel).setVisibility(View.VISIBLE);
             findViewById(R.id.photoScrollView).setVisibility(View.VISIBLE);
@@ -72,7 +76,7 @@ public class FirstAidDetailActivity extends AppCompatActivity {
             }
         }
 
-        // Steps
+        // ── Steps ────────────────────────────────────────────────
         LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
         if (steps != null) {
             for (int i = 0; i < steps.size(); i++) {
@@ -93,7 +97,7 @@ public class FirstAidDetailActivity extends AppCompatActivity {
 
                 TextView step = new TextView(this);
                 step.setText(steps.get(i));
-                step.setTextColor(0xFF000000);
+                step.setTextColor(0xFFCCCCCC);
                 step.setTextSize(14);
                 step.setLineSpacing(4, 1);
                 LinearLayout.LayoutParams sp =
@@ -107,19 +111,29 @@ public class FirstAidDetailActivity extends AppCompatActivity {
             }
         }
 
-        // In-app video
+        // ── ExoPlayer video ──────────────────────────────────────
         if (storageVideoUrl != null && !storageVideoUrl.isEmpty()) {
-            findViewById(R.id.tvInAppVideoLabel).setVisibility(View.VISIBLE);
-            VideoView videoView = findViewById(R.id.inAppVideoView);
-            videoView.setVisibility(View.VISIBLE);
-            MediaController mc = new MediaController(this);
-            mc.setAnchorView(videoView);
-            videoView.setMediaController(mc);
-            videoView.setVideoURI(Uri.parse(storageVideoUrl));
-            videoView.requestFocus();
+            findViewById(R.id.tvInAppVideoLabel)
+                    .setVisibility(View.VISIBLE);
+
+            PlayerView playerView = findViewById(R.id.exoPlayerView);
+            playerView.setVisibility(View.VISIBLE);
+
+            // Build ExoPlayer
+            exoPlayer = new ExoPlayer.Builder(this).build();
+            playerView.setPlayer(exoPlayer);
+            playerView.setKeepScreenOn(true);
+
+            // Set the Cloudinary video URL
+            MediaItem mediaItem = MediaItem.fromUri(
+                    Uri.parse(storageVideoUrl));
+            exoPlayer.setMediaItem(mediaItem);
+            exoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
+            exoPlayer.prepare();
+            // Don't autoplay — user taps play
         }
 
-        // YouTube
+        // ── YouTube button ────────────────────────────────────────
         Button btnVideo = findViewById(R.id.btnWatchVideo);
         if (videoUrl != null && !videoUrl.isEmpty()) {
             btnVideo.setOnClickListener(v ->
@@ -130,6 +144,28 @@ public class FirstAidDetailActivity extends AppCompatActivity {
             btnVideo.setEnabled(false);
             btnVideo.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(0xFF444466));
+        }
+    }
+
+    // ── Release ExoPlayer properly ────────────────────────────────
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (exoPlayer != null) exoPlayer.pause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (exoPlayer != null) exoPlayer.pause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (exoPlayer != null) {
+            exoPlayer.release();
+            exoPlayer = null;
         }
     }
 

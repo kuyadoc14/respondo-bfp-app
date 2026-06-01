@@ -279,32 +279,57 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                 .option("folder",        "bfp_first_aid/videos")
                 .option("resource_type", "video")
                 .callback(new UploadCallback() {
-                    @Override public void onStart(String id) {}
-                    @Override public void onProgress(String id,
-                                                     long bytes, long total) {
-                        int pct = (int)(100.0 * bytes / total);
-                        uploadProgress.setProgress(pct);
-                        showStatus("Uploading video... " + pct + "%");
+                    @Override
+                    public void onStart(String id) {
+                        showStatus("Starting video upload...");
                     }
-                    @Override public void onSuccess(String id,
-                                                    Map resultData) {
-                        data.put("storageVideoUrl",
-                                resultData.get("secure_url"));
+
+                    @Override
+                    public void onProgress(String id,
+                                           long bytes, long total) {
+                        int pct = total > 0
+                                ? (int)(100.0 * bytes / total) : 0;
+                        runOnUiThread(() -> {
+                            uploadProgress.setProgress(pct);
+                            showStatus("Uploading video... " + pct + "%"
+                                    + " (" + formatSize(bytes)
+                                    + " / " + formatSize(total) + ")");
+                        });
+                    }
+
+                    @Override
+                    public void onSuccess(String id, Map resultData) {
+                        String url = (String) resultData.get("secure_url");
+                        data.put("storageVideoUrl", url);
                         saveToFirestore(data);
                     }
-                    @Override public void onError(String id,
-                                                  ErrorInfo error) {
-                        showUploadProgress(false);
-                        resetSaveButton();
-                        Toast.makeText(FirstAidEditorActivity.this,
-                                "Video upload failed: "
-                                        + error.getDescription(),
-                                Toast.LENGTH_SHORT).show();
+
+                    @Override
+                    public void onError(String id, ErrorInfo error) {
+                        runOnUiThread(() -> {
+                            showUploadProgress(false);
+                            resetSaveButton();
+                            Toast.makeText(FirstAidEditorActivity.this,
+                                    "Video upload failed: "
+                                            + error.getDescription(),
+                                    Toast.LENGTH_LONG).show();
+                        });
                     }
-                    @Override public void onReschedule(String id,
-                                                       ErrorInfo error) {}
+
+                    @Override
+                    public void onReschedule(String id, ErrorInfo error) {
+                        runOnUiThread(() ->
+                                showStatus("Retrying upload..."));
+                    }
                 })
                 .dispatch();
+    }
+
+    // Helper to show readable file size
+    private String formatSize(long bytes) {
+        if (bytes < 1024 * 1024)
+            return (bytes / 1024) + " KB";
+        return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
     private void saveToFirestore(Map<String, Object> data) {

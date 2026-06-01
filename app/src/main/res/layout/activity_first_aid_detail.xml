@@ -122,18 +122,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Video Guide"
-            android:textColor="#000000"
+            android:textColor="#ffffff"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="10dp"
             android:visibility="gone"/>
 
-        <VideoView
-            android:id="@+id/inAppVideoView"
+        <!-- Replace VideoView with ExoPlayer's PlayerView -->
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/exoPlayerView"
             android:layout_width="match_parent"
             android:layout_height="220dp"
             android:layout_marginBottom="20dp"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            app:show_buffering="when_playing"
+            app:use_controller="true"
+            xmlns:app="http://schemas.android.com/apk/res-auto"/>
 
         <!-- YouTube -->
         <TextView
