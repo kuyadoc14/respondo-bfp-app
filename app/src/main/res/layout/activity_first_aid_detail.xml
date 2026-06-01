@@ -116,6 +116,22 @@
             android:orientation="vertical"
             android:layout_marginBottom="24dp"/>
 
+        <!-- Offline notice — hidden by default -->
+        <TextView
+            android:id="@+id/tvOfflineNotice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚠ You are offline. Showing cached content."
+            android:textColor="#FFBB33"
+            android:textSize="12sp"
+            android:background="#2A1A00"
+            android:padding="10dp"
+            android:gravity="center"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone"/>
+
+        <!-- Put this above the steps section -->
+
         <!-- In-app video -->
         <TextView
             android:id="@+id/tvInAppVideoLabel"
@@ -128,16 +144,31 @@
             android:layout_marginBottom="10dp"
             android:visibility="gone"/>
 
-        <!-- Replace VideoView with ExoPlayer's PlayerView -->
         <androidx.media3.ui.PlayerView
             android:id="@+id/exoPlayerView"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="8dp"
             android:visibility="gone"
             app:show_buffering="when_playing"
             app:use_controller="true"
             xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
+        <ProgressBar
+            android:id="@+id/videoDownloadProgress"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvVideoStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"/>
 
         <!-- YouTube -->
         <TextView

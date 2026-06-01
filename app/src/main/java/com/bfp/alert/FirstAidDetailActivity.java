@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.common.MediaItem;
@@ -23,20 +25,21 @@ import java.util.ArrayList;
 public class FirstAidDetailActivity extends AppCompatActivity {
 
     private ExoPlayer exoPlayer;
+    private String    storageVideoUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_aid_detail);
 
-        String            title           = getIntent().getStringExtra("title");
-        String            category        = getIntent().getStringExtra("category");
-        String            description     = getIntent().getStringExtra("description");
-        String            videoUrl        = getIntent().getStringExtra("videoUrl");
-        String            storageVideoUrl = getIntent().getStringExtra("storageVideoUrl");
-        String            iconEmoji       = getIntent().getStringExtra("iconEmoji");
-        ArrayList<String> steps           = getIntent().getStringArrayListExtra("steps");
-        ArrayList<String> photoUrls       = getIntent().getStringArrayListExtra("photoUrls");
+        String            title       = getIntent().getStringExtra("title");
+        String            category    = getIntent().getStringExtra("category");
+        String            description = getIntent().getStringExtra("description");
+        String            videoUrl    = getIntent().getStringExtra("videoUrl");
+        storageVideoUrl               = getIntent().getStringExtra("storageVideoUrl");
+        String            iconEmoji   = getIntent().getStringExtra("iconEmoji");
+        ArrayList<String> steps       = getIntent().getStringArrayListExtra("steps");
+        ArrayList<String> photoUrls   = getIntent().getStringArrayListExtra("photoUrls");
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         ((TextView) findViewById(R.id.tvDetailIcon))
@@ -45,11 +48,20 @@ public class FirstAidDetailActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.tvDetailCategory)).setText(category);
         ((TextView) findViewById(R.id.tvDetailDescription)).setText(description);
 
+        // ── Offline notice ───────────────────────────────────────
+        TextView tvOfflineNotice = findViewById(R.id.tvOfflineNotice);
+        if (!NetworkUtils.isOnline(this)) {
+            tvOfflineNotice.setVisibility(View.VISIBLE);
+        }
+
         // ── Photos ───────────────────────────────────────────────
         if (photoUrls != null && !photoUrls.isEmpty()) {
-            findViewById(R.id.tvPhotosLabel).setVisibility(View.VISIBLE);
-            findViewById(R.id.photoScrollView).setVisibility(View.VISIBLE);
-            LinearLayout container = findViewById(R.id.photoContainer);
+            findViewById(R.id.tvPhotosLabel)
+                    .setVisibility(View.VISIBLE);
+            findViewById(R.id.photoScrollView)
+                    .setVisibility(View.VISIBLE);
+            LinearLayout container =
+                    findViewById(R.id.photoContainer);
             int size   = dp(170);
             int margin = dp(10);
 
@@ -62,14 +74,25 @@ public class FirstAidDetailActivity extends AppCompatActivity {
                 lp.setMargins(0, 0, margin, 0);
                 img.setLayoutParams(lp);
                 img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                Glide.with(this).load(url)
-                        .placeholder(android.R.drawable.ic_menu_gallery)
+
+                // Glide automatically uses disk cache
+                // when offline it serves from cache
+                Glide.with(this)
+                        .load(url)
+                        .diskCacheStrategy(
+                                com.bumptech.glide.load.engine
+                                        .DiskCacheStrategy.ALL)
+                        .placeholder(
+                                android.R.drawable.ic_menu_gallery)
+                        .error(android.R.drawable.ic_menu_gallery)
                         .into(img);
+
                 img.setOnClickListener(v -> {
                     Intent intent = new Intent(this,
                             PhotoViewerActivity.class);
                     intent.putExtra("startIndex", idx);
-                    intent.putStringArrayListExtra("allUrls", photoUrls);
+                    intent.putStringArrayListExtra(
+                            "allUrls", photoUrls);
                     startActivity(intent);
                 });
                 container.addView(img);
@@ -77,7 +100,8 @@ public class FirstAidDetailActivity extends AppCompatActivity {
         }
 
         // ── Steps ────────────────────────────────────────────────
-        LinearLayout stepsContainer = findViewById(R.id.stepsContainer);
+        LinearLayout stepsContainer =
+                findViewById(R.id.stepsContainer);
         if (steps != null) {
             for (int i = 0; i < steps.size(); i++) {
                 LinearLayout row = new LinearLayout(this);
@@ -102,7 +126,9 @@ public class FirstAidDetailActivity extends AppCompatActivity {
                 step.setLineSpacing(4, 1);
                 LinearLayout.LayoutParams sp =
                         new LinearLayout.LayoutParams(
-                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                                0,
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                1f);
                 step.setLayoutParams(sp);
 
                 row.addView(num);
@@ -111,26 +137,9 @@ public class FirstAidDetailActivity extends AppCompatActivity {
             }
         }
 
-        // ── ExoPlayer video ──────────────────────────────────────
+        // ── Video ────────────────────────────────────────────────
         if (storageVideoUrl != null && !storageVideoUrl.isEmpty()) {
-            findViewById(R.id.tvInAppVideoLabel)
-                    .setVisibility(View.VISIBLE);
-
-            PlayerView playerView = findViewById(R.id.exoPlayerView);
-            playerView.setVisibility(View.VISIBLE);
-
-            // Build ExoPlayer
-            exoPlayer = new ExoPlayer.Builder(this).build();
-            playerView.setPlayer(exoPlayer);
-            playerView.setKeepScreenOn(true);
-
-            // Set the Cloudinary video URL
-            MediaItem mediaItem = MediaItem.fromUri(
-                    Uri.parse(storageVideoUrl));
-            exoPlayer.setMediaItem(mediaItem);
-            exoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
-            exoPlayer.prepare();
-            // Don't autoplay — user taps play
+            setupVideo();
         }
 
         // ── YouTube button ────────────────────────────────────────
@@ -143,25 +152,101 @@ public class FirstAidDetailActivity extends AppCompatActivity {
             btnVideo.setText("No YouTube video");
             btnVideo.setEnabled(false);
             btnVideo.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(0xFF444466));
+                    android.content.res.ColorStateList
+                            .valueOf(0xFF444466));
         }
     }
 
-    // ── Release ExoPlayer properly ────────────────────────────────
-    @Override
-    protected void onPause() {
+    // ── Video setup — uses cache if available ─────────────────────
+    private void setupVideo() {
+        findViewById(R.id.tvInAppVideoLabel)
+                .setVisibility(View.VISIBLE);
+
+        PlayerView playerView = findViewById(R.id.exoPlayerView);
+        playerView.setVisibility(View.VISIBLE);
+
+        TextView   tvVideoStatus  = findViewById(R.id.tvVideoStatus);
+        ProgressBar videoProgress = findViewById(R.id.videoDownloadProgress);
+
+        // Check if already cached locally
+        if (VideoCache.isCached(this, storageVideoUrl)) {
+            // Play from local cache
+            String localPath = VideoCache.getCachedPath(
+                    this, storageVideoUrl);
+            playVideo(playerView,
+                    Uri.fromFile(new java.io.File(localPath)));
+            tvVideoStatus.setText("✓ Available offline");
+            tvVideoStatus.setTextColor(0xFF2a9d8f);
+            tvVideoStatus.setVisibility(View.VISIBLE);
+
+        } else if (NetworkUtils.isOnline(this)) {
+            // Stream and cache simultaneously
+            playVideo(playerView,
+                    Uri.parse(storageVideoUrl));
+            tvVideoStatus.setText("⬇ Downloading for offline...");
+            tvVideoStatus.setTextColor(0xFFFFBB33);
+            tvVideoStatus.setVisibility(View.VISIBLE);
+            videoProgress.setVisibility(View.VISIBLE);
+
+            // Download in background for next offline use
+            VideoCache.downloadVideo(this, storageVideoUrl,
+                    new VideoCache.DownloadCallback() {
+                        @Override
+                        public void onProgress(int percent) {
+                            runOnUiThread(() ->
+                                    videoProgress.setProgress(percent));
+                        }
+
+                        @Override
+                        public void onComplete(String localPath) {
+                            runOnUiThread(() -> {
+                                videoProgress.setVisibility(View.GONE);
+                                tvVideoStatus.setText(
+                                        "✓ Available offline");
+                                tvVideoStatus.setTextColor(0xFF2a9d8f);
+                            });
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            runOnUiThread(() -> {
+                                videoProgress.setVisibility(View.GONE);
+                                tvVideoStatus.setVisibility(View.GONE);
+                            });
+                        }
+                    });
+
+        } else {
+            // Offline and not cached
+            playerView.setVisibility(View.GONE);
+            tvVideoStatus.setText(
+                    "⚠ Video not available offline.\n"
+                            + "Connect to internet to download it.");
+            tvVideoStatus.setTextColor(0xFFe63946);
+            tvVideoStatus.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void playVideo(PlayerView playerView, Uri uri) {
+        exoPlayer = new ExoPlayer.Builder(this).build();
+        playerView.setPlayer(exoPlayer);
+        playerView.setKeepScreenOn(true);
+        exoPlayer.setMediaItem(MediaItem.fromUri(uri));
+        exoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
+        exoPlayer.prepare();
+    }
+
+    @Override protected void onPause() {
         super.onPause();
         if (exoPlayer != null) exoPlayer.pause();
     }
 
-    @Override
-    protected void onStop() {
+    @Override protected void onStop() {
         super.onStop();
         if (exoPlayer != null) exoPlayer.pause();
     }
 
-    @Override
-    protected void onDestroy() {
+    @Override protected void onDestroy() {
         super.onDestroy();
         if (exoPlayer != null) {
             exoPlayer.release();
