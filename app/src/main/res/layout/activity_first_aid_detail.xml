@@ -1,193 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff">
+    android:orientation="vertical"
+    android:background="@color/background">
 
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="horizontal"
+        android:background="@color/primary"
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <!-- Header -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="@color/white"
+            android:layout_marginEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/tvDetailIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:background="@drawable/icon_circle_bg_white"
+            android:layout_marginEnd="12dp"/>
+
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/ic_media_previous"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_marginEnd="12dp"
-                app:tint="#000000" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvDetailIcon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:textSize="28sp"
-                android:gravity="center"
-                android:layout_marginEnd="12dp"/>
-
-            <LinearLayout
-                android:layout_width="0dp"
+                android:id="@+id/tvDetailTitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
 
-                <TextView
-                    android:id="@+id/tvDetailTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#000000"
-                    android:textSize="20sp"
-                    android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/tvDetailCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFCCCC"
+                android:textSize="12sp"/>
 
-                <TextView
-                    android:id="@+id/tvDetailCategory"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#e63946"
-                    android:textSize="12sp"/>
-
-            </LinearLayout>
         </LinearLayout>
 
-        <!-- Description -->
-        <TextView
-            android:id="@+id/tvDetailDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#000000"
-            android:textSize="14sp"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="20dp"/>
+    </LinearLayout>
 
-        <!-- Photos -->
-        <TextView
-            android:id="@+id/tvPhotosLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Photos"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"
-            android:visibility="gone"/>
-
-        <HorizontalScrollView
-            android:id="@+id/photoScrollView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:layout_marginBottom="20dp"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/photoContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="180dp"
-                android:orientation="horizontal"/>
-
-        </HorizontalScrollView>
-
-        <!-- Steps -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Step-by-Step Guide"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <LinearLayout
-            android:id="@+id/stepsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="24dp"/>
+            android:padding="20dp">
 
-        <!-- Offline notice — hidden by default -->
-        <TextView
-            android:id="@+id/tvOfflineNotice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="⚠ You are offline. Showing cached content."
-            android:textColor="#FFBB33"
-            android:textSize="12sp"
-            android:background="#2A1A00"
-            android:padding="10dp"
-            android:gravity="center"
-            android:layout_marginBottom="12dp"
-            android:visibility="gone"/>
+            <!-- Offline notice -->
+            <TextView
+                android:id="@+id/tvOfflineNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚠ You are offline. Showing cached content."
+                android:textColor="#996600"
+                android:textSize="12sp"
+                android:background="#FFF8E1"
+                android:padding="10dp"
+                android:gravity="center"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"/>
 
-        <!-- Put this above the steps section -->
+            <!-- Description card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="20dp">
 
-        <!-- In-app video -->
-        <TextView
-            android:id="@+id/tvInAppVideoLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Video Guide"
-            android:textColor="#ffffff"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"
-            android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/tvDetailDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"/>
 
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/exoPlayerView"
-            android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone"
-            app:show_buffering="when_playing"
-            app:use_controller="true"
-            xmlns:app="http://schemas.android.com/apk/res-auto"/>
+            </LinearLayout>
 
-        <ProgressBar
-            android:id="@+id/videoDownloadProgress"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginBottom="4dp"/>
+            <!-- Photos label -->
+            <TextView
+                android:id="@+id/tvPhotosLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Photos"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone"/>
 
-        <TextView
-            android:id="@+id/tvVideoStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:layout_marginBottom="20dp"
-            android:visibility="gone"/>
+            <!-- Photos scroll -->
+            <HorizontalScrollView
+                android:id="@+id/photoScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone">
 
-        <!-- YouTube -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="YouTube Reference"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"/>
+                <LinearLayout
+                    android:id="@+id/photoContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="180dp"
+                    android:orientation="horizontal"/>
 
-        <Button
-            android:id="@+id/btnWatchVideo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="▶ Watch on YouTube"
-            android:backgroundTint="#e63946"
-            android:textColor="#ffffff"
-            android:padding="12dp"/>
+            </HorizontalScrollView>
 
-    </LinearLayout>
-</ScrollView>
+            <!-- Steps label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Step-by-Step Guide"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Steps container -->
+            <LinearLayout
+                android:id="@+id/stepsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Video label -->
+            <TextView
+                android:id="@+id/tvInAppVideoLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Video Guide"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone"/>
+
+            <!-- ExoPlayer -->
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/exoPlayerView"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone"
+                app:show_buffering="when_playing"
+                app:use_controller="true"/>
+
+            <!-- Video download progress -->
+            <ProgressBar
+                android:id="@+id/videoDownloadProgress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:progressTint="@color/primary"
+                android:visibility="gone"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvVideoStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone"/>
+
+            <!-- YouTube section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YouTube Reference"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <Button
+                android:id="@+id/btnWatchVideo"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="▶  Watch on YouTube"
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:stateListAnimator="@null"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,200 +1,256 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1a1a2e">
+    android:orientation="vertical"
+    android:background="@color/background">
 
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:background="@color/primary"
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/tvEditorTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add First Aid"
-            android:textColor="#ffffff"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Icon Emoji"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etIcon"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g. ❤️" android:textColor="#ffffff"
-            android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Title"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g. CPR" android:textColor="#ffffff"
-            android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Category"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etCategory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g. Cardiac" android:textColor="#ffffff"
-            android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Description"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Brief description..."
-            android:textColor="#ffffff" android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:minLines="2" android:gravity="top"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Steps (one per line)"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etSteps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Step 1&#10;Step 2&#10;Step 3"
-            android:textColor="#ffffff" android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:minLines="5" android:gravity="top"
-            android:inputType="textMultiLine"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="YouTube Video URL (optional)"
-            android:textColor="#aaaaaa" android:textSize="12sp"/>
-        <EditText android:id="@+id/etVideoUrl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="https://youtube.com/watch?v=..."
-            android:textColor="#ffffff" android:textColorHint="#555555"
-            android:background="#16213e" android:padding="12dp"
-            android:inputType="textUri"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- Divider -->
-        <View android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#333355"
-            android:layout_marginBottom="20dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Media Upload"
-            android:textColor="#ffffff"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Photos -->
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Photos (up to 5)"
-            android:textColor="#aaaaaa" android:textSize="12sp"
-            android:layout_marginBottom="8dp"/>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp">
-            <LinearLayout
-                android:id="@+id/photoPreviewContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="100dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"/>
-        </HorizontalScrollView>
-
-        <Button android:id="@+id/btnPickPhoto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="+ Add Photos"
-            android:backgroundTint="#333355"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="20dp"/>
-
-        <!-- Video -->
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Video (MP4 recommended — up to 200MB)"
-            android:textColor="#aaaaaa" android:textSize="12sp"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView android:id="@+id/tvVideoName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="No video selected"
-            android:textColor="#555577"
-            android:textSize="12sp"
-            android:layout_marginBottom="8dp"/>
-
-        <Button android:id="@+id/btnPickVideo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="+ Add Video"
-            android:backgroundTint="#333355"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="12dp"/>
-
-        <!-- Progress -->
-        <ProgressBar
-            android:id="@+id/uploadProgress"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginBottom="8dp"/>
-
-        <TextView android:id="@+id/tvUploadStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#2a9d8f"
-            android:textSize="12sp"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp"/>
-
-        <Button android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save"
-            android:backgroundTint="#e63946"
-            android:textColor="#ffffff"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp"/>
-
-        <Button android:id="@+id/btnCancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:backgroundTint="#444466"
-            android:textColor="#ffffff"
-            android:padding="14dp"/>
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
     </LinearLayout>
-</ScrollView>
+
+    <!-- Scrollable form -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Icon Emoji"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etIcon"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:hint="e.g. ❤️"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etTitle"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:hint="e.g. CPR"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Category"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etCategory"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:hint="e.g. Cardiac"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Description"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Brief description..."
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:padding="16dp"
+                android:minLines="3"
+                android:gravity="top"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Steps (one per line)"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etSteps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Step 1&#10;Step 2&#10;Step 3"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:padding="16dp"
+                android:minLines="5"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YouTube URL (optional)"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+            <EditText android:id="@+id/etVideoUrl"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:hint="https://youtube.com/watch?v=..."
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@drawable/input_bg"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:inputType="textUri"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Divider -->
+            <View android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border"
+                android:layout_marginBottom="20dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media Upload"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Photos (up to 5)"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp"/>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp">
+                <LinearLayout
+                    android:id="@+id/photoPreviewContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="100dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"/>
+            </HorizontalScrollView>
+
+            <Button android:id="@+id/btnPickPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="+ Add Photos"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="@color/text_primary"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="20dp"/>
+
+            <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Video (MP4 — up to 200MB)"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView android:id="@+id/tvVideoName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No video selected"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp"/>
+
+            <Button android:id="@+id/btnPickVideo"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="+ Add Video"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="@color/text_primary"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="12dp"/>
+
+            <ProgressBar
+                android:id="@+id/uploadProgress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:progressTint="@color/primary"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView android:id="@+id/tvUploadStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/success"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp"/>
+
+            <Button android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Save"
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="12dp"/>
+
+            <Button android:id="@+id/btnCancel"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Cancel"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="@color/text_secondary"
+                android:stateListAnimator="@null"/>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

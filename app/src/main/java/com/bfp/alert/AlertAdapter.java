@@ -48,8 +48,14 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.AlertViewHol
         boolean isActive = "active".equals(status);
 
         // --- Status badge ---
-        holder.tvStatus.setText(isActive ? "ACTIVE" : "RESOLVED");
-        holder.tvStatus.setBackgroundColor(isActive ? 0xFFe63946 : 0xFF2a9d8f);
+        // Update badge background based on status
+        if (isActive) {
+            holder.tvStatus.setText("ACTIVE");
+            holder.tvStatus.setBackgroundResource(R.drawable.badge_active);
+        } else {
+            holder.tvStatus.setText("RESOLVED");
+            holder.tvStatus.setBackgroundResource(R.drawable.badge_resolved);
+        }
 
         // --- Timestamp ---
         Object ts = alert.get("timestamp");

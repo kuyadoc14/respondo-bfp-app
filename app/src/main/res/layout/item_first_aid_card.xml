@@ -4,22 +4,35 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@drawable/firstaid_card_bg"
+    android:background="@drawable/card_bg"
     android:padding="16dp"
-    android:layout_margin="8dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="10dp"
     android:gravity="center_vertical"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:elevation="2dp">
 
-    <TextView
-        android:id="@+id/tvIcon"
+    <!-- Icon circle -->
+    <LinearLayout
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:textSize="28sp"
+        android:background="@drawable/icon_circle_bg"
         android:gravity="center"
-        android:background="@drawable/card_icon_bg"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginEnd="14dp">
 
+        <TextView
+            android:id="@+id/tvIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="26sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- Text -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -30,7 +43,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold"/>
 
@@ -38,28 +51,31 @@
             android:id="@+id/tvCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#e63946"
+            android:textColor="@color/primary"
             android:textSize="11sp"
-            android:layout_marginTop="2dp"/>
+            android:textStyle="bold"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="4dp"/>
 
         <TextView
             android:id="@+id/tvDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#aaaaaa"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:maxLines="2"
             android:ellipsize="end"
-            android:layout_marginTop="4dp"/>
+            android:lineSpacingExtra="2dp"/>
 
     </LinearLayout>
 
+    <!-- Arrow -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="›"
-        android:textColor="#aaaaaa"
-        android:textSize="24sp"
+        android:textColor="@color/text_hint"
+        android:textSize="28sp"
         android:layout_marginStart="8dp"/>
 
 </LinearLayout>

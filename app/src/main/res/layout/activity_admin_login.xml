@@ -4,77 +4,102 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="28dp">
+    android:padding="28dp"
+    android:background="@color/white">
+
+    <!-- Icon -->
+    <LinearLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/circle_avatar_bg"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔒"
+            android:textSize="28sp"/>
+
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🔒 Admin Login"
-        android:textColor="#ffffff"
+        android:text="Admin Login"
+        android:textColor="@color/text_primary"
         android:textSize="20sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Restricted access — BFP personnel only"
-        android:textColor="#aaaaaa"
+        android:text="BFP personnel only"
+        android:textColor="@color/text_secondary"
         android:textSize="12sp"
         android:gravity="center"
-        android:layout_marginBottom="28dp"/>
+        android:layout_marginBottom="24dp"/>
 
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:textColorHint="#888888"
-        android:textColor="#ffffff"
-        android:backgroundTint="#ffffff"
+        android:layout_height="50dp"
+        android:hint="Email address"
+        android:textColorHint="@color/text_hint"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:background="@drawable/input_bg"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:inputType="textEmailAddress"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:hint="Password"
-        android:textColorHint="#888888"
-        android:textColor="#ffffff"
-        android:backgroundTint="#ffffff"
+        android:textColorHint="@color/text_hint"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:background="@drawable/input_bg"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:inputType="textPassword"
-        android:padding="12dp"
         android:layout_marginBottom="8dp"/>
 
     <TextView
         android:id="@+id/tvLoginError"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#e63946"
+        android:textColor="@color/primary"
         android:textSize="12sp"
         android:gravity="center"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="16dp"/>
 
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="52dp"
         android:text="Login"
-        android:backgroundTint="#e63946"
-        android:textColor="#ffffff"
-        android:padding="12dp"
+        android:backgroundTint="@color/primary"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:stateListAnimator="@null"
         android:layout_marginBottom="10dp"/>
 
     <Button
         android:id="@+id/btnDismiss"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:text="Cancel"
-        android:backgroundTint="#333355"
-        android:textColor="#aaaaaa"
-        android:padding="12dp"/>
+        android:backgroundTint="#F5F5F5"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:stateListAnimator="@null"/>
 
 </LinearLayout>

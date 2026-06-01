@@ -4,19 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="#16213e"
+    android:background="@drawable/card_bg"
     android:padding="14dp"
-    android:layout_margin="8dp"
-    android:gravity="center_vertical">
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="10dp"
+    android:gravity="center_vertical"
+    android:elevation="2dp">
 
-    <TextView
-        android:id="@+id/tvAdminIcon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:textSize="24sp"
+    <!-- Icon -->
+    <LinearLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/icon_circle_bg"
         android:gravity="center"
-        android:layout_marginEnd="12dp"/>
+        android:layout_marginEnd="12dp">
 
+        <TextView
+            android:id="@+id/tvAdminIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- Text -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -27,7 +40,7 @@
             android:id="@+id/tvAdminTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#ffffff"
+            android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold"/>
 
@@ -35,28 +48,35 @@
             android:id="@+id/tvAdminCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#e63946"
-            android:textSize="11sp"/>
+            android:textColor="@color/primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginTop="2dp"/>
 
     </LinearLayout>
 
+    <!-- Edit button -->
     <Button
         android:id="@+id/btnEdit"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="34dp"
         android:text="Edit"
         android:textSize="11sp"
         android:backgroundTint="#457b9d"
-        android:textColor="#ffffff"
+        android:textColor="@color/white"
+        android:stateListAnimator="@null"
         android:layout_marginEnd="6dp"/>
 
+    <!-- Delete button -->
     <Button
         android:id="@+id/btnAdminDelete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
         android:text="✕"
-        android:textSize="11sp"
-        android:backgroundTint="#880000"
-        android:textColor="#ffffff"/>
+        android:textSize="12sp"
+        android:backgroundTint="@color/primary"
+        android:textColor="@color/white"
+        android:stateListAnimator="@null"
+        android:padding="0dp"/>
 
 </LinearLayout>

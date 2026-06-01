@@ -100,18 +100,22 @@ public class AdminDashboardActivity extends AppCompatActivity
         recyclerView.setVisibility(View.VISIBLE);
         mapContainer.setVisibility(View.GONE);
         btnTabList.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFFe63946));
+                android.content.res.ColorStateList.valueOf(0xFFFC4D4D));
+        btnTabList.setTextColor(0xFFFFFFFF);
         btnTabMap.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFF444466));
+                android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+        btnTabMap.setTextColor(0xFF666666);
     }
 
     private void showMapView() {
         recyclerView.setVisibility(View.GONE);
         mapContainer.setVisibility(View.VISIBLE);
         btnTabList.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFF444466));
+                android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+        btnTabList.setTextColor(0xFF666666);
         btnTabMap.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFFe63946));
+                android.content.res.ColorStateList.valueOf(0xFFFC4D4D));
+        btnTabMap.setTextColor(0xFFFFFFFF);
     }
 
     // ── Firestore real-time listener ───────────────────────────────
