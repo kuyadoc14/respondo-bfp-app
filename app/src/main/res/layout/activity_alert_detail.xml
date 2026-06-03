@@ -4,64 +4,143 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000"
-    android:padding="24dp">
+    android:background="@color/background">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Alert Details"
-        android:textColor="#ffffff"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
-
-    <TextView
-        android:id="@+id/tvDetailStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:layout_marginBottom="12dp"/>
-
-    <TextView
-        android:id="@+id/tvDetailTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#aaaaaa"
-        android:textSize="13sp"
-        android:layout_marginBottom="12dp"/>
-
-    <TextView
-        android:id="@+id/tvDetailLocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#ffffff"
-        android:textSize="14sp"
-        android:layout_marginBottom="12dp"/>
-
-    <TextView
-        android:id="@+id/tvDetailUser"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#888888"
-        android:textSize="13sp"
-        android:layout_marginBottom="32dp"/>
-
-    <Button
-        android:id="@+id/btnDetailResolve"
+    <!-- Header -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Mark as Resolved"
-        android:backgroundTint="#2a9d8f"
-        android:textColor="#ffffff"
-        android:layout_marginBottom="12dp"/>
+        android:background="@color/primary"
+        android:padding="16dp">
 
-    <Button
-        android:id="@+id/btnDetailBack"
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Alert Details"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Back"
-        android:backgroundTint="#444466"
-        android:textColor="#ffffff"/>
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- Info card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:id="@+id/tvDetailStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp"/>
+
+                <TextView
+                    android:id="@+id/tvDetailTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvDetailLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvDetailUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_hint"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
+
+            <!-- Navigation section label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Navigation"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Navigate from my location -->
+            <Button
+                android:id="@+id/btnDirections"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="🗺  Navigate from My Location"
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Navigate from BFP station -->
+            <Button
+                android:id="@+id/btnDirectionsFromStation"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="🚒  Navigate from BFP Station"
+                android:backgroundTint="#457b9d"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Resolve button -->
+            <Button
+                android:id="@+id/btnDetailResolve"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="✓  Mark as Resolved"
+                android:backgroundTint="@color/success"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Back button -->
+            <Button
+                android:id="@+id/btnDetailBack"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Back"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="@color/text_secondary"
+                android:stateListAnimator="@null"/>
+
+        </LinearLayout>
+
+    </ScrollView>
 
 </LinearLayout>

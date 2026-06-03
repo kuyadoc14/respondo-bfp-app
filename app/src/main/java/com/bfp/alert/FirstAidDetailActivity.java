@@ -121,7 +121,7 @@ public class FirstAidDetailActivity extends AppCompatActivity {
 
                 TextView step = new TextView(this);
                 step.setText(steps.get(i));
-                step.setTextColor(0xFFCCCCCC);
+                step.setTextColor(0xFF000000);
                 step.setTextSize(14);
                 step.setLineSpacing(4, 1);
                 LinearLayout.LayoutParams sp =
