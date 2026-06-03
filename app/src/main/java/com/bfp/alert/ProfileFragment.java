@@ -20,9 +20,23 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(
                 R.layout.fragment_profile, container, false);
 
-        view.findViewById(R.id.btnGoToAdmin).setOnClickListener(v ->
-                startActivity(new Intent(requireContext(),
-                        AdminLoginActivity.class)));
+        view.findViewById(R.id.btnGoToAdmin)
+                .setOnClickListener(v -> {
+                    // Check if already logged in
+                    if (com.google.firebase.auth.FirebaseAuth
+                            .getInstance()
+                            .getCurrentUser() != null) {
+                        // Already logged in — go straight to dashboard
+                        startActivity(new Intent(
+                                requireContext(),
+                                AdminDashboardActivity.class));
+                    } else {
+                        // Not logged in — show login popup
+                        startActivity(new Intent(
+                                requireContext(),
+                                AdminLoginActivity.class));
+                    }
+                });
 
         return view;
     }

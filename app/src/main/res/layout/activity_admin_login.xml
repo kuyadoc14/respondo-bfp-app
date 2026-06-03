@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="28dp"
     android:background="@color/white">
 
-    <!-- Icon -->
+    <!-- Lock icon -->
     <LinearLayout
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:background="@drawable/circle_avatar_bg"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:background="@drawable/bg_icon_circle"
         android:gravity="center"
         android:layout_gravity="center"
         android:layout_marginBottom="16dp">
@@ -20,16 +21,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🔒"
-            android:textSize="28sp"/>
+            android:textSize="30sp"/>
 
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Admin Login"
+        android:text="Welcome back"
         android:textColor="@color/text_primary"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         android:gravity="center"
         android:layout_marginBottom="4dp"/>
@@ -37,40 +38,61 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="BFP personnel only"
+        android:text="Sign in to your admin account"
         android:textColor="@color/text_secondary"
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:gravity="center"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginBottom="28dp"/>
+
+    <!-- Email field -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Email"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Email address"
+        android:layout_height="52dp"
+        android:hint="admin@bfp.gov.ph"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/input_bg"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:background="@drawable/bg_input"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
         android:inputType="textEmailAddress"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Password field -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Password"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Password"
+        android:layout_height="52dp"
+        android:hint="••••••••"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/input_bg"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:background="@drawable/bg_input"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
         android:inputType="textPassword"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="6dp"/>
 
+    <!-- Error text -->
     <TextView
         android:id="@+id/tvLoginError"
         android:layout_width="match_parent"
@@ -78,28 +100,33 @@
         android:textColor="@color/primary"
         android:textSize="12sp"
         android:gravity="center"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="20dp"/>
 
-    <Button
+    <!-- Login button -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="Login"
-        android:backgroundTint="@color/primary"
+        android:layout_height="56dp"
+        android:text="Sign In"
+        app:backgroundTint="@color/primary"
         android:textColor="@color/white"
-        android:textSize="15sp"
+        android:textSize="16sp"
         android:textStyle="bold"
-        android:stateListAnimator="@null"
-        android:layout_marginBottom="10dp"/>
+        app:cornerRadius="16dp"
+        android:elevation="0dp"
+        android:layout_marginBottom="12dp"/>
 
-    <Button
+    <!-- Cancel button -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDismiss"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="52dp"
         android:text="Cancel"
-        android:backgroundTint="#F5F5F5"
+        style="@style/Widget.BFP.Button.Text"
+        app:backgroundTint="@android:color/transparent"
         android:textColor="@color/text_secondary"
         android:textSize="14sp"
-        android:stateListAnimator="@null"/>
+        app:cornerRadius="16dp"
+        android:elevation="0dp"/>
 
 </LinearLayout>

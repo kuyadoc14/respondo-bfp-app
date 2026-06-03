@@ -57,8 +57,8 @@ public class AlertAdapter extends
                 isActive ? "ACTIVE" : "RESOLVED");
         holder.tvStatus.setBackgroundResource(
                 isActive
-                        ? R.drawable.badge_active
-                        : R.drawable.badge_resolved);
+                        ? R.drawable.bg_badge_active
+                        : R.drawable.bg_badge_resolved);
 
         // Timestamp
         Object ts = alert.get("timestamp");
@@ -85,19 +85,15 @@ public class AlertAdapter extends
 
         // Show correct button based on status
         if (isActive) {
-            holder.btnResolve.setVisibility(View.VISIBLE);
-            holder.btnDelete.setVisibility(View.GONE);
-            holder.btnResolve.setOnClickListener(v ->
-                    db.collection("sos_alerts")
-                            .document(alertId)
-                            .update("status", "resolved"));
+            holder.tvStatus.setText("● Active");
+            holder.tvStatus.setTextColor(0xFFFC4D4D);
+            holder.tvStatus.setBackgroundResource(
+                    R.drawable.bg_badge_active);
         } else {
-            holder.btnResolve.setVisibility(View.GONE);
-            holder.btnDelete.setVisibility(View.VISIBLE);
-            holder.btnDelete.setOnClickListener(v ->
-                    db.collection("sos_alerts")
-                            .document(alertId)
-                            .delete());
+            holder.tvStatus.setText("● Resolved");
+            holder.tvStatus.setTextColor(0xFF10B981);
+            holder.tvStatus.setBackgroundResource(
+                    R.drawable.bg_badge_resolved);
         }
 
         // Tap card → open detail with routing options

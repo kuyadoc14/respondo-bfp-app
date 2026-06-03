@@ -65,8 +65,8 @@ public class AdminDashboardActivity extends AppCompatActivity
     // ── Views ─────────────────────────────────────────────────────
     private RecyclerView recyclerView;
     private View         mapContainer;
-    private Button       btnTabList, btnTabMap;
     private TextView     tvAlertCount;
+    private TextView btnTabList, btnTabMap;
 
     // ── Replace with your actual Maps API key ─────────────────────
     private static final String MAPS_API_KEY = "AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg";
@@ -90,8 +90,8 @@ public class AdminDashboardActivity extends AppCompatActivity
         tvAlertCount = findViewById(R.id.tvAlertCount);
         recyclerView = findViewById(R.id.recyclerView);
         mapContainer = findViewById(R.id.mapFragment);
-        btnTabList   = findViewById(R.id.btnTabList);
-        btnTabMap    = findViewById(R.id.btnTabMap);
+        btnTabList = findViewById(R.id.btnTabList);
+        btnTabMap  = findViewById(R.id.btnTabMap);
 
         // RecyclerView
         recyclerView.setLayoutManager(
@@ -112,13 +112,20 @@ public class AdminDashboardActivity extends AppCompatActivity
         btnTabMap.setOnClickListener(v  -> showMapView());
 
         // Header buttons
+        // Change from Button to LinearLayout
         findViewById(R.id.btnManageFirstAid)
                 .setOnClickListener(v -> startActivity(
                         new Intent(this, AdminFirstAidActivity.class)));
 
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(this, MainActivity.class));
+
+            // Go back to main screen
+            Intent mainIntent = new Intent(this, MainActivity.class);
+            mainIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                            Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(mainIntent);
             finish();
         });
 
@@ -131,26 +138,22 @@ public class AdminDashboardActivity extends AppCompatActivity
     private void showListView() {
         recyclerView.setVisibility(View.VISIBLE);
         mapContainer.setVisibility(View.GONE);
-        btnTabList.setBackgroundTintList(
-                android.content.res.ColorStateList
-                        .valueOf(0xFFFC4D4D));
+        btnTabList.setBackground(
+                getDrawable(R.drawable.bg_tab_selected));
         btnTabList.setTextColor(0xFFFFFFFF);
-        btnTabMap.setBackgroundTintList(
-                android.content.res.ColorStateList
-                        .valueOf(0xFFFFFFFF));
-        btnTabMap.setTextColor(0xFF666666);
+        btnTabMap.setBackground(
+                getDrawable(R.drawable.bg_tab_unselected));
+        btnTabMap.setTextColor(0xFF6B7280);
     }
 
     private void showMapView() {
         recyclerView.setVisibility(View.GONE);
         mapContainer.setVisibility(View.VISIBLE);
-        btnTabList.setBackgroundTintList(
-                android.content.res.ColorStateList
-                        .valueOf(0xFFFFFFFF));
-        btnTabList.setTextColor(0xFF666666);
-        btnTabMap.setBackgroundTintList(
-                android.content.res.ColorStateList
-                        .valueOf(0xFFFC4D4D));
+        btnTabList.setBackground(
+                getDrawable(R.drawable.bg_tab_unselected));
+        btnTabList.setTextColor(0xFF6B7280);
+        btnTabMap.setBackground(
+                getDrawable(R.drawable.bg_tab_selected));
         btnTabMap.setTextColor(0xFFFFFFFF);
 
         if (!mapInitialized && googleMap != null) {

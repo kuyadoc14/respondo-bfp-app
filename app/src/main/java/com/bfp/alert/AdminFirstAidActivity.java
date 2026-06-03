@@ -33,14 +33,19 @@ public class AdminFirstAidActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        // Back button is now a LinearLayout
+        findViewById(R.id.btnBack)
+                .setOnClickListener(v -> finish());
 
-        RecyclerView recycler = findViewById(R.id.recyclerAdminFirstAid);
-        recycler.setLayoutManager(new LinearLayoutManager(this));
+        RecyclerView recycler =
+                findViewById(R.id.recyclerAdminFirstAid);
+        recycler.setLayoutManager(
+                new LinearLayoutManager(this));
+
         adapter = new AdminFirstAidAdapter(items,
-                // Edit
                 item -> {
-                    Intent intent = new Intent(this, FirstAidEditorActivity.class);
+                    Intent intent = new Intent(
+                            this, FirstAidEditorActivity.class);
                     intent.putExtra("mode",        "edit");
                     intent.putExtra("id",          item.id);
                     intent.putExtra("title",       item.title);
@@ -48,31 +53,37 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                     intent.putExtra("description", item.description);
                     intent.putExtra("videoUrl",    item.videoUrl);
                     intent.putExtra("iconEmoji",   item.iconEmoji);
-                    intent.putStringArrayListExtra("steps",
-                            new ArrayList<>(item.steps != null ? item.steps : new ArrayList<>()));
                     intent.putExtra("storageVideoUrl",
-                            item.storageVideoUrl != null ? item.storageVideoUrl : "");
+                            item.storageVideoUrl != null
+                                    ? item.storageVideoUrl : "");
+                    intent.putStringArrayListExtra("steps",
+                            new ArrayList<>(item.steps != null
+                                    ? item.steps : new ArrayList<>()));
                     intent.putStringArrayListExtra("photoUrls",
                             new ArrayList<>(item.photoUrls != null
                                     ? item.photoUrls : new ArrayList<>()));
                     startActivity(intent);
                 },
-                // Delete
-                item -> db.collection("first_aid").document(item.id)
+                item -> db.collection("first_aid")
+                        .document(item.id)
                         .delete()
                         .addOnSuccessListener(u ->
-                                Toast.makeText(this, "Deleted.", Toast.LENGTH_SHORT).show())
+                                Toast.makeText(this,
+                                        "Deleted.", Toast.LENGTH_SHORT).show())
                         .addOnFailureListener(e ->
-                                Toast.makeText(this, "Failed: " + e.getMessage(),
+                                Toast.makeText(this,
+                                        "Failed: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show())
         );
         recycler.setAdapter(adapter);
 
-        findViewById(R.id.btnAddFirstAid).setOnClickListener(v -> {
-            Intent intent = new Intent(this, FirstAidEditorActivity.class);
-            intent.putExtra("mode", "add");
-            startActivity(intent);
-        });
+        findViewById(R.id.btnAddFirstAid)
+                .setOnClickListener(v -> {
+                    Intent intent = new Intent(
+                            this, FirstAidEditorActivity.class);
+                    intent.putExtra("mode", "add");
+                    startActivity(intent);
+                });
 
         loadItems();
     }
@@ -84,10 +95,19 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                     if (e != null || snapshots == null) return;
                     items.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        FirstAidItem item = doc.toObject(FirstAidItem.class);
+                        FirstAidItem item =
+                                doc.toObject(FirstAidItem.class);
                         item.id = doc.getId();
                         items.add(item);
                     }
+
+                    // Update count label
+                    TextView tvCount =
+                            findViewById(R.id.tvItemCount);
+                    tvCount.setText(items.size()
+                            + " guide" + (items.size() != 1
+                            ? "s" : ""));
+
                     adapter.notifyDataSetChanged();
                 });
     }

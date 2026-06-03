@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -11,14 +12,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="@drawable/bg_icon_circle_white"
+            android:tint="@color/white"
+            android:layout_marginEnd="14dp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Alert Details"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"/>
 
     </LinearLayout>
@@ -34,49 +49,104 @@
             android:padding="20dp">
 
             <!-- Info card -->
-            <LinearLayout
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_bg"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/border"
+                app:cardBackgroundColor="@color/surface">
 
-                <TextView
-                    android:id="@+id/tvDetailStatus"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="10dp"/>
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/tvDetailTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp"/>
+                    <TextView
+                        android:id="@+id/tvDetailStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp"/>
 
-                <TextView
-                    android:id="@+id/tvDetailLocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
 
-                <TextView
-                    android:id="@+id/tvDetailUser"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/text_hint"
-                    android:textSize="12sp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🕐"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp"/>
 
-            </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvDetailTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp"/>
 
-            <!-- Navigation section label -->
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📍"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp"/>
+
+                        <TextView
+                            android:id="@+id/tvDetailLocation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="👤"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp"/>
+
+                        <TextView
+                            android:id="@+id/tvDetailUser"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_hint"
+                            android:textSize="12sp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Navigation label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -87,27 +157,31 @@
                 android:layout_marginBottom="12dp"/>
 
             <!-- Navigate from my location -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDirections"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:text="🗺  Navigate from My Location"
-                android:backgroundTint="@color/primary"
+                app:backgroundTint="@color/primary"
                 android:textColor="@color/white"
                 android:textSize="14sp"
-                android:stateListAnimator="@null"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                android:elevation="0dp"
                 android:layout_marginBottom="10dp"/>
 
             <!-- Navigate from BFP station -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDirectionsFromStation"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:text="🚒  Navigate from BFP Station"
-                android:backgroundTint="#457b9d"
+                app:backgroundTint="@color/info"
                 android:textColor="@color/white"
                 android:textSize="14sp"
-                android:stateListAnimator="@null"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                android:elevation="0dp"
                 android:layout_marginBottom="24dp"/>
 
             <!-- Divider -->
@@ -117,27 +191,32 @@
                 android:background="@color/border"
                 android:layout_marginBottom="20dp"/>
 
-            <!-- Resolve button -->
-            <Button
+            <!-- Resolve -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDetailResolve"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="56dp"
                 android:text="✓  Mark as Resolved"
-                android:backgroundTint="@color/success"
+                app:backgroundTint="@color/success"
                 android:textColor="@color/white"
                 android:textSize="14sp"
-                android:stateListAnimator="@null"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                android:elevation="0dp"
                 android:layout_marginBottom="10dp"/>
 
-            <!-- Back button -->
-            <Button
+            <!-- Back -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDetailBack"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
                 android:text="Back"
-                android:backgroundTint="#F5F5F5"
+                style="@style/Widget.BFP.Button.Text"
+                app:backgroundTint="@android:color/transparent"
                 android:textColor="@color/text_secondary"
-                android:stateListAnimator="@null"/>
+                android:textSize="14sp"
+                app:cornerRadius="16dp"
+                android:elevation="0dp"/>
 
         </LinearLayout>
 

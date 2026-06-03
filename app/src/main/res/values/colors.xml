@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="nav_bg">#121212</color>
-    <color name="nav_active">#FF4B4B</color>
-    <color name="nav_inactive">#9E9E9E</color>
-
     <color name="primary">#FC4D4D</color>
-    <color name="primary_dark">#D93A3A</color>
+    <color name="primary_dark">#E03A3A</color>
+    <color name="primary_light">#FFECEC</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="background">#FFFFFF</color>
-    <color name="surface">#F8F8F8</color>
+    <color name="background">#F7F8FA</color>
+    <color name="surface">#FFFFFF</color>
     <color name="border">#EEEEEE</color>
-    <color name="text_primary">#1A1A1A</color>
-    <color name="text_secondary">#666666</color>
-    <color name="text_hint">#AAAAAA</color>
-    <color name="success">#2a9d8f</color>
-    <color name="warning">#FFBB33</color>
-
+    <color name="text_primary">#1A1A2E</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_hint">#9CA3AF</color>
+    <color name="success">#10B981</color>
+    <color name="success_light">#D1FAE5</color>
+    <color name="warning">#F59E0B</color>
+    <color name="warning_light">#FEF3C7</color>
+    <color name="info">#3B82F6</color>
+    <color name="info_light">#DBEAFE</color>
 </resources>

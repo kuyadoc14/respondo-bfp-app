@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,7 +13,10 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/primary"
-        android:padding="16dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         android:gravity="center_vertical">
 
         <LinearLayout
@@ -26,85 +30,125 @@
                 android:layout_height="wrap_content"
                 android:text="BFP Dashboard"
                 android:textColor="@color/white"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvAlertCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Active alerts: 0"
+                android:text="No active alerts"
                 android:textColor="#FFCCCC"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp"/>
 
         </LinearLayout>
 
-        <Button
+        <!-- First Aid icon button -->
+        <LinearLayout
             android:id="@+id/btnManageFirstAid"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="First Aid"
-            android:textSize="11sp"
-            android:backgroundTint="#CC3A3A"
-            android:textColor="@color/white"
-            android:stateListAnimator="@null"
-            android:layout_marginEnd="8dp"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_white"
+            android:gravity="center"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true">
 
-        <Button
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🩺"
+                android:textSize="18sp"/>
+
+        </LinearLayout>
+
+        <!-- Logout icon button -->
+        <LinearLayout
             android:id="@+id/btnLogout"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="Logout"
-            android:textSize="11sp"
-            android:backgroundTint="#33000000"
-            android:textColor="@color/white"
-            android:stateListAnimator="@null"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_white"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🚪"
+                android:textSize="18sp"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Tab buttons -->
+    <!-- Tab bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@color/white"
-        android:elevation="2dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-        <Button
-            android:id="@+id/btnTabList"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_weight="1"
-            android:text="List View"
-            android:textSize="13sp"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/primary"
-            android:stateListAnimator="@null"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_tab_container"
+            android:orientation="horizontal"
+            android:padding="4dp">
 
-        <Button
-            android:id="@+id/btnTabMap"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_weight="1"
-            android:text="Map View"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:backgroundTint="@color/white"
-            android:stateListAnimator="@null"/>
+            <TextView
+                android:id="@+id/btnTabList"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="List"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:background="@drawable/bg_tab_selected"
+                android:textColor="@color/white"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/btnTabMap"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Live Map"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:background="@drawable/bg_tab_unselected"
+                android:textColor="@color/text_secondary"
+                android:clickable="true"
+                android:focusable="true"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- List view -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border"/>
+
+    <!-- List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="12dp"
+        android:padding="16dp"
         android:clipToPadding="false"
         android:visibility="visible"/>
 
-    <!-- Map view -->
+    <!-- Map -->
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.google.android.gms.maps.SupportMapFragment"

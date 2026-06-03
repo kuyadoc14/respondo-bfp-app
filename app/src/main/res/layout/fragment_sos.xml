@@ -5,101 +5,112 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <!-- BFP Logo area -->
-
-    <!-- SOS button -->
-
-    <!-- Status card -->
-
+    <!-- Top bar -->
     <LinearLayout
-        android:id="@+id/headerArea"
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:orientation="vertical"
-        android:paddingTop="52dp"
-        android:paddingBottom="20dp">
+        android:gravity="center"
+        android:paddingTop="56dp"
+        android:paddingBottom="24dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🔥"
-            android:textSize="50sp" />
+            android:textSize="32sp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:letterSpacing="0.05"
-            android:text="RESPONDO"
-            android:textColor="#FFFFFF"
-            android:textSize="25sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:letterSpacing="0.05"
             android:text="Bureau of Fire Protection"
             android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:layout_marginTop="8dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
             android:text="Emergency Alert System"
-            android:textColor="#888888"
-            android:textSize="12sp" />
+            android:textColor="#666666"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"/>
 
     </LinearLayout>
 
+    <!-- SOS button centered -->
     <LinearLayout
-        android:id="@+id/sosArea"
+        android:id="@+id/sosCenter"
         android:layout_width="match_parent"
-        android:layout_height="299dp"
-        android:layout_below="@+id/headerArea"
-        android:layout_marginTop="19dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:gravity="center"
-        android:orientation="vertical">
+        android:layout_centerInParent="true">
 
-        <Button
-            android:id="@+id/btnSOS"
-            android:layout_width="210dp"
-            android:layout_height="210dp"
-            android:background="@drawable/glow_button"
-            android:elevation="12dp"
-            android:stateListAnimator="@null"
-            android:text="SOS"
-            android:textColor="#FFFFFF"
-            android:textSize="52sp"
-            android:textStyle="bold" />
+        <!-- Outer glow ring -->
+        <FrameLayout
+            android:layout_width="240dp"
+            android:layout_height="240dp"
+            android:layout_gravity="center">
+
+            <!-- Ring 1 -->
+            <View
+                android:layout_width="240dp"
+                android:layout_height="240dp"
+                android:background="@drawable/circle_ring_outer"
+                android:alpha="0.15"/>
+
+            <!-- Ring 2 -->
+            <View
+                android:layout_width="210dp"
+                android:layout_height="210dp"
+                android:background="@drawable/circle_ring_mid"
+                android:alpha="0.25"
+                android:layout_gravity="center"/>
+
+            <!-- SOS Button -->
+            <Button
+                android:id="@+id/btnSOS"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_gravity="center"
+                android:text="SOS"
+                android:textSize="44sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:background="@drawable/bg_sos_button"
+                android:stateListAnimator="@null"
+                android:elevation="0dp"/>
+
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tvInstruction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:text="Press to alert BFP immediately"
-            android:textColor="#888888"
-            android:textSize="13sp" />
+            android:textColor="#666666"
+            android:textSize="13sp"
+            android:layout_marginTop="24dp"/>
 
     </LinearLayout>
 
+    <!-- Status card -->
     <LinearLayout
         android:id="@+id/statusCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="18dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:gravity="center"
         android:visibility="gone"
-        android:layout_below="@id/sosArea"
-        android:layout_marginTop="20dp"
+        android:layout_below="@id/sosCenter"
+        android:layout_marginTop="16dp"
         android:layout_centerHorizontal="true">
 
         <LinearLayout
@@ -107,7 +118,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginBottom="10dp">
+            android:layout_marginBottom="8dp">
 
             <View
                 android:id="@+id/pulseDot"
@@ -123,7 +134,7 @@
                 android:textColor="@color/warning"
                 android:textSize="11sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.1"/>
+                android:letterSpacing="0.12"/>
 
         </LinearLayout>
 

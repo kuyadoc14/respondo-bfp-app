@@ -3,6 +3,7 @@ package com.bfp.alert;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -38,26 +39,35 @@ public class FirstAidAdapter extends RecyclerView.Adapter<FirstAidAdapter.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(
+            @NonNull ViewHolder holder, int position) {
         FirstAidItem item = items.get(position);
-        holder.tvIcon.setText(item.iconEmoji != null ? item.iconEmoji : "🩺");
+        holder.tvIcon.setText(
+                item.iconEmoji != null ? item.iconEmoji : "🩺");
         holder.tvTitle.setText(item.title);
         holder.tvCategory.setText(item.category);
         holder.tvDescription.setText(item.description);
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
+
+        // Set click on the inner container not the card
+        holder.itemContainer.setOnClickListener(
+                v -> listener.onItemClick(item));
     }
 
     @Override
     public int getItemCount() { return items.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvIcon, tvTitle, tvCategory, tvDescription;
+        TextView     tvIcon, tvTitle,
+                tvCategory, tvDescription;
+        LinearLayout itemContainer;
+
         ViewHolder(View v) {
             super(v);
             tvIcon        = v.findViewById(R.id.tvIcon);
             tvTitle       = v.findViewById(R.id.tvTitle);
             tvCategory    = v.findViewById(R.id.tvCategory);
             tvDescription = v.findViewById(R.id.tvDescription);
+            itemContainer = v.findViewById(R.id.itemContainer);
         }
     }
 }
