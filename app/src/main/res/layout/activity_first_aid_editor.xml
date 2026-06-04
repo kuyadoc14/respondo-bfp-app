@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/background">
 
@@ -109,25 +109,62 @@
                 android:gravity="top"
                 android:layout_marginBottom="16dp"/>
 
-            <TextView android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Steps (one per line)"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="4dp"/>
-            <EditText android:id="@+id/etSteps"
+            <!-- Steps label and add button -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Step 1&#10;Step 2&#10;Step 3"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_hint"
-                android:background="@drawable/bg_input"
-                android:padding="16dp"
-                android:minLines="5"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                android:layout_marginBottom="16dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Steps"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Add one step per field"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp"
+                        android:layout_marginTop="2dp"/>
+
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddStep"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="+ Add Step"
+                    android:textSize="12sp"
+                    android:textColor="@color/primary"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    app:backgroundTint="@color/primary_light"
+                    app:cornerRadius="10dp"
+                    android:elevation="0dp"/>
+
+            </LinearLayout>
+
+            <!-- Dynamic steps container -->
+            <LinearLayout
+                android:id="@+id/stepsInputContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="20dp"/>
 
             <TextView android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

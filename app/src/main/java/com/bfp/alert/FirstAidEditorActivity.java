@@ -2,8 +2,8 @@ package com.bfp.alert;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -27,7 +27,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +36,18 @@ public class FirstAidEditorActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String mode, docId;
 
+    // Media
     private final List<Uri>    selectedPhotoUris = new ArrayList<>();
     private final List<String> existingPhotoUrls = new ArrayList<>();
-    private Uri    selectedVideoUri  = null;
-    private String existingVideoUrl  = "";
+    private Uri    selectedVideoUri = null;
+    private String existingVideoUrl = "";
 
+    // Views
     private LinearLayout photoPreviewContainer;
+    private LinearLayout stepsInputContainer;
     private TextView     tvVideoName, tvUploadStatus;
     private ProgressBar  uploadProgress;
-    private Button       btnSave;
+    private Button btnSave;
 
     // Photo picker
     private final ActivityResultLauncher<Intent> photoPicker =
@@ -62,12 +64,14 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                                             - existingPhotoUrls.size());
                             for (int i = 0; i < count; i++) {
                                 selectedPhotoUris.add(
-                                        data.getClipData().getItemAt(i).getUri());
+                                        data.getClipData()
+                                                .getItemAt(i).getUri());
                             }
                         } else if (data.getData() != null) {
                             if (selectedPhotoUris.size()
                                     + existingPhotoUrls.size() < 5) {
-                                selectedPhotoUris.add(data.getData());
+                                selectedPhotoUris.add(
+                                        data.getData());
                             }
                         }
                         refreshPhotoPreviews();
@@ -80,10 +84,11 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                     result -> {
                         if (result.getResultCode() != RESULT_OK
                                 || result.getData() == null
-                                || result.getData().getData() == null) return;
+                                || result.getData().getData() == null)
+                            return;
                         selectedVideoUri = result.getData().getData();
                         tvVideoName.setText("Video selected ✓");
-                        tvVideoName.setTextColor(0xFF2a9d8f);
+                        tvVideoName.setTextColor(0xFF10B981);
                     });
 
     @Override
@@ -91,26 +96,29 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_aid_editor);
 
-        db   = FirebaseFirestore.getInstance();
-        mode = getIntent().getStringExtra("mode");
+        db    = FirebaseFirestore.getInstance();
+        mode  = getIntent().getStringExtra("mode");
         docId = getIntent().getStringExtra("id");
 
-        TextView tvTitle       = findViewById(R.id.tvEditorTitle);
-        EditText etIcon        = findViewById(R.id.etIcon);
-        EditText etTitle       = findViewById(R.id.etTitle);
-        EditText etCat         = findViewById(R.id.etCategory);
-        EditText etDesc        = findViewById(R.id.etDescription);
-        EditText etSteps       = findViewById(R.id.etSteps);
-        EditText etVideo       = findViewById(R.id.etVideoUrl);
-        Button   btnPickPhoto  = findViewById(R.id.btnPickPhoto);
-        Button   btnPickVideo  = findViewById(R.id.btnPickVideo);
-        Button   btnCancel     = findViewById(R.id.btnCancel);
-        btnSave               = findViewById(R.id.btnSave);
+        // ── View refs ─────────────────────────────────────────────
+        TextView       tvTitle    = findViewById(R.id.tvEditorTitle);
+        EditText       etIcon     = findViewById(R.id.etIcon);
+        EditText       etTitle    = findViewById(R.id.etTitle);
+        EditText       etCat      = findViewById(R.id.etCategory);
+        EditText       etDesc     = findViewById(R.id.etDescription);
+        EditText       etVideo    = findViewById(R.id.etVideoUrl);
+        Button btnPickPhoto  = findViewById(R.id.btnPickPhoto);
+        Button btnPickVideo  = findViewById(R.id.btnPickVideo);
+        Button btnAddStep    = findViewById(R.id.btnAddStep);
+        Button btnCancel     = findViewById(R.id.btnCancel);
+        btnSave              = findViewById(R.id.btnSave);
+        stepsInputContainer   = findViewById(R.id.stepsInputContainer);
         photoPreviewContainer = findViewById(R.id.photoPreviewContainer);
         tvVideoName           = findViewById(R.id.tvVideoName);
         tvUploadStatus        = findViewById(R.id.tvUploadStatus);
         uploadProgress        = findViewById(R.id.uploadProgress);
 
+        // ── Edit mode — prefill ───────────────────────────────────
         if ("edit".equals(mode)) {
             tvTitle.setText("Edit First Aid");
             etIcon.setText(getIntent().getStringExtra("iconEmoji"));
@@ -119,12 +127,18 @@ public class FirstAidEditorActivity extends AppCompatActivity {
             etDesc.setText(getIntent().getStringExtra("description"));
             etVideo.setText(getIntent().getStringExtra("videoUrl"));
 
+            // Pre-fill steps — one field per step
             ArrayList<String> steps =
                     getIntent().getStringArrayListExtra("steps");
-            if (steps != null)
-                etSteps.setText(
-                        android.text.TextUtils.join("\n", steps));
+            if (steps != null && !steps.isEmpty()) {
+                for (String step : steps) {
+                    addStepField(step);
+                }
+            } else {
+                addStepField(""); // at least one empty field
+            }
 
+            // Existing photos
             ArrayList<String> photos =
                     getIntent().getStringArrayListExtra("photoUrls");
             if (photos != null) {
@@ -132,14 +146,24 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                 refreshPhotoPreviews();
             }
 
-            String sv = getIntent().getStringExtra("storageVideoUrl");
+            // Existing video
+            String sv =
+                    getIntent().getStringExtra("storageVideoUrl");
             existingVideoUrl = sv != null ? sv : "";
             if (!existingVideoUrl.isEmpty()) {
                 tvVideoName.setText("Video uploaded ✓");
-                tvVideoName.setTextColor(0xFF2a9d8f);
+                tvVideoName.setTextColor(0xFF10B981);
             }
+
+        } else {
+            // Add mode — start with 1 empty step field
+            addStepField("");
         }
 
+        // ── Add step button ───────────────────────────────────────
+        btnAddStep.setOnClickListener(v -> addStepField(""));
+
+        // ── Photo picker ──────────────────────────────────────────
         btnPickPhoto.setOnClickListener(v -> {
             if (selectedPhotoUris.size()
                     + existingPhotoUrls.size() >= 5) {
@@ -148,43 +172,53 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            Intent intent =
+                    new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("image/*");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            intent.putExtra(
+                    Intent.EXTRA_ALLOW_MULTIPLE, true);
             photoPicker.launch(intent);
         });
 
+        // ── Video picker ──────────────────────────────────────────
         btnPickVideo.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            Intent intent =
+                    new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("video/*");
             videoPicker.launch(intent);
         });
 
         btnCancel.setOnClickListener(v -> finish());
 
+        // ── Save ──────────────────────────────────────────────────
         btnSave.setOnClickListener(v -> {
-            String icon     = etIcon.getText().toString().trim();
-            String title    = etTitle.getText().toString().trim();
-            String cat      = etCat.getText().toString().trim();
-            String desc     = etDesc.getText().toString().trim();
-            String video    = etVideo.getText().toString().trim();
-            String stepsRaw = etSteps.getText().toString().trim();
+            String icon  = etIcon.getText().toString().trim();
+            String title = etTitle.getText().toString().trim();
+            String cat   = etCat.getText().toString().trim();
+            String desc  = etDesc.getText().toString().trim();
+            String video = etVideo.getText().toString().trim();
 
-            if (title.isEmpty() || cat.isEmpty() || desc.isEmpty()) {
+            if (title.isEmpty() || cat.isEmpty()
+                    || desc.isEmpty()) {
                 Toast.makeText(this,
-                        "Title, category and description are required.",
+                        "Title, category and description "
+                                + "are required.",
                         Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            List<String> stepsList = new ArrayList<>(
-                    Arrays.asList(stepsRaw.split("\n")));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stepsList.removeIf(String::isEmpty);
+            // Collect steps from dynamic fields
+            List<String> stepsList = collectSteps();
+            if (stepsList.isEmpty()) {
+                Toast.makeText(this,
+                        "Please add at least one step.",
+                        Toast.LENGTH_SHORT).show();
+                return;
             }
 
             Map<String, Object> data = new HashMap<>();
-            data.put("iconEmoji",   icon.isEmpty() ? "🩺" : icon);
+            data.put("iconEmoji",
+                    icon.isEmpty() ? "🩺" : icon);
             data.put("title",       title);
             data.put("category",    cat);
             data.put("description", desc);
@@ -198,12 +232,139 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         });
     }
 
-    // ── Upload photos then video then save ─────────────────────────
-    private void uploadMediaAndSave(Map<String, Object> data) {
-        showUploadProgress(true);
-        List<String> finalPhotoUrls = new ArrayList<>(existingPhotoUrls);
+    // ════════════════════════════════════════════════════════════
+    //  Dynamic step fields
+    // ════════════════════════════════════════════════════════════
 
-        if (selectedPhotoUris.isEmpty() && selectedVideoUri == null) {
+    private void addStepField(String value) {
+        int stepNumber =
+                stepsInputContainer.getChildCount() + 1;
+
+        // Outer row
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams rowParams =
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.setMargins(0, 0, 0, dp(10));
+        row.setLayoutParams(rowParams);
+
+        // Step number circle
+        TextView numView = new TextView(this);
+        numView.setText(String.valueOf(stepNumber));
+        numView.setTextColor(0xFFFFFFFF);
+        numView.setTextSize(12);
+        numView.setGravity(android.view.Gravity.CENTER);
+        numView.setBackground(
+                getDrawable(R.drawable.bg_step_number));
+        LinearLayout.LayoutParams numParams =
+                new LinearLayout.LayoutParams(dp(32), dp(32));
+        numParams.setMargins(0, 0, dp(10), 0);
+        numView.setLayoutParams(numParams);
+
+        // Step text input
+        EditText etStep = new EditText(this);
+        etStep.setHint("Describe step " + stepNumber);
+        etStep.setHintTextColor(0xFF9CA3AF);
+        etStep.setTextColor(0xFF1A1A2E);
+        etStep.setTextSize(14);
+        etStep.setBackground(
+                getDrawable(R.drawable.bg_input));
+        etStep.setPadding(dp(16), dp(12), dp(16), dp(12));
+        etStep.setInputType(
+                android.text.InputType.TYPE_CLASS_TEXT
+                        | android.text.InputType
+                        .TYPE_TEXT_FLAG_MULTI_LINE);
+        etStep.setMinLines(1);
+        etStep.setMaxLines(3);
+        LinearLayout.LayoutParams etParams =
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f);
+        etStep.setLayoutParams(etParams);
+
+        // Pre-fill if editing
+        if (!value.isEmpty()) etStep.setText(value);
+
+        // Remove button
+        TextView removeBtn = new TextView(this);
+        removeBtn.setText("✕");
+        removeBtn.setTextColor(0xFFFC4D4D);
+        removeBtn.setTextSize(16);
+        removeBtn.setGravity(android.view.Gravity.CENTER);
+        removeBtn.setPadding(dp(10), dp(8), dp(4), dp(8));
+        removeBtn.setClickable(true);
+        removeBtn.setFocusable(true);
+
+        removeBtn.setOnClickListener(v -> {
+            // Don't allow removing the last step
+            if (stepsInputContainer.getChildCount() <= 1) {
+                Toast.makeText(this,
+                        "At least one step is required.",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            stepsInputContainer.removeView(row);
+            renumberSteps();
+        });
+
+        row.addView(numView);
+        row.addView(etStep);
+        row.addView(removeBtn);
+        stepsInputContainer.addView(row);
+    }
+
+    // Renumber step circles after a step is removed
+    private void renumberSteps() {
+        for (int i = 0;
+             i < stepsInputContainer.getChildCount();
+             i++) {
+            LinearLayout row =
+                    (LinearLayout) stepsInputContainer
+                            .getChildAt(i);
+            TextView numView =
+                    (TextView) row.getChildAt(0);
+            numView.setText(String.valueOf(i + 1));
+
+            EditText etStep =
+                    (EditText) row.getChildAt(1);
+            etStep.setHint("Describe step " + (i + 1));
+        }
+    }
+
+    // Collect all step values from dynamic fields
+    private List<String> collectSteps() {
+        List<String> steps = new ArrayList<>();
+        for (int i = 0;
+             i < stepsInputContainer.getChildCount();
+             i++) {
+            LinearLayout row =
+                    (LinearLayout) stepsInputContainer
+                            .getChildAt(i);
+            EditText etStep =
+                    (EditText) row.getChildAt(1);
+            String val =
+                    etStep.getText().toString().trim();
+            if (!val.isEmpty()) steps.add(val);
+        }
+        return steps;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Upload media then save to Firestore
+    // ════════════════════════════════════════════════════════════
+
+    private void uploadMediaAndSave(
+            Map<String, Object> data) {
+        showUploadProgress(true);
+        List<String> finalPhotoUrls =
+                new ArrayList<>(existingPhotoUrls);
+
+        if (selectedPhotoUris.isEmpty()
+                && selectedVideoUri == null) {
             data.put("photoUrls",       finalPhotoUrls);
             data.put("storageVideoUrl", existingVideoUrl);
             saveToFirestore(data);
@@ -211,7 +372,8 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         }
 
         if (!selectedPhotoUris.isEmpty()) {
-            uploadPhotos(new ArrayList<>(selectedPhotoUris),
+            uploadPhotos(
+                    new ArrayList<>(selectedPhotoUris),
                     finalPhotoUrls, 0, data);
         } else {
             data.put("photoUrls", finalPhotoUrls);
@@ -230,36 +392,51 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         }
 
         showStatus("Uploading photo "
-                + (index + 1) + " of " + uris.size() + "...");
+                + (index + 1) + " of "
+                + uris.size() + "...");
 
         MediaManager.get()
                 .upload(uris.get(index))
                 .option("upload_preset", "bfp_upload")
-                .option("folder",        "bfp_first_aid/photos")
+                .option("folder", "bfp_first_aid/photos")
                 .option("resource_type", "image")
                 .callback(new UploadCallback() {
-                    @Override public void onStart(String id) {}
-                    @Override public void onProgress(String id,
-                                                     long bytes, long total) {
+                    @Override
+                    public void onStart(String id) {}
+
+                    @Override
+                    public void onProgress(String id,
+                                           long bytes, long total) {
                         uploadProgress.setProgress(
                                 (int)(100.0 * bytes / total));
                     }
-                    @Override public void onSuccess(String id,
-                                                    Map resultData) {
-                        uploaded.add((String) resultData.get("secure_url"));
-                        uploadPhotos(uris, uploaded, index + 1, data);
+
+                    @Override
+                    public void onSuccess(String id,
+                                          Map resultData) {
+                        uploaded.add((String)
+                                resultData.get("secure_url"));
+                        uploadPhotos(uris, uploaded,
+                                index + 1, data);
                     }
-                    @Override public void onError(String id,
-                                                  ErrorInfo error) {
-                        showUploadProgress(false);
-                        resetSaveButton();
-                        Toast.makeText(FirstAidEditorActivity.this,
-                                "Photo upload failed: "
-                                        + error.getDescription(),
-                                Toast.LENGTH_SHORT).show();
+
+                    @Override
+                    public void onError(String id,
+                                        ErrorInfo error) {
+                        runOnUiThread(() -> {
+                            showUploadProgress(false);
+                            resetSaveButton();
+                            Toast.makeText(
+                                    FirstAidEditorActivity.this,
+                                    "Photo upload failed: "
+                                            + error.getDescription(),
+                                    Toast.LENGTH_SHORT).show();
+                        });
                     }
-                    @Override public void onReschedule(String id,
-                                                       ErrorInfo error) {}
+
+                    @Override
+                    public void onReschedule(String id,
+                                             ErrorInfo error) {}
                 })
                 .dispatch();
     }
@@ -276,40 +453,47 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         MediaManager.get()
                 .upload(selectedVideoUri)
                 .option("upload_preset", "bfp_upload")
-                .option("folder",        "bfp_first_aid/videos")
+                .option("folder", "bfp_first_aid/videos")
                 .option("resource_type", "video")
                 .callback(new UploadCallback() {
                     @Override
                     public void onStart(String id) {
-                        showStatus("Starting video upload...");
+                        showStatus(
+                                "Starting video upload...");
                     }
 
                     @Override
                     public void onProgress(String id,
                                            long bytes, long total) {
                         int pct = total > 0
-                                ? (int)(100.0 * bytes / total) : 0;
+                                ? (int)(100.0 * bytes / total)
+                                : 0;
                         runOnUiThread(() -> {
                             uploadProgress.setProgress(pct);
-                            showStatus("Uploading video... " + pct + "%"
-                                    + " (" + formatSize(bytes)
-                                    + " / " + formatSize(total) + ")");
+                            showStatus("Uploading video... "
+                                    + pct + "% ("
+                                    + formatSize(bytes)
+                                    + " / "
+                                    + formatSize(total) + ")");
                         });
                     }
 
                     @Override
-                    public void onSuccess(String id, Map resultData) {
-                        String url = (String) resultData.get("secure_url");
-                        data.put("storageVideoUrl", url);
+                    public void onSuccess(String id,
+                                          Map resultData) {
+                        data.put("storageVideoUrl",
+                                resultData.get("secure_url"));
                         saveToFirestore(data);
                     }
 
                     @Override
-                    public void onError(String id, ErrorInfo error) {
+                    public void onError(String id,
+                                        ErrorInfo error) {
                         runOnUiThread(() -> {
                             showUploadProgress(false);
                             resetSaveButton();
-                            Toast.makeText(FirstAidEditorActivity.this,
+                            Toast.makeText(
+                                    FirstAidEditorActivity.this,
                                     "Video upload failed: "
                                             + error.getDescription(),
                                     Toast.LENGTH_LONG).show();
@@ -317,29 +501,26 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onReschedule(String id, ErrorInfo error) {
+                    public void onReschedule(String id,
+                                             ErrorInfo error) {
                         runOnUiThread(() ->
-                                showStatus("Retrying upload..."));
+                                showStatus("Retrying..."));
                     }
                 })
                 .dispatch();
     }
 
-    // Helper to show readable file size
-    private String formatSize(long bytes) {
-        if (bytes < 1024 * 1024)
-            return (bytes / 1024) + " KB";
-        return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
-    }
-
-    private void saveToFirestore(Map<String, Object> data) {
+    private void saveToFirestore(
+            Map<String, Object> data) {
         showStatus("Saving...");
         if ("add".equals(mode)) {
-            data.put("createdAt", FieldValue.serverTimestamp());
+            data.put("createdAt",
+                    FieldValue.serverTimestamp());
             db.collection("first_aid").add(data)
                     .addOnSuccessListener(r -> {
                         Toast.makeText(this,
-                                "Added!", Toast.LENGTH_SHORT).show();
+                                "Added successfully!",
+                                Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(e -> {
@@ -350,10 +531,12 @@ public class FirstAidEditorActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     });
         } else {
-            db.collection("first_aid").document(docId).update(data)
+            db.collection("first_aid")
+                    .document(docId).update(data)
                     .addOnSuccessListener(u -> {
                         Toast.makeText(this,
-                                "Updated!", Toast.LENGTH_SHORT).show();
+                                "Updated successfully!",
+                                Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(e -> {
@@ -366,24 +549,30 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         }
     }
 
-    // ── Photo previews ─────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Photo previews
+    // ════════════════════════════════════════════════════════════
+
     private void refreshPhotoPreviews() {
         photoPreviewContainer.removeAllViews();
         int size   = dp(90);
         int margin = dp(8);
 
-        for (int i = 0; i < existingPhotoUrls.size(); i++) {
+        for (int i = 0;
+             i < existingPhotoUrls.size(); i++) {
             final int idx = i;
-            addPreview(null, existingPhotoUrls.get(i),
+            addPreview(null,
+                    existingPhotoUrls.get(i),
                     size, margin, () -> {
                         existingPhotoUrls.remove(idx);
                         refreshPhotoPreviews();
                     });
         }
-        for (int i = 0; i < selectedPhotoUris.size(); i++) {
+        for (int i = 0;
+             i < selectedPhotoUris.size(); i++) {
             final int idx = i;
-            addPreview(selectedPhotoUris.get(i), null,
-                    size, margin, () -> {
+            addPreview(selectedPhotoUris.get(i),
+                    null, size, margin, () -> {
                         selectedPhotoUris.remove(idx);
                         refreshPhotoPreviews();
                     });
@@ -402,24 +591,43 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         ImageView img = new ImageView(this);
         img.setLayoutParams(
                 new ViewGroup.LayoutParams(size, size));
-        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        img.setScaleType(
+                ImageView.ScaleType.CENTER_CROP);
 
-        if (uri != null) Glide.with(this).load(uri).into(img);
-        else             Glide.with(this).load(url).into(img);
+        // Rounded corners on image
+        img.setClipToOutline(true);
+        img.setOutlineProvider(
+                new android.view.ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(View view,
+                                           android.graphics.Outline outline) {
+                        outline.setRoundRect(0, 0,
+                                view.getWidth(),
+                                view.getHeight(), dp(10));
+                    }
+                });
 
+        if (uri != null) {
+            Glide.with(this).load(uri).into(img);
+        } else {
+            Glide.with(this).load(url).into(img);
+        }
+
+        // X remove button
         TextView x = new TextView(this);
         FrameLayout.LayoutParams xp =
-                new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT);
+                new FrameLayout.LayoutParams(dp(22), dp(22));
         xp.gravity =
-                android.view.Gravity.TOP | android.view.Gravity.END;
+                android.view.Gravity.TOP
+                        | android.view.Gravity.END;
+        xp.setMargins(0, dp(4), dp(4), 0);
         x.setLayoutParams(xp);
         x.setText("✕");
         x.setTextColor(0xFFFFFFFF);
-        x.setTextSize(12);
-        x.setPadding(6, 2, 6, 2);
-        x.setBackgroundColor(0xAAe63946);
+        x.setTextSize(10);
+        x.setGravity(android.view.Gravity.CENTER);
+        x.setBackground(
+                getDrawable(R.drawable.bg_remove_photo));
         x.setOnClickListener(v -> onRemove.run());
 
         frame.addView(img);
@@ -427,7 +635,10 @@ public class FirstAidEditorActivity extends AppCompatActivity {
         photoPreviewContainer.addView(frame);
     }
 
-    // ── Helpers ────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Helpers
+    // ════════════════════════════════════════════════════════════
+
     private void showUploadProgress(boolean show) {
         uploadProgress.setVisibility(
                 show ? View.VISIBLE : View.GONE);
@@ -436,17 +647,28 @@ public class FirstAidEditorActivity extends AppCompatActivity {
     }
 
     private void showStatus(String msg) {
-        tvUploadStatus.setVisibility(View.VISIBLE);
-        tvUploadStatus.setText(msg);
+        runOnUiThread(() -> {
+            tvUploadStatus.setVisibility(View.VISIBLE);
+            tvUploadStatus.setText(msg);
+        });
     }
 
     private void resetSaveButton() {
-        btnSave.setEnabled(true);
-        btnSave.setText("Save");
+        runOnUiThread(() -> {
+            btnSave.setEnabled(true);
+            btnSave.setText("Save");
+        });
+    }
+
+    private String formatSize(long bytes) {
+        if (bytes < 1024 * 1024)
+            return (bytes / 1024) + " KB";
+        return String.format("%.1f MB",
+                bytes / (1024.0 * 1024.0));
     }
 
     private int dp(int val) {
-        return (int)(val *
-                getResources().getDisplayMetrics().density);
+        return (int)(val * getResources()
+                .getDisplayMetrics().density);
     }
 }

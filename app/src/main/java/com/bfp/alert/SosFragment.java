@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -56,6 +57,13 @@ public class SosFragment extends Fragment {
         Animation pulse = AnimationUtils.loadAnimation(
                 requireContext(), R.anim.pulse);
         btnSOS.startAnimation(pulse);
+
+        // Voice assistant button
+        View btnVoice = view.findViewById(R.id.btnVoice);
+        if (btnVoice != null) {
+            btnVoice.setOnClickListener(
+                    v -> showVoiceAssistant());
+        }
 
         btnSOS.setOnClickListener(v -> sendSOSAlert());
 
@@ -225,6 +233,50 @@ public class SosFragment extends Fragment {
                 statusCard.startAnimation(fadeOut);
             }
         }, 6000);
+    }
+
+    private void showVoiceAssistant() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    new String[]{
+                            Manifest.permission.RECORD_AUDIO},
+                    200);
+            return;
+        }
+
+        VoiceAssistantDialog dialog =
+                new VoiceAssistantDialog(
+                        requireContext(),
+                        new VoiceAssistantDialog.ActionListener() {
+                            @Override
+                            public void onSendSOS() {
+                                sendSOSAlert();
+                            }
+
+                            @Override
+                            public void onOpenFirstAid() {
+                                if (getActivity()
+                                        instanceof MainActivity) {
+                                    ((MainActivity) getActivity())
+                                            .switchToFirstAid();
+                                }
+                            }
+
+                            @Override
+                            public void onSearchFirstAid(
+                                    String query) {
+                                if (getActivity()
+                                        instanceof MainActivity) {
+                                    ((MainActivity) getActivity())
+                                            .switchToFirstAid(query);
+                                }
+                            }
+                        });
+        dialog.show();
     }
 
     // ── User ID helpers ──────────────────────────────────────────

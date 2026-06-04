@@ -205,6 +205,16 @@ public class FirstAidFragment extends Fragment {
         adapter.notifyDataSetChanged();
     }
 
+    public void setSearchQuery(String query) {
+        if (getView() == null) return;
+        EditText etSearch =
+                getView().findViewById(R.id.etSearch);
+        if (etSearch != null) {
+            etSearch.setText(query);
+            filterItems(query);
+        }
+    }
+
     // ── Filter by category ─────────────────────────────────────────
     private void filterByCategory(String category) {
         filteredItems.clear();

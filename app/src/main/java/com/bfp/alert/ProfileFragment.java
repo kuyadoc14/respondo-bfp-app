@@ -22,16 +22,15 @@ public class ProfileFragment extends Fragment {
 
         view.findViewById(R.id.btnGoToAdmin)
                 .setOnClickListener(v -> {
-                    // Check if already logged in
                     if (com.google.firebase.auth.FirebaseAuth
                             .getInstance()
                             .getCurrentUser() != null) {
-                        // Already logged in — go straight to dashboard
+                        // Already logged in
                         startActivity(new Intent(
                                 requireContext(),
                                 AdminDashboardActivity.class));
                     } else {
-                        // Not logged in — show login popup
+                        // Show login popup
                         startActivity(new Intent(
                                 requireContext(),
                                 AdminLoginActivity.class));

@@ -120,12 +120,12 @@ public class AdminDashboardActivity extends AppCompatActivity
         findViewById(R.id.btnLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
 
-            // Go back to main screen
-            Intent mainIntent = new Intent(this, MainActivity.class);
-            mainIntent.addFlags(
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent intent = new Intent(
+                    this, MainActivity.class);
+            intent.addFlags(
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK |
                             Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(mainIntent);
+            startActivity(intent);
             finish();
         });
 

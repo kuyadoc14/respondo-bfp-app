@@ -80,8 +80,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                                     .getToken()
                                     .addOnSuccessListener(token -> {
                                         String uid = mAuth
-                                                .getCurrentUser()
-                                                .getUid();
+                                                .getCurrentUser().getUid();
                                         Map<String, Object> data =
                                                 new HashMap<>();
                                         data.put("fcmToken", token);
@@ -91,9 +90,14 @@ public class AdminLoginActivity extends AppCompatActivity {
                                                 .set(data);
                                     });
 
+                            // Go to dashboard cleanly
+                            Intent intent = new Intent(
+                                    this, AdminDashboardActivity.class);
+                            intent.addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                                            Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            startActivity(intent);
                             finish();
-                            startActivity(new Intent(this,
-                                    AdminDashboardActivity.class));
 
                         } else {
                             btnLogin.setEnabled(true);

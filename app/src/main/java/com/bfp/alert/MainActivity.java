@@ -16,12 +16,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Initialize Cloudinary
-        java.util.Map<String, Object> config = new java.util.HashMap<>();
-        config.put("cloud_name", "ds8c4o8q4");
-        config.put("api_key",    "986862986147198");
-        config.put("api_secret", "Xx2WgEGLTWMfGk_BlxIl71QKL5A");
-        com.cloudinary.android.MediaManager.init(this, config);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -54,5 +48,19 @@ public class MainActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
                 .commit();
+    }
+
+    public void switchToFirstAid() {
+        switchToFirstAid("");
+    }
+
+    public void switchToFirstAid(String query) {
+        BottomNavigationView bottomNav =
+                findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.firstAid);
+        loadFragment(firstAidFragment);
+        if (!query.isEmpty()) {
+            firstAidFragment.setSearchQuery(query);
+        }
     }
 }
