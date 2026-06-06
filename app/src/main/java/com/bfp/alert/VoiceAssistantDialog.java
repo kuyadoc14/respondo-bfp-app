@@ -27,16 +27,18 @@ import java.util.Locale;
 
 public class VoiceAssistantDialog extends Dialog {
 
+    // ── Action listener interface ─────────────────────────────────
     public interface ActionListener {
         void onSendSOS();
         void onOpenFirstAid();
         void onSearchFirstAid(String query);
     }
 
+    // ── Fields ────────────────────────────────────────────────────
     private ClaudeVoiceAssistant assistant;
     private SpeechRecognizer     recognizer;
-    private ActionListener       actionListener;
-    private Handler              handler;
+    private final ActionListener actionListener;
+    private final Handler        handler;
 
     // Views
     private TextView tvResponse;
@@ -44,31 +46,32 @@ public class VoiceAssistantDialog extends Dialog {
     private TextView tvMicStatus;
     private TextView tvMicIcon;
     private View     btnMic;
-    private View     ringOuter, ringInner;
+    private View     ringOuter;
+    private View     ringInner;
     private View     thinkingIndicator;
 
     // State
-    private boolean isListening  = false;
-    private boolean isProcessing = false;
+    private boolean    isListening  = false;
+    private boolean    isProcessing = false;
     private AnimatorSet pulseAnimation;
 
+    // ── Constructor ───────────────────────────────────────────────
     public VoiceAssistantDialog(Context ctx,
                                 ActionListener listener) {
-        super(ctx,
-                com.google.android.material.R.style
-                        .Theme_MaterialComponents_Light_BottomSheetDialog);
+        super(ctx);
         this.actionListener = listener;
         this.handler =
                 new Handler(Looper.getMainLooper());
     }
 
+    // ── onCreate ──────────────────────────────────────────────────
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.dialog_voice_assistant);
 
-        // Bottom sheet positioning
+        // Bottom sheet style
         Window window = getWindow();
         if (window != null) {
             window.setLayout(
@@ -80,32 +83,32 @@ public class VoiceAssistantDialog extends Dialog {
                     android.R.color.transparent);
         }
 
-        // View refs
-        tvResponse         =
+        // Bind views
+        tvResponse        =
                 findViewById(R.id.tvAssistantResponse);
-        tvUserTranscript   =
+        tvUserTranscript  =
                 findViewById(R.id.tvUserTranscript);
-        tvMicStatus        =
+        tvMicStatus       =
                 findViewById(R.id.tvMicStatus);
-        tvMicIcon          =
+        tvMicIcon         =
                 findViewById(R.id.tvMicIcon);
-        btnMic             =
+        btnMic            =
                 findViewById(R.id.btnMic);
-        ringOuter          =
+        ringOuter         =
                 findViewById(R.id.ringOuter);
-        ringInner          =
+        ringInner         =
                 findViewById(R.id.ringInner);
-        thinkingIndicator  =
+        thinkingIndicator =
                 findViewById(R.id.thinkingIndicator);
 
-        // Init Claude assistant
+        // Init Groq AI assistant
         assistant = new ClaudeVoiceAssistant(
                 getContext());
 
         // Init speech recognizer
         initSpeechRecognizer();
 
-        // Mic button
+        // Mic button tap
         btnMic.setOnClickListener(v -> {
             if (isListening) {
                 stopListening();
@@ -118,24 +121,27 @@ public class VoiceAssistantDialog extends Dialog {
         findViewById(R.id.btnCloseVoice)
                 .setOnClickListener(v -> dismiss());
 
-        // Quick chips
+        // Quick command chips
         findViewById(R.id.chipSOS)
                 .setOnClickListener(v ->
                         sendToAssistant("Send SOS alert"));
 
         findViewById(R.id.chipFirstAid)
                 .setOnClickListener(v ->
-                        sendToAssistant("Open first aid guides"));
+                        sendToAssistant(
+                                "Open first aid guides"));
 
         findViewById(R.id.chipCPR)
                 .setOnClickListener(v ->
-                        sendToAssistant("Show me CPR steps"));
+                        sendToAssistant(
+                                "Show me CPR steps"));
 
         findViewById(R.id.chipCall)
                 .setOnClickListener(v ->
-                        sendToAssistant("Call the fire station"));
+                        sendToAssistant(
+                                "Call the fire station"));
 
-        // Greet on open
+        // Greet user on open
         handler.postDelayed(() ->
                         assistant.speak(
                                 "Hello! I am your BFP AI assistant. "
@@ -145,9 +151,8 @@ public class VoiceAssistantDialog extends Dialog {
                                         .AssistantCallback() {
                                     @Override
                                     public void onResponse(
-                                            String text,
-                                            String action,
-                                            String data) {}
+                                            String t, String a,
+                                            String d) {}
                                     @Override
                                     public void onError(String e) {}
                                     @Override
@@ -158,19 +163,27 @@ public class VoiceAssistantDialog extends Dialog {
                 400);
     }
 
-    // ── Speech recognizer ─────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Speech Recognizer
+    // ════════════════════════════════════════════════════════════
     private void initSpeechRecognizer() {
         if (!SpeechRecognizer
-                .isRecognitionAvailable(getContext()))
+                .isRecognitionAvailable(getContext())) {
+            setStatus(
+                    "Speech recognition not available.",
+                    0xFFFC4D4D);
             return;
+        }
 
         recognizer = SpeechRecognizer
                 .createSpeechRecognizer(getContext());
 
         recognizer.setRecognitionListener(
                 new RecognitionListener() {
+
                     @Override
-                    public void onReadyForSpeech(Bundle p) {
+                    public void onReadyForSpeech(
+                            Bundle params) {
                         setStatus("Listening...",
                                 0xFFFC4D4D);
                     }
@@ -185,7 +198,8 @@ public class VoiceAssistantDialog extends Dialog {
                     public void onRmsChanged(float v) {}
 
                     @Override
-                    public void onBufferReceived(byte[] b) {}
+                    public void onBufferReceived(
+                            byte[] buffer) {}
 
                     @Override
                     public void onEndOfSpeech() {
@@ -197,22 +211,29 @@ public class VoiceAssistantDialog extends Dialog {
                     @Override
                     public void onError(int error) {
                         stopListeningUI();
+                        isListening  = false;
+                        isProcessing = false;
+
                         if (error ==
                                 SpeechRecognizer
-                                        .ERROR_NO_MATCH ||
-                                error ==
-                                        SpeechRecognizer
-                                                .ERROR_SPEECH_TIMEOUT) {
+                                        .ERROR_NO_MATCH
+                                || error ==
+                                SpeechRecognizer
+                                        .ERROR_SPEECH_TIMEOUT) {
                             setStatus(
-                                    "Tap mic to try again",
+                                    "Tap mic to try again.",
                                     0xFF6B7280);
+                        } else if (error ==
+                                SpeechRecognizer
+                                        .ERROR_AUDIO) {
+                            setStatus(
+                                    "Audio error. Try again.",
+                                    0xFFFC4D4D);
                         } else {
                             setStatus(
-                                    "Error. Tap mic to retry.",
+                                    "Tap mic to speak.",
                                     0xFF6B7280);
                         }
-                        isListening   = false;
-                        isProcessing  = false;
                     }
 
                     @Override
@@ -226,25 +247,33 @@ public class VoiceAssistantDialog extends Dialog {
                             String text = matches.get(0);
                             showUserTranscript(text);
                             sendToAssistant(text);
+                        } else {
+                            isProcessing = false;
+                            setStatus(
+                                    "Could not hear you. "
+                                            + "Try again.",
+                                    0xFF6B7280);
                         }
                     }
 
                     @Override
                     public void onPartialResults(
-                            Bundle partial) {
-                        ArrayList<String> partial2 =
-                                partial.getStringArrayList(
-                                        SpeechRecognizer
-                                                .RESULTS_RECOGNITION);
-                        if (partial2 != null
-                                && !partial2.isEmpty()) {
+                            Bundle partialResults) {
+                        ArrayList<String> partial =
+                                partialResults
+                                        .getStringArrayList(
+                                                SpeechRecognizer
+                                                        .RESULTS_RECOGNITION);
+                        if (partial != null
+                                && !partial.isEmpty()) {
                             showUserTranscript(
-                                    partial2.get(0) + "...");
+                                    partial.get(0) + "...");
                         }
                     }
 
                     @Override
-                    public void onEvent(int t, Bundle e) {}
+                    public void onEvent(int eventType,
+                                        Bundle params) {}
                 });
     }
 
@@ -291,6 +320,7 @@ public class VoiceAssistantDialog extends Dialog {
             recognizer.startListening(intent);
         } catch (Exception e) {
             stopListeningUI();
+            isListening = false;
             setStatus("Could not start mic.",
                     0xFFFC4D4D);
         }
@@ -304,14 +334,18 @@ public class VoiceAssistantDialog extends Dialog {
     }
 
     private void stopListeningUI() {
-        isListening = false;
-        ringOuter.setVisibility(View.GONE);
-        ringInner.setVisibility(View.GONE);
-        stopPulseAnimation();
-        tvMicIcon.setText("🎙");
+        handler.post(() -> {
+            isListening = false;
+            ringOuter.setVisibility(View.GONE);
+            ringInner.setVisibility(View.GONE);
+            stopPulseAnimation();
+            tvMicIcon.setText("🎙");
+        });
     }
 
-    // ── Send text to Claude ───────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Send to AI
+    // ════════════════════════════════════════════════════════════
     private void sendToAssistant(String userText) {
         if (isProcessing) return;
         isProcessing = true;
@@ -324,22 +358,25 @@ public class VoiceAssistantDialog extends Dialog {
 
         assistant.processUserInput(userText,
                 new ClaudeVoiceAssistant.AssistantCallback() {
+
                     @Override
-                    public void onResponse(String text,
-                                           String action,
-                                           String data) {
+                    public void onResponse(
+                            String text,
+                            String action,
+                            String data) {
                         handler.post(() -> {
                             showThinking(false);
                             isProcessing = false;
                             btnMic.setEnabled(true);
 
-                            // Show response
+                            // Show response text
                             tvResponse.setText(text);
                             setStatus(
                                     "Tap mic to speak",
                                     0xFF6B7280);
 
-                            // Speak the response
+                            // Speak response then
+                            // execute action
                             assistant.speak(text,
                                     new ClaudeVoiceAssistant
                                             .AssistantCallback() {
@@ -354,11 +391,10 @@ public class VoiceAssistantDialog extends Dialog {
                                         public void onSpeakingStarted() {}
                                         @Override
                                         public void onSpeakingFinished() {
-                                            // Execute action
-                                            // after speaking
                                             handler.postDelayed(
                                                     () -> executeAction(
-                                                            action, data),
+                                                            action,
+                                                            data),
                                                     300);
                                         }
                                     });
@@ -373,7 +409,7 @@ public class VoiceAssistantDialog extends Dialog {
                             btnMic.setEnabled(true);
                             tvResponse.setText(error);
                             setStatus(
-                                    "Tap mic to try again",
+                                    "Tap mic to try again.",
                                     0xFF6B7280);
                             assistant.speak(error, null);
                         });
@@ -387,19 +423,26 @@ public class VoiceAssistantDialog extends Dialog {
                 });
     }
 
-    // ── Execute action from Claude ────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Execute action
+    // ════════════════════════════════════════════════════════════
     private void executeAction(String action,
                                String data) {
-        if (action == null) return;
+        if (action == null
+                || ClaudeVoiceAssistant
+                .ACTION_NONE.equals(action)) {
+            return;
+        }
 
         switch (action) {
+
             case ClaudeVoiceAssistant.ACTION_SEND_SOS:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
                         actionListener.onSendSOS();
                     }
                     dismiss();
-                }, 800);
+                }, 600);
                 break;
 
             case ClaudeVoiceAssistant
@@ -409,32 +452,27 @@ public class VoiceAssistantDialog extends Dialog {
                         actionListener.onOpenFirstAid();
                     }
                     dismiss();
-                }, 800);
+                }, 600);
                 break;
 
             case ClaudeVoiceAssistant
                          .ACTION_SEARCH_FIRSTAID:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        actionListener
-                                .onSearchFirstAid(
-                                        data != null
-                                                ? data : "");
+                        actionListener.onSearchFirstAid(
+                                data != null ? data : "");
                     }
                     dismiss();
-                }, 800);
+                }, 600);
                 break;
 
             case ClaudeVoiceAssistant
                          .ACTION_CALL_STATION:
-                handler.postDelayed(() -> {
-                    callBFP();
-                }, 800);
+                handler.postDelayed(
+                        this::callBFP, 600);
                 break;
 
-            case ClaudeVoiceAssistant.ACTION_NONE:
             default:
-                // No action — just spoken response
                 break;
         }
     }
@@ -447,11 +485,13 @@ public class VoiceAssistantDialog extends Dialog {
             getContext().startActivity(intent);
         } catch (Exception e) {
             tvResponse.setText(
-                    "Could not open phone app.");
+                    "Could not open the phone app.");
         }
     }
 
-    // ── Pulse animation ───────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  Pulse animation
+    // ════════════════════════════════════════════════════════════
     private void startPulseAnimation() {
         isListening = true;
         runPulse();
@@ -460,77 +500,79 @@ public class VoiceAssistantDialog extends Dialog {
     private void runPulse() {
         if (!isListening) return;
 
-        AnimatorSet pulse = new AnimatorSet();
-
-        ObjectAnimator scaleX1 = ObjectAnimator.ofFloat(
+        ObjectAnimator sx1 = ObjectAnimator.ofFloat(
                 ringOuter, "scaleX", 1f, 1.3f);
-        ObjectAnimator scaleY1 = ObjectAnimator.ofFloat(
+        ObjectAnimator sy1 = ObjectAnimator.ofFloat(
                 ringOuter, "scaleY", 1f, 1.3f);
-        ObjectAnimator alpha1  = ObjectAnimator.ofFloat(
-                ringOuter, "alpha",  0.2f, 0.5f);
-        ObjectAnimator scaleX2 = ObjectAnimator.ofFloat(
+        ObjectAnimator a1  = ObjectAnimator.ofFloat(
+                ringOuter, "alpha", 0.2f, 0.5f);
+        ObjectAnimator sx2 = ObjectAnimator.ofFloat(
                 ringInner, "scaleX", 1f, 1.15f);
-        ObjectAnimator scaleY2 = ObjectAnimator.ofFloat(
+        ObjectAnimator sy2 = ObjectAnimator.ofFloat(
                 ringInner, "scaleY", 1f, 1.15f);
 
-        pulse.playTogether(
-                scaleX1, scaleY1, alpha1,
-                scaleX2, scaleY2);
-        pulse.setDuration(600);
-        pulse.setInterpolator(
+        AnimatorSet forward = new AnimatorSet();
+        forward.playTogether(sx1, sy1, a1, sx2, sy2);
+        forward.setDuration(600);
+        forward.setInterpolator(
                 new AccelerateDecelerateInterpolator());
 
-        pulse.addListener(
-                new android.animation.AnimatorListenerAdapter() {
+        forward.addListener(
+                new android.animation
+                        .AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(
-                            android.animation.Animator a) {
-                        if (isListening) {
-                            // Reverse back
-                            AnimatorSet reverse =
-                                    new AnimatorSet();
-                            ObjectAnimator rx1 =
-                                    ObjectAnimator.ofFloat(
-                                            ringOuter, "scaleX",
-                                            1.3f, 1f);
-                            ObjectAnimator ry1 =
-                                    ObjectAnimator.ofFloat(
-                                            ringOuter, "scaleY",
-                                            1.3f, 1f);
-                            ObjectAnimator ra1 =
-                                    ObjectAnimator.ofFloat(
-                                            ringOuter, "alpha",
-                                            0.5f, 0.2f);
-                            ObjectAnimator rx2 =
-                                    ObjectAnimator.ofFloat(
-                                            ringInner, "scaleX",
-                                            1.15f, 1f);
-                            ObjectAnimator ry2 =
-                                    ObjectAnimator.ofFloat(
-                                            ringInner, "scaleY",
-                                            1.15f, 1f);
-                            reverse.playTogether(
-                                    rx1, ry1, ra1, rx2, ry2);
-                            reverse.setDuration(600);
-                            reverse.setInterpolator(
-                                    new AccelerateDecelerateInterpolator());
-                            reverse.addListener(
-                                    new android.animation
-                                            .AnimatorListenerAdapter() {
-                                        @Override
-                                        public void onAnimationEnd(
-                                                android.animation
-                                                        .Animator a2) {
-                                            runPulse();
-                                        }
-                                    });
-                            reverse.start();
-                        }
+                            android.animation
+                                    .Animator anim) {
+                        if (!isListening) return;
+
+                        // Reverse
+                        ObjectAnimator rx1 =
+                                ObjectAnimator.ofFloat(
+                                        ringOuter, "scaleX",
+                                        1.3f, 1f);
+                        ObjectAnimator ry1 =
+                                ObjectAnimator.ofFloat(
+                                        ringOuter, "scaleY",
+                                        1.3f, 1f);
+                        ObjectAnimator ra1 =
+                                ObjectAnimator.ofFloat(
+                                        ringOuter, "alpha",
+                                        0.5f, 0.2f);
+                        ObjectAnimator rx2 =
+                                ObjectAnimator.ofFloat(
+                                        ringInner, "scaleX",
+                                        1.15f, 1f);
+                        ObjectAnimator ry2 =
+                                ObjectAnimator.ofFloat(
+                                        ringInner, "scaleY",
+                                        1.15f, 1f);
+
+                        AnimatorSet reverse =
+                                new AnimatorSet();
+                        reverse.playTogether(
+                                rx1, ry1, ra1, rx2, ry2);
+                        reverse.setDuration(600);
+                        reverse.setInterpolator(
+                                new AccelerateDecelerateInterpolator());
+                        reverse.addListener(
+                                new android.animation
+                                        .AnimatorListenerAdapter() {
+                                    @Override
+                                    public void onAnimationEnd(
+                                            android.animation
+                                                    .Animator a2) {
+                                        runPulse();
+                                    }
+                                });
+
+                        pulseAnimation = reverse;
+                        reverse.start();
                     }
                 });
 
-        pulseAnimation = pulse;
-        pulse.start();
+        pulseAnimation = forward;
+        forward.start();
     }
 
     private void stopPulseAnimation() {
@@ -539,7 +581,6 @@ public class VoiceAssistantDialog extends Dialog {
             pulseAnimation.cancel();
             pulseAnimation = null;
         }
-        // Reset ring scale
         if (ringOuter != null) {
             ringOuter.setScaleX(1f);
             ringOuter.setScaleY(1f);
@@ -551,11 +592,13 @@ public class VoiceAssistantDialog extends Dialog {
         }
     }
 
-    // ── UI helpers ────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════
+    //  UI helpers
+    // ════════════════════════════════════════════════════════════
     private void showUserTranscript(String text) {
         handler.post(() -> {
             tvUserTranscript.setText(
-                    "You said: \"" + text + "\"");
+                    "You: \"" + text + "\"");
             tvUserTranscript.setVisibility(
                     View.VISIBLE);
         });
@@ -567,19 +610,23 @@ public class VoiceAssistantDialog extends Dialog {
                         show ? View.VISIBLE : View.GONE));
     }
 
-    private void setStatus(String status,
-                           int color) {
+    private void setStatus(String status, int color) {
         handler.post(() -> {
             tvMicStatus.setText(status);
             tvMicStatus.setTextColor(color);
         });
     }
 
+    // ════════════════════════════════════════════════════════════
+    //  Cleanup
+    // ════════════════════════════════════════════════════════════
     @Override
     public void dismiss() {
+        stopPulseAnimation();
         if (assistant != null) {
             assistant.stopSpeaking();
             assistant.release();
+            assistant = null;
         }
         if (recognizer != null) {
             recognizer.destroy();

@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,15 +24,24 @@ import okhttp3.Response;
 
 public class ClaudeVoiceAssistant {
 
-    // ── Replace with your Anthropic API key ───────────────────────
-    private static final String API_KEY =
-            "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";
-    private static final String API_URL =
-            "https://api.anthropic.com/v1/messages";
-    private static final String MODEL =
-            "claude-sonnet-4-20250514";
+    private static final String TAG = "BFPVoice";
 
-    // ── Callback interface ────────────────────────────────────────
+    // ── Groq API config (free) ────────────────────────────────────
+    private static final String API_KEY  =
+            "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";
+    private static final String API_URL  =
+            "https://api.groq.com/openai/v1/chat/completions";
+    private static final String MODEL    =
+            "llama-3.3-70b-versatile";
+
+    // ── Actions ───────────────────────────────────────────────────
+    public static final String ACTION_SEND_SOS        = "SEND_SOS";
+    public static final String ACTION_OPEN_FIRSTAID   = "OPEN_FIRSTAID";
+    public static final String ACTION_SEARCH_FIRSTAID = "SEARCH_FIRSTAID";
+    public static final String ACTION_CALL_STATION    = "CALL_STATION";
+    public static final String ACTION_NONE            = "NONE";
+
+    // ── Callback ──────────────────────────────────────────────────
     public interface AssistantCallback {
         void onResponse(String spokenText,
                         String action,
@@ -41,42 +51,44 @@ public class ClaudeVoiceAssistant {
         void onSpeakingFinished();
     }
 
-    // ── Actions Claude can return ─────────────────────────────────
-    public static final String ACTION_SEND_SOS    = "SEND_SOS";
-    public static final String ACTION_OPEN_FIRSTAID = "OPEN_FIRSTAID";
-    public static final String ACTION_SEARCH_FIRSTAID = "SEARCH_FIRSTAID";
-    public static final String ACTION_CALL_STATION = "CALL_STATION";
-    public static final String ACTION_NONE        = "NONE";
-
-    private final Context    ctx;
-    private TextToSpeech     tts;
-    private boolean          ttsReady    = false;
-    private String           lastSpoken  = "";
+    private final Context      ctx;
+    private       TextToSpeech tts;
+    private       boolean      ttsReady   = false;
+    private       String       lastSpoken = "";
     private final OkHttpClient httpClient;
-    private final Handler    mainHandler;
+    private final Handler      mainHandler;
 
-    // Conversation history for context
-    private final List<JSONObject> conversationHistory =
+    // Conversation history
+    private final List<JSONObject> history =
             new ArrayList<>();
 
     public ClaudeVoiceAssistant(Context ctx) {
-        this.ctx        = ctx;
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(30,
-                        java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(30,
-                        java.util.concurrent.TimeUnit.SECONDS)
-                .build();
+        this.ctx         = ctx;
         this.mainHandler =
                 new Handler(Looper.getMainLooper());
+        this.httpClient  =
+                new OkHttpClient.Builder()
+                        .connectTimeout(30,
+                                java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(30,
+                                java.util.concurrent.TimeUnit.SECONDS)
+                        .writeTimeout(30,
+                                java.util.concurrent.TimeUnit.SECONDS)
+                        .build();
         initTTS();
     }
 
-    // ── TTS init ──────────────────────────────────────────────────
+    // ── TTS ───────────────────────────────────────────────────────
     private void initTTS() {
         tts = new TextToSpeech(ctx, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                tts.setLanguage(Locale.ENGLISH);
+                int result =
+                        tts.setLanguage(Locale.ENGLISH);
+                if (result == TextToSpeech.LANG_MISSING_DATA
+                        || result == TextToSpeech
+                        .LANG_NOT_SUPPORTED) {
+                    tts.setLanguage(Locale.getDefault());
+                }
                 tts.setSpeechRate(0.92f);
                 tts.setPitch(1.0f);
                 ttsReady = true;
@@ -84,37 +96,39 @@ public class ClaudeVoiceAssistant {
         });
     }
 
-    // ── Speak text ────────────────────────────────────────────────
     public void speak(String text,
                       AssistantCallback callback) {
-        if (!ttsReady) return;
+        if (!ttsReady || text == null
+                || text.isEmpty()) return;
         lastSpoken = text;
         tts.stop();
 
-        if (callback != null) {
-            tts.setOnUtteranceProgressListener(
-                    new UtteranceProgressListener() {
-                        @Override
-                        public void onStart(String id) {
+        tts.setOnUtteranceProgressListener(
+                new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String id) {
+                        if (callback != null)
                             mainHandler.post(
                                     callback::onSpeakingStarted);
-                        }
-                        @Override
-                        public void onDone(String id) {
+                    }
+                    @Override
+                    public void onDone(String id) {
+                        if (callback != null)
                             mainHandler.post(
                                     callback::onSpeakingFinished);
-                        }
-                        @Override
-                        public void onError(String id) {
+                    }
+                    @Override
+                    public void onError(String id) {
+                        if (callback != null)
                             mainHandler.post(
                                     callback::onSpeakingFinished);
-                        }
-                    });
-        }
+                    }
+                });
 
         tts.speak(text,
                 TextToSpeech.QUEUE_FLUSH,
-                null, "utterance_" + System.currentTimeMillis());
+                null,
+                "utt_" + System.currentTimeMillis());
     }
 
     public void stopSpeaking() {
@@ -122,240 +136,385 @@ public class ClaudeVoiceAssistant {
     }
 
     public void repeatLast(AssistantCallback cb) {
-        if (!lastSpoken.isEmpty()) speak(lastSpoken, cb);
+        if (!lastSpoken.isEmpty())
+            speak(lastSpoken, cb);
     }
 
-    // ── Send to Claude API ────────────────────────────────────────
+    // ── Send to Groq ──────────────────────────────────────────────
     public void processUserInput(
             String userText,
             AssistantCallback callback) {
 
         new Thread(() -> {
             try {
-                // Add user message to history
-                JSONObject userMsg = new JSONObject();
-                userMsg.put("role", "user");
-                userMsg.put("content", userText);
-                conversationHistory.add(userMsg);
-
                 // Build messages array
+                // Always start with system message
                 JSONArray messages = new JSONArray();
-                for (JSONObject msg : conversationHistory) {
+
+                // System message
+                JSONObject sysMsg = new JSONObject();
+                sysMsg.put("role", "system");
+                sysMsg.put("content", getSystemPrompt());
+                messages.put(sysMsg);
+
+                // Add conversation history
+                for (JSONObject msg : history) {
                     messages.put(msg);
                 }
 
+                // Add current user message
+                JSONObject userMsg = new JSONObject();
+                userMsg.put("role", "user");
+                userMsg.put("content", userText);
+                messages.put(userMsg);
+
                 // Build request body
-                JSONObject body = new JSONObject();
-                body.put("model", MODEL);
-                body.put("max_tokens", 300);
-                body.put("system", getSystemPrompt());
-                body.put("messages", messages);
+                // Groq uses OpenAI-compatible format
+                JSONObject requestBody =
+                        new JSONObject();
+                requestBody.put("model",      MODEL);
+                requestBody.put("max_tokens", 300);
+                requestBody.put("temperature", 0.3);
+                requestBody.put("messages",   messages);
 
-                RequestBody requestBody =
-                        RequestBody.create(
-                                body.toString(),
-                                MediaType.parse(
-                                        "application/json"));
+                String bodyStr = requestBody.toString();
+                Log.d(TAG, "Request: " + bodyStr);
 
-                Request request = new Request.Builder()
-                        .url(API_URL)
-                        .addHeader("x-api-key", API_KEY)
-                        .addHeader("anthropic-version",
-                                "2023-06-01")
-                        .addHeader("content-type",
-                                "application/json")
-                        .post(requestBody)
-                        .build();
+                RequestBody body = RequestBody.create(
+                        bodyStr,
+                        MediaType.get(
+                                "application/json; charset=utf-8"));
 
-                httpClient.newCall(request)
-                        .enqueue(new Callback() {
-                            @Override
-                            public void onFailure(
-                                    Call call,
-                                    java.io.IOException e) {
-                                mainHandler.post(() ->
-                                        callback.onError(
-                                                "Network error. "
-                                                        + "Please check "
-                                                        + "your connection."));
-                            }
+                Request request =
+                        new Request.Builder()
+                                .url(API_URL)
+                                .header("Authorization",
+                                        "Bearer " + API_KEY)
+                                .header("Content-Type",
+                                        "application/json")
+                                .post(body)
+                                .build();
 
-                            @Override
-                            public void onResponse(
-                                    Call call,
-                                    Response response)
-                                    throws java.io.IOException {
-                                try {
-                                    String responseBody =
-                                            response.body()
-                                                    .string();
-                                    parseClaudeResponse(
-                                            responseBody,
-                                            callback);
-                                } catch (Exception e) {
-                                    mainHandler.post(() ->
-                                            callback.onError(
-                                                    "Failed to "
-                                                            + "process "
-                                                            + "response."));
-                                }
-                            }
-                        });
+                try (Response response =
+                             httpClient.newCall(request)
+                                     .execute()) {
 
-            } catch (Exception e) {
+                    String responseStr =
+                            response.body() != null
+                                    ? response.body().string()
+                                    : "";
+
+                    Log.d(TAG, "HTTP: "
+                            + response.code());
+                    Log.d(TAG, "Body: "
+                            + responseStr);
+
+                    if (!response.isSuccessful()) {
+                        handleApiError(
+                                response.code(),
+                                responseStr,
+                                callback);
+                        return;
+                    }
+
+                    // Save to history on success
+                    JSONObject saved =
+                            new JSONObject();
+                    saved.put("role", "user");
+                    saved.put("content", userText);
+                    history.add(saved);
+
+                    parseAndRespond(
+                            responseStr, callback);
+                }
+
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "IO: " + e.getMessage());
                 mainHandler.post(() ->
                         callback.onError(
-                                "Error: " + e.getMessage()));
+                                "Network error. Please check "
+                                        + "your internet connection."));
+            } catch (Exception e) {
+                Log.e(TAG, "Error: " + e.getMessage());
+                mainHandler.post(() ->
+                        callback.onError(
+                                "Something went wrong. "
+                                        + "Please try again."));
             }
         }).start();
     }
 
-    // ── Parse Claude response ─────────────────────────────────────
-    private void parseClaudeResponse(
-            String responseBody,
+    // ── Parse Groq response ───────────────────────────────────────
+    // Groq uses OpenAI format:
+    // choices[0].message.content
+    private void parseAndRespond(
+            String responseStr,
             AssistantCallback callback) {
+
         try {
             JSONObject json =
-                    new JSONObject(responseBody);
-            JSONArray content =
-                    json.getJSONArray("content");
+                    new JSONObject(responseStr);
 
+            // Get content from
+            // choices[0].message.content
             String fullText = "";
-            for (int i = 0;
-                 i < content.length(); i++) {
-                JSONObject block =
-                        content.getJSONObject(i);
-                if ("text".equals(
-                        block.getString("type"))) {
-                    fullText = block.getString("text");
-                    break;
+
+            JSONArray choices =
+                    json.optJSONArray("choices");
+            if (choices != null
+                    && choices.length() > 0) {
+                JSONObject choice =
+                        choices.getJSONObject(0);
+                JSONObject message =
+                        choice.optJSONObject("message");
+                if (message != null) {
+                    fullText = message.optString(
+                            "content", "");
                 }
             }
 
-            // Add assistant response to history
-            JSONObject assistantMsg = new JSONObject();
+            Log.d(TAG, "AI text: " + fullText);
+
+            if (fullText.isEmpty()) {
+                mainHandler.post(() ->
+                        callback.onError(
+                                "No response received. "
+                                        + "Please try again."));
+                return;
+            }
+
+            // Save assistant response to history
+            JSONObject assistantMsg =
+                    new JSONObject();
             assistantMsg.put("role", "assistant");
             assistantMsg.put("content", fullText);
-            conversationHistory.add(assistantMsg);
+            history.add(assistantMsg);
 
-            // Parse action from response
+            // Parse action tag
             String action     = ACTION_NONE;
             String actionData = "";
             String spokenText = fullText;
 
-            // Claude wraps action in [ACTION:xxx]
-            if (fullText.contains("[ACTION:")) {
-                int start =
-                        fullText.indexOf("[ACTION:") + 8;
-                int end   =
-                        fullText.indexOf("]", start);
-                if (end > start) {
-                    String actionStr =
-                            fullText.substring(start, end)
-                                    .trim();
+            int actionStart =
+                    fullText.indexOf("[ACTION:");
+            if (actionStart >= 0) {
+                int actionEnd =
+                        fullText.indexOf("]", actionStart);
+                if (actionEnd > actionStart) {
+                    String actionContent =
+                            fullText.substring(
+                                    actionStart + 8,
+                                    actionEnd).trim();
 
-                    // Parse action and optional data
-                    if (actionStr.contains("|")) {
+                    if (actionContent.contains("|")) {
                         String[] parts =
-                                actionStr.split("\\|", 2);
-                        action     = parts[0].trim();
-                        actionData = parts[1].trim();
+                                actionContent.split(
+                                        "\\|", 2);
+                        action     =
+                                parts[0].trim()
+                                        .toUpperCase();
+                        actionData =
+                                parts[1].trim();
                     } else {
-                        action = actionStr;
+                        action =
+                                actionContent.trim()
+                                        .toUpperCase();
                     }
 
-                    // Remove action tag from spoken text
+                    // Remove action tag
+                    // from spoken text
                     spokenText = fullText
-                            .replace("[ACTION:" + actionStr
-                                    + "]", "")
+                            .substring(0, actionStart)
                             .trim();
                 }
             }
 
-            final String finalSpoken   = spokenText;
-            final String finalAction   = action;
-            final String finalData     = actionData;
+            // Fallback: if AI didn't include
+            // action tag, detect from text
+            if (ACTION_NONE.equals(action)) {
+                action = detectActionFromText(
+                        fullText);
+            }
+
+            if (!isValidAction(action)) {
+                action = ACTION_NONE;
+            }
+
+            Log.d(TAG, "Action: " + action
+                    + " Data: " + actionData);
+
+            final String fa = action;
+            final String fd = actionData;
+            final String ft = spokenText.isEmpty()
+                    ? fullText : spokenText;
 
             mainHandler.post(() ->
-                    callback.onResponse(
-                            finalSpoken,
-                            finalAction,
-                            finalData));
+                    callback.onResponse(ft, fa, fd));
 
         } catch (Exception e) {
+            Log.e(TAG, "Parse: " + e.getMessage());
             mainHandler.post(() ->
                     callback.onError(
-                            "Could not understand response."));
+                            "Could not process response. "
+                                    + "Please try again."));
         }
+    }
+
+    // Fallback detection if AI forgets action tag
+    private String detectActionFromText(
+            String text) {
+        String lower = text.toLowerCase();
+
+        if (lower.contains("sending sos")
+                || lower.contains("sos alert")
+                || lower.contains("emergency alert")) {
+            return ACTION_SEND_SOS;
+        }
+        if (lower.contains("calling")
+                || lower.contains("fire station")
+                || lower.contains("dialing")) {
+            return ACTION_CALL_STATION;
+        }
+        if (lower.contains("first aid guide")
+                || lower.contains("opening the guide")
+                || lower.contains("first aid guides")) {
+            return ACTION_OPEN_FIRSTAID;
+        }
+        if (lower.contains("cpr guide")
+                || lower.contains("choking guide")
+                || lower.contains("burns guide")) {
+            return ACTION_SEARCH_FIRSTAID;
+        }
+        return ACTION_NONE;
+    }
+
+    private boolean isValidAction(String action) {
+        return ACTION_SEND_SOS.equals(action)
+                || ACTION_OPEN_FIRSTAID.equals(action)
+                || ACTION_SEARCH_FIRSTAID.equals(action)
+                || ACTION_CALL_STATION.equals(action)
+                || ACTION_NONE.equals(action);
+    }
+
+    // ── Handle API errors ─────────────────────────────────────────
+    private void handleApiError(int code,
+                                String body,
+                                AssistantCallback cb) {
+        Log.e(TAG, "API Error " + code
+                + " body: " + body);
+
+        String msg =
+                "Error " + code + ". Please try again.";
+
+        try {
+            JSONObject err =
+                    new JSONObject(body);
+            JSONObject error =
+                    err.optJSONObject("error");
+            String message = error != null
+                    ? error.optString("message", "")
+                    : body;
+
+            Log.e(TAG, "Error message: " + message);
+
+            if (code == 400) {
+                msg = "Bad request: " + message;
+            } else if (code == 401) {
+                msg = "Invalid API key. "
+                        + "Please check your Groq key.";
+            } else if (code == 429) {
+                msg = "Too many requests. "
+                        + "Please wait and try again.";
+            } else if (code == 503) {
+                msg = "Service unavailable. "
+                        + "Please try again shortly.";
+            } else {
+                msg = "Error " + code
+                        + ". Please try again.";
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing: "
+                    + e.getMessage());
+        }
+
+        final String finalMsg = msg;
+        mainHandler.post(() -> cb.onError(finalMsg));
     }
 
     // ── System prompt ─────────────────────────────────────────────
     private String getSystemPrompt() {
-        return "You are the BFP (Bureau of Fire Protection) "
-                + "Voice Assistant, designed to help people — "
-                + "especially those with disabilities — use the "
-                + "BFP emergency app. You are calm, clear, and "
-                + "compassionate.\n\n"
+        return "You are the BFP (Bureau of Fire "
+                + "Protection) Voice Assistant app. "
+                + "Help people — especially those with "
+                + "disabilities — use the BFP emergency app. "
+                + "Be calm, clear, and very brief.\n\n"
 
-                + "You can perform these actions by including "
-                + "an action tag in your response:\n"
-                + "- [ACTION:SEND_SOS] — Send emergency SOS alert\n"
-                + "- [ACTION:OPEN_FIRSTAID] — Open first aid guides\n"
-                + "- [ACTION:SEARCH_FIRSTAID|query] — Search first aid\n"
-                + "- [ACTION:CALL_STATION] — Call BFP fire station\n"
-                + "- [ACTION:NONE] — No action needed\n\n"
+                + "RESPONSE FORMAT RULES:\n"
+                + "1. Plain text only. No markdown, no "
+                + "asterisks, no bullet points, no headers.\n"
+                + "2. Maximum 2 short sentences.\n"
+                + "3. Always end with exactly one action "
+                + "tag from this list:\n"
+                + "   [ACTION:SEND_SOS]\n"
+                + "   [ACTION:OPEN_FIRSTAID]\n"
+                + "   [ACTION:SEARCH_FIRSTAID|topic]\n"
+                + "   [ACTION:CALL_STATION]\n"
+                + "   [ACTION:NONE]\n"
+                + "4. For SEARCH_FIRSTAID, replace topic "
+                + "with one word like CPR, choking, burns, "
+                + "bleeding, fracture.\n"
+                + "5. Never skip the action tag.\n\n"
 
-                + "Rules:\n"
-                + "1. Always respond in SHORT, CLEAR sentences "
-                + "suitable for text-to-speech. No markdown, "
-                + "no bullet points, no special characters "
-                + "except periods and commas.\n"
-                + "2. Include ONE action tag per response if "
-                + "an action is needed, placed at the END.\n"
-                + "3. If the user seems to be in an emergency, "
-                + "prioritize sending SOS.\n"
-                + "4. For first aid questions, search the guides "
-                + "rather than giving medical advice directly.\n"
-                + "5. Be brief. Maximum 3 sentences before "
-                + "the action tag.\n"
-                + "6. Always confirm what action you are taking.\n\n"
+                + "ACTION RULES:\n"
+                + "- Fire, emergency, danger, help, "
+                + "accident = SEND_SOS\n"
+                + "- First aid, medical guide, "
+                + "open guides = OPEN_FIRSTAID\n"
+                + "- CPR, choking, burns, bleeding, "
+                + "wound, fracture, specific condition "
+                + "= SEARCH_FIRSTAID|topic\n"
+                + "- Call, phone, dial, "
+                + "fire station = CALL_STATION\n"
+                + "- Greetings, questions, "
+                + "help menu = NONE\n\n"
 
-                + "Examples:\n"
-                + "User: 'There is a fire'\n"
-                + "Response: 'I am sending an emergency SOS "
-                + "alert to BFP right now. Help is on the way. "
-                + "Please stay calm and move to safety. "
-                + "[ACTION:SEND_SOS]'\n\n"
+                + "EXAMPLES:\n"
+                + "User: Send SOS\n"
+                + "You: Sending SOS alert to BFP now. "
+                + "Stay safe. [ACTION:SEND_SOS]\n\n"
 
-                + "User: 'How do I do CPR'\n"
-                + "Response: 'Let me find the CPR first aid "
-                + "guide for you right away. "
-                + "[ACTION:SEARCH_FIRSTAID|CPR]'\n\n"
+                + "User: CPR steps\n"
+                + "You: Opening CPR guide for you now. "
+                + "[ACTION:SEARCH_FIRSTAID|CPR]\n\n"
 
-                + "User: 'I need help'\n"
-                + "Response: 'I am here to help. I can send "
-                + "an SOS alert, open first aid guides, or "
-                + "call the fire station. What do you need? "
-                + "[ACTION:NONE]'\n\n"
+                + "User: Someone is choking\n"
+                + "You: Opening choking first aid guide "
+                + "immediately. [ACTION:SEARCH_FIRSTAID|choking]\n\n"
 
-                + "User: 'Someone is choking'\n"
-                + "Response: 'Opening the choking first aid "
-                + "guide immediately. Follow the steps carefully. "
-                + "[ACTION:SEARCH_FIRSTAID|choking]'";
+                + "User: Open first aid\n"
+                + "You: Opening first aid guides now. "
+                + "[ACTION:OPEN_FIRSTAID]\n\n"
+
+                + "User: Call fire station\n"
+                + "You: Calling BFP fire station now. "
+                + "[ACTION:CALL_STATION]\n\n"
+
+                + "User: Hello\n"
+                + "You: Hello! I can send SOS, open first "
+                + "aid guides, or call the fire station. "
+                + "[ACTION:NONE]";
     }
 
-    // ── Clear conversation history ────────────────────────────────
     public void clearHistory() {
-        conversationHistory.clear();
+        history.clear();
     }
 
-    // ── Release resources ─────────────────────────────────────────
     public void release() {
         stopSpeaking();
         if (tts != null) {
             tts.shutdown();
-            tts = null;
+            tts     = null;
+            ttsReady = false;
         }
-        ttsReady = false;
     }
 }
