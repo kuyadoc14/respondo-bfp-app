@@ -1,11 +1,3 @@
-import java.util.Properties
-
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { localProperties.load(it) }
-}
-
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
@@ -19,10 +11,6 @@ android {
         version = release(36) {
             minorApiLevel = 1
         }
-
-        buildFeatures {
-            buildConfig = true
-        }
     }
 
     defaultConfig {
@@ -33,13 +21,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // ADD this
-        buildConfigField(
-            "String",
-            "GROQ_API_KEY",
-            "\"${localProperties.getProperty("GROQ_API_KEY", "")}\""
-        )
     }
 
     buildTypes {

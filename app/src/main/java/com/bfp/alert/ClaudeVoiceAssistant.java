@@ -22,14 +22,13 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-
 public class ClaudeVoiceAssistant {
 
     private static final String TAG = "BFPVoice";
 
     // ── Groq API config (free) ────────────────────────────────────
-    private static final String API_KEY =
-            BuildConfig.GROQ_API_KEY;
+    private static final String API_KEY  =
+            "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";
     private static final String API_URL  =
             "https://api.groq.com/openai/v1/chat/completions";
     private static final String MODEL    =
