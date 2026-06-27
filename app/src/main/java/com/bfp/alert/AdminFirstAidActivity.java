@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -141,25 +142,33 @@ public class AdminFirstAidActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
             FirstAidItem item = items.get(position);
-            h.tvIcon.setText(item.iconEmoji != null ? item.iconEmoji : "🩺");
-            h.tvTitle.setText(item.title);
-            h.tvCategory.setText(item.category);
+            h.tvAdminIcon.setText(item.iconEmoji != null ? item.iconEmoji : "🩺");
+            h.tvAdminTitle.setText(item.title);
+            h.tvAdminCategory.setText(item.category);
             h.btnEdit.setOnClickListener(v   -> onEdit.onEdit(item));
-            h.btnDelete.setOnClickListener(v -> onDelete.onDelete(item));
+            h.btnAdminDelete.setOnClickListener(v -> onDelete.onDelete(item));
         }
 
         @Override public int getItemCount() { return items.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
-            TextView tvIcon, tvTitle, tvCategory;
-            Button btnEdit, btnDelete;
+            TextView tvAdminIcon, tvAdminTitle,
+                    tvAdminCategory;
+            TextView btnEdit;
+            ImageButton btnAdminDelete;
+
             VH(View v) {
                 super(v);
-                tvIcon    = v.findViewById(R.id.tvAdminIcon);
-                tvTitle   = v.findViewById(R.id.tvAdminTitle);
-                tvCategory = v.findViewById(R.id.tvAdminCategory);
-                btnEdit   = v.findViewById(R.id.btnEdit);
-                btnDelete = v.findViewById(R.id.btnAdminDelete);
+                tvAdminIcon     =
+                        v.findViewById(R.id.tvAdminIcon);
+                tvAdminTitle    =
+                        v.findViewById(R.id.tvAdminTitle);
+                tvAdminCategory =
+                        v.findViewById(R.id.tvAdminCategory);
+                btnEdit         =
+                        v.findViewById(R.id.btnEdit);
+                btnAdminDelete  =
+                        v.findViewById(R.id.btnAdminDelete);
             }
         }
     }

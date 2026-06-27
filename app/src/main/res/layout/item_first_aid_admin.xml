@@ -24,8 +24,7 @@
             android:layout_height="48dp"
             android:background="@drawable/bg_icon_circle"
             android:gravity="center"
-            android:layout_marginEnd="14dp"
-            >
+            android:layout_marginEnd="14dp">
 
             <TextView
                 android:id="@+id/tvAdminIcon"
@@ -70,44 +69,41 @@
 
         </LinearLayout>
 
-        <!-- Action buttons -->
-        <LinearLayout
+        <!-- Edit button -->
+        <TextView
+            android:id="@+id/btnEdit"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="36dp"
+            android:text="Edit"
+            android:textSize="12sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@drawable/bg_button_info"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:text="Edit"
-                android:textSize="12sp"
-                android:textColor="@color/white"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                app:backgroundTint="@color/info"
-                app:cornerRadius="10dp"
-                android:elevation="0dp"
-                android:layout_marginEnd="8dp"/>
+        <LinearLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_badge_active"
+            android:gravity="center">
 
-            <com.google.android.material.button.MaterialButton
+            <ImageButton
                 android:id="@+id/btnAdminDelete"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:text="✕"
-                android:textSize="13sp"
-                android:textColor="@color/primary"
-                android:padding="0dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                app:backgroundTint="@color/primary_light"
-                app:cornerRadius="10dp"
-                android:elevation="0dp"/>
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_delete_trashcan"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"/>
 
         </LinearLayout>
+
 
     </LinearLayout>
 

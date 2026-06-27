@@ -117,7 +117,7 @@ public class AdminDashboardActivity extends AppCompatActivity
                 .setOnClickListener(v -> startActivity(
                         new Intent(this, AdminFirstAidActivity.class)));
 
-        findViewById(R.id.btnLogout).setOnClickListener(v -> {
+        findViewById(R.id.btnAdminLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
 
             Intent intent = new Intent(
