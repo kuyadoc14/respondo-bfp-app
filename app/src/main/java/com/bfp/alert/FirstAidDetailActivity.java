@@ -162,69 +162,83 @@ public class FirstAidDetailActivity extends AppCompatActivity {
         findViewById(R.id.tvInAppVideoLabel)
                 .setVisibility(View.VISIBLE);
 
-        PlayerView playerView = findViewById(R.id.exoPlayerView);
+        PlayerView  playerView    = findViewById(R.id.exoPlayerView);
+        TextView    tvVideoStatus = findViewById(R.id.tvVideoStatus);
+        ProgressBar videoProgress =
+                findViewById(R.id.videoDownloadProgress);
+
         playerView.setVisibility(View.VISIBLE);
 
-        TextView   tvVideoStatus  = findViewById(R.id.tvVideoStatus);
-        ProgressBar videoProgress = findViewById(R.id.videoDownloadProgress);
-
-        // Check if already cached locally
+        // Check cache — guard against null path
         if (VideoCache.isCached(this, storageVideoUrl)) {
-            // Play from local cache
-            String localPath = VideoCache.getCachedPath(
-                    this, storageVideoUrl);
-            playVideo(playerView,
-                    Uri.fromFile(new java.io.File(localPath)));
-            tvVideoStatus.setText("✓ Available offline");
-            tvVideoStatus.setTextColor(0xFF2a9d8f);
-            tvVideoStatus.setVisibility(View.VISIBLE);
+            String localPath =
+                    VideoCache.getCachedPath(this, storageVideoUrl);
+
+            if (localPath != null && !localPath.isEmpty()) {
+                // Play from local file
+                playVideo(playerView,
+                        Uri.fromFile(new java.io.File(localPath)));
+                tvVideoStatus.setText("✓ Available offline");
+                tvVideoStatus.setTextColor(0xFF34C759);
+                tvVideoStatus.setVisibility(View.VISIBLE);
+            } else {
+                // getCachedPath returned null even though isCached
+                // was true — fall back to streaming
+                streamVideo(playerView, tvVideoStatus, videoProgress);
+            }
 
         } else if (NetworkUtils.isOnline(this)) {
-            // Stream and cache simultaneously
-            playVideo(playerView,
-                    Uri.parse(storageVideoUrl));
-            tvVideoStatus.setText("⬇ Downloading for offline...");
-            tvVideoStatus.setTextColor(0xFFFFBB33);
-            tvVideoStatus.setVisibility(View.VISIBLE);
-            videoProgress.setVisibility(View.VISIBLE);
-
-            // Download in background for next offline use
-            VideoCache.downloadVideo(this, storageVideoUrl,
-                    new VideoCache.DownloadCallback() {
-                        @Override
-                        public void onProgress(int percent) {
-                            runOnUiThread(() ->
-                                    videoProgress.setProgress(percent));
-                        }
-
-                        @Override
-                        public void onComplete(String localPath) {
-                            runOnUiThread(() -> {
-                                videoProgress.setVisibility(View.GONE);
-                                tvVideoStatus.setText(
-                                        "✓ Available offline");
-                                tvVideoStatus.setTextColor(0xFF2a9d8f);
-                            });
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            runOnUiThread(() -> {
-                                videoProgress.setVisibility(View.GONE);
-                                tvVideoStatus.setVisibility(View.GONE);
-                            });
-                        }
-                    });
+            streamVideo(playerView, tvVideoStatus, videoProgress);
 
         } else {
             // Offline and not cached
             playerView.setVisibility(View.GONE);
             tvVideoStatus.setText(
-                    "⚠ Video not available offline.\n"
-                            + "Connect to internet to download it.");
-            tvVideoStatus.setTextColor(0xFFe63946);
+                    "⚠ Video not available offline. "
+                            + "Connect to the internet to download it.");
+            tvVideoStatus.setTextColor(0xFFFF3B30);
             tvVideoStatus.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void streamVideo(PlayerView playerView,
+                             TextView tvVideoStatus,
+                             ProgressBar videoProgress) {
+        if (storageVideoUrl == null
+                || storageVideoUrl.isEmpty()) return;
+
+        playVideo(playerView, Uri.parse(storageVideoUrl));
+        tvVideoStatus.setText("⬇ Downloading for offline...");
+        tvVideoStatus.setTextColor(0xFFFF9500);
+        tvVideoStatus.setVisibility(View.VISIBLE);
+        videoProgress.setVisibility(View.VISIBLE);
+
+        VideoCache.downloadVideo(this, storageVideoUrl,
+                new VideoCache.DownloadCallback() {
+                    @Override
+                    public void onProgress(int percent) {
+                        runOnUiThread(() ->
+                                videoProgress.setProgress(percent));
+                    }
+
+                    @Override
+                    public void onComplete(String localPath) {
+                        runOnUiThread(() -> {
+                            videoProgress.setVisibility(View.GONE);
+                            tvVideoStatus.setText(
+                                    "✓ Available offline");
+                            tvVideoStatus.setTextColor(0xFF34C759);
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            videoProgress.setVisibility(View.GONE);
+                            tvVideoStatus.setVisibility(View.GONE);
+                        });
+                    }
+                });
     }
 
     private void playVideo(PlayerView playerView, Uri uri) {
