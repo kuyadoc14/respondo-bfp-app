@@ -16,14 +16,27 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:src="@android:drawable/ic_media_previous"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:tint="@color/white"
-            android:layout_marginEnd="12dp"/>
+        <LinearLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_circle_white"
+            android:gravity="center"
+            android:layout_marginEnd="14dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_back"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"/>
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvDetailIcon"
@@ -31,7 +44,7 @@
             android:layout_height="40dp"
             android:textSize="24sp"
             android:gravity="center"
-            android:background="@drawable/bg_icon_circle_white"
+            android:background="@drawable/bg_icon_circle_legitwhite"
             android:layout_marginEnd="12dp"/>
 
         <LinearLayout

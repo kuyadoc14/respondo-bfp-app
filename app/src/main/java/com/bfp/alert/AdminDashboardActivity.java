@@ -64,7 +64,7 @@ public class AdminDashboardActivity extends AppCompatActivity
 
     // ── Views ─────────────────────────────────────────────────────
     private RecyclerView recyclerView;
-    private View         mapContainer;
+    private android.widget.FrameLayout         mapContainer;
     private TextView     tvAlertCount;
     private TextView btnTabList, btnTabMap;
 
@@ -89,7 +89,7 @@ public class AdminDashboardActivity extends AppCompatActivity
         db           = FirebaseFirestore.getInstance();
         tvAlertCount = findViewById(R.id.tvAlertCount);
         recyclerView = findViewById(R.id.recyclerView);
-        mapContainer = findViewById(R.id.mapFragment);
+        mapContainer = findViewById(R.id.mapContainer);
         btnTabList = findViewById(R.id.btnTabList);
         btnTabMap  = findViewById(R.id.btnTabMap);
 
@@ -100,12 +100,7 @@ public class AdminDashboardActivity extends AppCompatActivity
         recyclerView.setAdapter(adapter);
 
         // Map fragment
-        SupportMapFragment mapFragment =
-                (SupportMapFragment) getSupportFragmentManager()
-                        .findFragmentById(R.id.mapFragment);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        initMapFragment();
 
         // Tabs
         btnTabList.setOnClickListener(v -> showListView());
@@ -130,6 +125,22 @@ public class AdminDashboardActivity extends AppCompatActivity
         });
 
         listenForAlerts();
+    }
+
+    private void initMapFragment() {
+        SupportMapFragment mapFragment =
+                (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.mapContainer);
+
+        if (mapFragment == null) {
+            mapFragment = SupportMapFragment.newInstance();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.mapContainer, mapFragment)
+                    .commit();
+        }
+
+        mapFragment.getMapAsync(this);
     }
 
     // ════════════════════════════════════════════════════════════
@@ -204,14 +215,11 @@ public class AdminDashboardActivity extends AppCompatActivity
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setCompassEnabled(true);
 
-        // Default camera — Philippines
         googleMap.moveCamera(
                 CameraUpdateFactory.newLatLngZoom(
                         new LatLng(12.8797, 121.7740), 6f));
 
-        // Marker tap → show info dialog
         googleMap.setOnMarkerClickListener(marker -> {
-            // Skip station marker
             if ("station".equals(marker.getTag())) {
                 marker.showInfoWindow();
                 return true;
@@ -222,14 +230,14 @@ public class AdminDashboardActivity extends AppCompatActivity
 
             for (int i = 0; i < alertIds.size(); i++) {
                 if (alertIds.get(i).equals(alertId)) {
-                    showAlertDialog(alertId,
-                            alertList.get(i));
+                    showAlertDialog(alertId, alertList.get(i));
                     break;
                 }
             }
             return true;
         });
 
+        // Update the visibility check to use mapContainer
         if (mapContainer.getVisibility() == View.VISIBLE) {
             mapInitialized = true;
             updateMapMarkers();

@@ -153,9 +153,9 @@
         android:padding="16dp"
         android:visibility="visible" />
 
-    <fragment
-        android:id="@+id/mapFragment"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <!-- With this -->
+    <FrameLayout
+        android:id="@+id/mapContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"/>

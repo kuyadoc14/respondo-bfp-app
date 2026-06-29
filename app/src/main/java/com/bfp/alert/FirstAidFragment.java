@@ -124,37 +124,65 @@ public class FirstAidFragment extends Fragment {
                 view.findViewById(R.id.categoryFilter);
         container.removeAllViews();
 
-        // Collect unique categories
         List<String> categories = new ArrayList<>();
         categories.add("All");
         for (FirstAidItem item : allItems) {
             if (item.category != null
-                    && !categories.contains(item.category)) {
+                    && !categories.contains(
+                    item.category)) {
                 categories.add(item.category);
             }
         }
 
         for (String cat : categories) {
-            Button btn = new Button(requireContext());
+            com.google.android.material.button.MaterialButton btn =
+                    new com.google.android.material.button
+                            .MaterialButton(requireContext());
+
             btn.setText(cat);
-            btn.setTextSize(11);
+            btn.setTextSize(12);
             btn.setTextColor(0xFFFFFFFF);
+            btn.setTypeface(null,
+                    android.graphics.Typeface.BOLD);
+
+            // Corner radius — increase this for more rounding
+            btn.setCornerRadius(dp(50)); // full pill
+
+            // Remove default shadow/elevation
+            btn.setElevation(0);
+            btn.setStateListAnimator(null);
+
+            // Padding inside the chip
+            btn.setPadding(
+                    dp(18), dp(6), dp(18), dp(6));
+            btn.setMinWidth(0);
+            btn.setMinimumWidth(0);
+            btn.setMinHeight(0);
+            btn.setMinimumHeight(0);
+            btn.setInsetTop(0);
+            btn.setInsetBottom(0);
+
+            // Color
             btn.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(
-                            cat.equals("All") ? 0xFFe63946 : 0xFF333355));
+                    android.content.res.ColorStateList
+                            .valueOf(cat.equals("All")
+                                    ? 0xFFFF3B30   // red for All
+                                    : 0xFF3A3A3C));// dark for others
 
             LinearLayout.LayoutParams params =
                     new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT);
-            params.setMargins(6, 0, 6, 0);
+                            LinearLayout.LayoutParams
+                                    .WRAP_CONTENT,
+                            LinearLayout.LayoutParams
+                                    .WRAP_CONTENT);
+            params.setMargins(0, 0, dp(8), 0);
             btn.setLayoutParams(params);
 
             btn.setOnClickListener(v -> {
-                // Reset search box
                 EditText etSearch =
                         view.findViewById(R.id.etSearch);
-                etSearch.setText("");
+                if (etSearch != null)
+                    etSearch.setText("");
 
                 if (cat.equals("All")) {
                     filterItems("");
@@ -162,7 +190,6 @@ public class FirstAidFragment extends Fragment {
                     filterByCategory(cat);
                 }
 
-                // Highlight selected button
                 highlightCategoryButton(
                         container, btn, cat);
             });
@@ -171,19 +198,35 @@ public class FirstAidFragment extends Fragment {
         }
     }
 
-    // Highlight the active category button
-    private void highlightCategoryButton(LinearLayout container,
-                                         Button selected,
-                                         String cat) {
-        for (int i = 0; i < container.getChildCount(); i++) {
+    private void highlightCategoryButton(
+            LinearLayout container,
+            com.google.android.material.button
+                    .MaterialButton selected,
+            String cat) {
+        for (int i = 0;
+             i < container.getChildCount(); i++) {
             View child = container.getChildAt(i);
-            if (child instanceof Button) {
-                Button b = (Button) child;
+            if (child instanceof
+                    com.google.android.material.button
+                            .MaterialButton) {
+                com.google.android.material.button
+                        .MaterialButton b =
+                        (com.google.android.material.button
+                                .MaterialButton) child;
                 b.setBackgroundTintList(
-                        android.content.res.ColorStateList.valueOf(
-                                b == selected ? 0xFFe63946 : 0xFF333355));
+                        android.content.res.ColorStateList
+                                .valueOf(b == selected
+                                        ? 0xFFFF3B30   // selected
+                                        : 0xFF3A3A3C));// unselected
             }
         }
+    }
+
+    private int dp(int val) {
+        return (int)(val * requireContext()
+                .getResources()
+                .getDisplayMetrics()
+                .density);
     }
 
     // ── Filter by search query ─────────────────────────────────────
