@@ -5,6 +5,38 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
+    <!-- BLE connection badge -->
+    <LinearLayout
+        android:id="@+id/bleBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1A1A1A"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_margin="12dp"
+        android:visibility="gone"
+        android:gravity="center_vertical">
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/circle_dot_green"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ESP32 Connected"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"/>
+
+    </LinearLayout>
+
     <!-- Top bar -->
     <LinearLayout
         android:id="@+id/topBar"

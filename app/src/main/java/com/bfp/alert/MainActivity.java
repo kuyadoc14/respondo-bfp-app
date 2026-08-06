@@ -22,6 +22,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         FirebaseAuth.getInstance().signOut();
 
+        // Request BLE permissions on Android 12+
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            requestPermissions(new String[]{
+                    android.Manifest.permission.BLUETOOTH_SCAN,
+                    android.Manifest.permission.BLUETOOTH_CONNECT
+            }, 300);
+        }
 
         // Load SOS as default tab
         if (savedInstanceState == null) {

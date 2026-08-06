@@ -3,6 +3,7 @@ package com.bfp.alert;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +40,8 @@ public class SosFragment extends Fragment {
     private LinearLayout statusCard;
     private ListenerRegistration alertListener;
     private String activeAlertId = null;
+    private BLEManager bleManager;
+    private View       bleBadge;
 
     @Nullable
     @Override
@@ -54,6 +57,7 @@ public class SosFragment extends Fragment {
         btnSOS     = view.findViewById(R.id.btnSOS);
         tvStatus   = view.findViewById(R.id.tvStatus);
         statusCard = view.findViewById(R.id.statusCard);
+        bleBadge = view.findViewById(R.id.bleBadge);
 
         Animation pulse = AnimationUtils.loadAnimation(
                 requireContext(), R.anim.pulse);
@@ -71,8 +75,10 @@ public class SosFragment extends Fragment {
 
         // Check if there's already an active alert when fragment loads
         checkExistingAlert();
+        initBLE();
 
         return view;
+
     }
 
     // Check Firestore for any existing active alert from this session
@@ -237,6 +243,64 @@ public class SosFragment extends Fragment {
         }, 6000);
     }
 
+    private void initBLE() {
+        bleManager = new BLEManager(
+                requireContext(),
+                new BLEManager.BLEListener() {
+
+                    @Override
+                    public void onSOSReceived(
+                            String deviceInfo) {
+                        // ESP32 button pressed —
+                        // trigger SOS from app
+                        requireActivity().runOnUiThread(
+                                () -> {
+                                    if (activeAlertId
+                                            == null) {
+                                        Toast.makeText(
+                                                        requireContext(),
+                                                        "🚨 SOS from ESP32 device!",
+                                                        Toast.LENGTH_SHORT)
+                                                .show();
+                                        sendSOSAlert();
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onConnected() {
+                        requireActivity().runOnUiThread(
+                                () -> {
+                                    if (bleBadge != null)
+                                        bleBadge.setVisibility(
+                                                View.VISIBLE);
+                                    Toast.makeText(
+                                            requireContext(),
+                                            "🔵 ESP32 device connected",
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                    }
+
+                    @Override
+                    public void onDisconnected() {
+                        requireActivity().runOnUiThread(
+                                () -> {
+                                    if (bleBadge != null)
+                                        bleBadge.setVisibility(
+                                                View.GONE);
+                                });
+                    }
+
+                    @Override
+                    public void onScanStarted() {
+                        Log.d("BLE", "Scanning...");
+                    }
+                });
+
+        // Start scanning for ESP32
+        bleManager.startScan();
+    }
+
     private void showVoiceAssistant() {
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
@@ -308,6 +372,9 @@ public class SosFragment extends Fragment {
         if (alertListener != null) {
             alertListener.remove();
             alertListener = null;
+            if (bleManager != null) {
+                bleManager.disconnect();
+            }
         }
     }
 }
