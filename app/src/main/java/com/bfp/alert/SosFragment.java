@@ -1,6 +1,8 @@
 package com.bfp.alert;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,47 +19,60 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
-
+import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SosFragment extends Fragment {
 
+    private static final String TAG       = "SosFragment";
+    private static final String PREFS     = "bfp_prefs";
+    private static final String KEY_ALERT = "activeAlertId";
+    private static final String KEY_USER  = "userId";
+
+    // Static so they survive tab switches (fragment .replace() destroys views)
+    private static ListenerRegistration sListener = null;
+    private static String               sAlertId  = null;
+
+    private FirebaseFirestore          db;
     private FusedLocationProviderClient locationClient;
-    private FirebaseFirestore db;
-    private Button btnSOS;
-    private TextView tvStatus;
+
+    private Button       btnSOS;
+    private TextView     tvStatus;
     private LinearLayout statusCard;
-    private ListenerRegistration alertListener;
-    private String activeAlertId = null;
+
+    // BLE
     private BLEManager bleManager;
     private View       bleBadge;
 
+    // ─────────────────────────────────────────────────────────
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_sos, container, false);
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
+
+        View view = inflater.inflate(
+                R.layout.fragment_sos, container, false);
 
         db             = FirebaseFirestore.getInstance();
         locationClient = LocationServices
-                .getFusedLocationProviderClient(requireActivity());
+                .getFusedLocationProviderClient(
+                        requireActivity());
 
         btnSOS     = view.findViewById(R.id.btnSOS);
         tvStatus   = view.findViewById(R.id.tvStatus);
         statusCard = view.findViewById(R.id.statusCard);
-        bleBadge = view.findViewById(R.id.bleBadge);
+        bleBadge   = view.findViewById(R.id.bleBadge);
 
         Animation pulse = AnimationUtils.loadAnimation(
                 requireContext(), R.anim.pulse);
@@ -70,179 +85,158 @@ public class SosFragment extends Fragment {
                     v -> showVoiceAssistant());
         }
 
-
         btnSOS.setOnClickListener(v -> sendSOSAlert());
 
-        // Check if there's already an active alert when fragment loads
-        checkExistingAlert();
+        // Init BLE
         initBLE();
 
-        return view;
+        // Restore state from SharedPreferences
+        // in case app was killed
+        String saved = getSavedAlertId();
+        if (saved != null) {
+            sAlertId = saved;
+        }
 
+        // Sync with current Firestore state
+        syncWithFirestore();
+
+        return view;
     }
 
-    // Check Firestore for any existing active alert from this session
-    private void checkExistingAlert() {
-        String sessionUserId = getSessionUserId();
-        if (sessionUserId == null) return;
+    // ─────────────────────────────────────────────────────────
+    // Called every onResume so the SOS button
+    // resets instantly after admin resolves
+    @Override
+    public void onResume() {
+        super.onResume();
+        syncWithFirestore();
+    }
 
+    // ─────────────────────────────────────────────────────────
+    // Check current Firestore state for the saved alert
+    // and attach a live listener
+    private void syncWithFirestore() {
+        String alertId = sAlertId != null
+                ? sAlertId : getSavedAlertId();
+
+        if (alertId == null) {
+            // No active alert — make sure button is ready
+            setIdleState();
+            return;
+        }
+
+        // One-time GET to get current status
         db.collection("sos_alerts")
-                .whereEqualTo("userId", sessionUserId)
-                .whereEqualTo("status", "active")
-                .limit(1)
+                .document(alertId)
                 .get()
-                .addOnSuccessListener(snapshots -> {
-                    if (!snapshots.isEmpty()) {
-                        activeAlertId = snapshots.getDocuments().get(0).getId();
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        // Document deleted — clear state
+                        clearAlertState();
+                        setIdleState();
+                        return;
+                    }
+
+                    String status = doc.getString("status");
+
+                    if ("active".equals(status)) {
+                        sAlertId = alertId;
                         setSOSSentState();
-                        listenForResolution(activeAlertId);
+                        attachLiveListener(alertId);
+                    } else {
+                        // Already resolved
+                        clearAlertState();
+                        setIdleState();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Sync failed: "
+                                + e.getMessage()));
+    }
+
+    // Attach live listener — survives tab switches
+    // because sListener is static
+    private void attachLiveListener(String alertId) {
+        // Remove old listener if any
+        if (sListener != null) {
+            sListener.remove();
+            sListener = null;
+        }
+
+        sListener = db.collection("sos_alerts")
+                .document(alertId)
+                .addSnapshotListener((snap, e) -> {
+                    if (e != null || snap == null) return;
+
+                    String status = snap.getString("status");
+                    Log.d(TAG, "Live update: " + status);
+
+                    if ("resolved".equals(status)) {
+                        // Immediately update UI without
+                        // waiting for tab switch
+                        clearAlertState();
+                        setResolvedState();
                     }
                 });
     }
 
+    // ─────────────────────────────────────────────────────────
+    // Send SOS from button tap
     private void sendSOSAlert() {
-        if (ActivityCompat.checkSelfPermission(requireContext(),
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 100);
+            ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    }, 100);
+            return;
+        }
+
+        if (!"SOS".equals(btnSOS.getText().toString())
+                && btnSOS.getText().toString().contains("SOS\nSENT")) {
             return;
         }
 
         btnSOS.setEnabled(false);
         btnSOS.setText("Sending...");
 
-        locationClient.getLastLocation().addOnSuccessListener(location -> {
-            // Generate a stable userId for this install
-            String userId = getOrCreateUserId();
+        locationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    String userId = getOrCreateUserId();
 
-            Map<String, Object> alert = new HashMap<>();
-            alert.put("userId",      userId);
-            alert.put("latitude",    location != null ? location.getLatitude()  : 0.0);
-            alert.put("longitude",   location != null ? location.getLongitude() : 0.0);
-            alert.put("timestamp",   FieldValue.serverTimestamp());
-            alert.put("status",      "active");
-            alert.put("deviceToken", "");
+                    Map<String, Object> alert = new HashMap<>();
+                    alert.put("userId",      userId);
+                    alert.put("latitude",    location != null
+                            ? location.getLatitude()  : 0.0);
+                    alert.put("longitude",   location != null
+                            ? location.getLongitude() : 0.0);
+                    alert.put("timestamp",
+                            FieldValue.serverTimestamp());
+                    alert.put("status",      "active");
+                    alert.put("deviceToken", "");
 
-            db.collection("sos_alerts").add(alert)
-                    .addOnSuccessListener(ref -> {
-                        activeAlertId = ref.getId();
-                        setSOSSentState();
-                        listenForResolution(activeAlertId);
-                    })
-                    .addOnFailureListener(e -> {
-                        btnSOS.setEnabled(true);
-                        btnSOS.setText("SOS");
-                        Toast.makeText(requireContext(),
-                                "Failed: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    });
-        });
-    }
-
-    // Real-time listener — watches for admin resolving the alert
-    private void listenForResolution(String alertId) {
-        if (alertListener != null) alertListener.remove();
-
-        alertListener = db.collection("sos_alerts")
-                .document(alertId)
-                .addSnapshotListener((snapshot, e) -> {
-                    if (e != null || snapshot == null) return;
-                    String status = snapshot.getString("status");
-
-                    if ("resolved".equals(status)) {
-                        setResolvedState();
-                        activeAlertId = null;
-                        if (alertListener != null) {
-                            alertListener.remove();
-                            alertListener = null;
-                        }
-                    }
+                    db.collection("sos_alerts").add(alert)
+                            .addOnSuccessListener(ref -> {
+                                sAlertId = ref.getId();
+                                saveAlertId(sAlertId);
+                                setSOSSentState();
+                                attachLiveListener(sAlertId);
+                            })
+                            .addOnFailureListener(e -> {
+                                btnSOS.setEnabled(true);
+                                btnSOS.setText("SOS");
+                                Toast.makeText(requireContext(),
+                                        "Failed: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            });
                 });
     }
 
-    // ── UI States ────────────────────────────────────────────────
-
-    private void setSOSSentState() {
-        if (getView() == null) return;
-
-        // Disable SOS button
-        btnSOS.setEnabled(false);
-        btnSOS.setText("SOS\nSENT");
-        btnSOS.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFF883333));
-
-        // Show warning status card
-        statusCard.setVisibility(View.VISIBLE);
-        statusCard.setBackgroundResource(R.drawable.bg_status_warning);
-
-        tvStatus.setText("🚒  Help is on the way!\nBFP has received your alert.");
-        tvStatus.setTextColor(0xFFFFBB33);
-
-        // Start pulsing dot
-        View pulseDot = getView().findViewById(R.id.pulseDot);
-        if (pulseDot != null) {
-            pulseDot.setBackgroundResource(R.drawable.circle_dot);
-            Animation pulseDotAnim = AnimationUtils.loadAnimation(
-                    requireContext(), R.anim.pulse_dot);
-            pulseDot.startAnimation(pulseDotAnim);
-        }
-
-        // Fade in animation
-        Animation fadeIn = AnimationUtils.loadAnimation(
-                requireContext(), android.R.anim.fade_in);
-        statusCard.startAnimation(fadeIn);
-    }
-
-    private void setResolvedState() {
-        if (getView() == null) return;
-
-        // Re-enable SOS button
-        btnSOS.setEnabled(true);
-        btnSOS.setText("SOS");
-        btnSOS.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(0xFFe63946));
-
-        Animation pulse = AnimationUtils.loadAnimation(
-                requireContext(), R.anim.pulse);
-        btnSOS.startAnimation(pulse);
-
-        // Switch to resolved status card
-        statusCard.setVisibility(View.VISIBLE);
-        statusCard.setBackgroundResource(R.drawable.bg_status_resolved);
-
-        tvStatus.setText("✅  Help has arrived!\nYour alert has been resolved.");
-        tvStatus.setTextColor(0xFF2a9d8f);
-
-        // Stop pulsing dot and turn green
-        View pulseDot = getView().findViewById(R.id.pulseDot);
-        if (pulseDot != null) {
-            pulseDot.clearAnimation();
-            pulseDot.setBackgroundResource(R.drawable.circle_dot_green);
-        }
-
-        Toast.makeText(requireContext(),
-                "Your alert has been resolved by BFP.",
-                Toast.LENGTH_LONG).show();
-
-        // Hide card after 6 seconds
-        statusCard.postDelayed(() -> {
-            if (getView() != null) {
-                Animation fadeOut = AnimationUtils.loadAnimation(
-                        requireContext(), android.R.anim.fade_out);
-                fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                    @Override public void onAnimationStart(Animation a) {}
-                    @Override public void onAnimationRepeat(Animation a) {}
-                    @Override public void onAnimationEnd(Animation a) {
-                        if (getView() != null)
-                            statusCard.setVisibility(View.GONE);
-                    }
-                });
-                statusCard.startAnimation(fadeOut);
-            }
-        }, 6000);
-    }
-
+    // ─────────────────────────────────────────────────────────
+    // BLE init — listens for ESP32 trigger
     private void initBLE() {
         bleManager = new BLEManager(
                 requireContext(),
@@ -251,53 +245,55 @@ public class SosFragment extends Fragment {
                     @Override
                     public void onSOSReceived(
                             String deviceInfo) {
-                        // ESP32 button pressed —
-                        // trigger SOS from app
-                        requireActivity().runOnUiThread(
-                                () -> {
-                                    if (activeAlertId
-                                            == null) {
-                                        Toast.makeText(
-                                                        requireContext(),
-                                                        "🚨 SOS from ESP32 device!",
-                                                        Toast.LENGTH_SHORT)
-                                                .show();
-                                        sendSOSAlert();
-                                    }
-                                });
+                        requireActivity().runOnUiThread(() -> {
+
+                            // Clear any existing alert state
+                            // before new BLE SOS so it
+                            // doesn't block sending
+                            if (sAlertId != null) {
+                                Log.d(TAG,
+                                        "BLE SOS: clearing "
+                                                + "old alert state");
+                                clearAlertState();
+                            }
+
+                            Toast.makeText(
+                                    requireContext(),
+                                    "🚨 SOS from ESP32!",
+                                    Toast.LENGTH_SHORT).show();
+
+                            sendSOSAlert();
+                        });
                     }
 
                     @Override
                     public void onConnected() {
-                        requireActivity().runOnUiThread(
-                                () -> {
-                                    if (bleBadge != null)
-                                        bleBadge.setVisibility(
-                                                View.VISIBLE);
-                                    Toast.makeText(
-                                            requireContext(),
-                                            "🔵 ESP32 device connected",
-                                            Toast.LENGTH_SHORT).show();
-                                });
+                        requireActivity().runOnUiThread(() -> {
+                            if (bleBadge != null)
+                                bleBadge.setVisibility(
+                                        View.VISIBLE);
+                            Toast.makeText(
+                                    requireContext(),
+                                    "🔵 ESP32 connected",
+                                    Toast.LENGTH_SHORT).show();
+                        });
                     }
 
                     @Override
                     public void onDisconnected() {
-                        requireActivity().runOnUiThread(
-                                () -> {
-                                    if (bleBadge != null)
-                                        bleBadge.setVisibility(
-                                                View.GONE);
-                                });
+                        requireActivity().runOnUiThread(() -> {
+                            if (bleBadge != null)
+                                bleBadge.setVisibility(
+                                        View.GONE);
+                        });
                     }
 
                     @Override
                     public void onScanStarted() {
-                        Log.d("BLE", "Scanning...");
+                        Log.d(TAG, "BLE scanning...");
                     }
                 });
 
-        // Start scanning for ESP32
         bleManager.startScan();
     }
 
@@ -345,36 +341,156 @@ public class SosFragment extends Fragment {
         dialog.show();
     }
 
-    // ── User ID helpers ──────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // UI states
+
+    private void setIdleState() {
+        if (getView() == null) return;
+
+        btnSOS.setEnabled(true);
+        btnSOS.setText("SOS");
+        btnSOS.setBackgroundTintList(
+                android.content.res.ColorStateList
+                        .valueOf(0xFFFF3B30));
+
+        Animation pulse = AnimationUtils.loadAnimation(
+                requireContext(), R.anim.pulse);
+        btnSOS.startAnimation(pulse);
+
+        statusCard.setVisibility(View.GONE);
+    }
+
+    private void setSOSSentState() {
+        if (getView() == null) return;
+
+        btnSOS.clearAnimation();
+        btnSOS.setEnabled(false);
+        btnSOS.setText("SOS\nSENT");
+        btnSOS.setBackgroundTintList(
+                android.content.res.ColorStateList
+                        .valueOf(0xFF883333));
+
+        statusCard.setVisibility(View.VISIBLE);
+        tvStatus.setText(
+                "🚒  Help is on the way!\n"
+                        + "BFP has received your alert.");
+        tvStatus.setTextColor(0xFFFFBB33);
+
+        // Pulse dot
+        View pulseDot = getView().findViewById(
+                R.id.pulseDot);
+        if (pulseDot != null) {
+            Animation dotAnim =
+                    AnimationUtils.loadAnimation(
+                            requireContext(), R.anim.pulse_dot);
+            pulseDot.startAnimation(dotAnim);
+        }
+    }
+
+    private void setResolvedState() {
+        if (getView() == null) return;
+
+        // Stop pulse dot
+        View pulseDot = getView().findViewById(
+                R.id.pulseDot);
+        if (pulseDot != null) {
+            pulseDot.clearAnimation();
+            pulseDot.setBackgroundResource(
+                    R.drawable.circle_dot_green);
+        }
+
+        btnSOS.setEnabled(true);
+        btnSOS.setText("SOS");
+        btnSOS.setBackgroundTintList(
+                android.content.res.ColorStateList
+                        .valueOf(0xFFFF3B30));
+
+        Animation pulse = AnimationUtils.loadAnimation(
+                requireContext(), R.anim.pulse);
+        btnSOS.startAnimation(pulse);
+
+        statusCard.setVisibility(View.VISIBLE);
+        tvStatus.setText(
+                "✅  Help has arrived!\n"
+                        + "Your alert has been resolved.");
+        tvStatus.setTextColor(0xFF34C759);
+
+        Toast.makeText(requireContext(),
+                "Alert resolved by BFP.",
+                Toast.LENGTH_LONG).show();
+
+        // Hide status card after 6 seconds
+        statusCard.postDelayed(() -> {
+            if (getView() != null)
+                statusCard.setVisibility(View.GONE);
+        }, 6000);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // SharedPreferences helpers
 
     private String getOrCreateUserId() {
-        android.content.SharedPreferences prefs =
-                requireContext().getSharedPreferences("bfp_prefs",
-                        android.content.Context.MODE_PRIVATE);
-        String userId = prefs.getString("userId", null);
-        if (userId == null) {
-            userId = "user_" + System.currentTimeMillis();
-            prefs.edit().putString("userId", userId).apply();
+        SharedPreferences prefs =
+                requireContext().getSharedPreferences(
+                        PREFS, Context.MODE_PRIVATE);
+        String id = prefs.getString(KEY_USER, null);
+        if (id == null) {
+            id = "user_" + System.currentTimeMillis();
+            prefs.edit().putString(KEY_USER, id).apply();
         }
-        return userId;
+        return id;
     }
 
-    private String getSessionUserId() {
-        android.content.SharedPreferences prefs =
-                requireContext().getSharedPreferences("bfp_prefs",
-                        android.content.Context.MODE_PRIVATE);
-        return prefs.getString("userId", null);
+    private void saveAlertId(String id) {
+        requireContext()
+                .getSharedPreferences(PREFS,
+                        Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_ALERT, id)
+                .apply();
     }
 
+    private String getSavedAlertId() {
+        return requireContext()
+                .getSharedPreferences(PREFS,
+                        Context.MODE_PRIVATE)
+                .getString(KEY_ALERT, null);
+    }
+
+    private void clearAlertState() {
+        sAlertId = null;
+        requireContext()
+                .getSharedPreferences(PREFS,
+                        Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_ALERT)
+                .apply();
+
+        if (sListener != null) {
+            sListener.remove();
+            sListener = null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (alertListener != null) {
-            alertListener.remove();
-            alertListener = null;
-            if (bleManager != null) {
-                bleManager.disconnect();
-            }
+        // Do NOT remove sListener here —
+        // it needs to survive tab switches
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (bleManager != null)
+            bleManager.disconnect();
+        // Only remove listener when fragment
+        // is truly destroyed
+        if (sListener != null) {
+            sListener.remove();
+            sListener = null;
         }
     }
 }
+

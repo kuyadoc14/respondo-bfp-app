@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // SOS alerts:
+    // - Anyone can CREATE (send SOS) — hardware needs this
+    // - Anyone can READ their own alert by document ID
+    //   (the sender is UNauthenticated; read must be allowed)
+    // - Only admin (logged in) can update/delete
+    match /sos_alerts/{alertId} {
+      allow create: if true;                  // hardware needs this
+      allow read: if true;                    // sender is unauthenticated
+      allow update, delete: if request.auth != null;
+    }
+
+    // First aid — anyone can read, admin writes
+    match /first_aid/{id} {
+      allow read:                    if true;
+      allow create, update, delete:  if request.auth != null;
+    }
+
+    // BFP stations — anyone can read, admin writes
+    match /bfp_stations/{id} {
+      allow read:                    if true;
+      allow create, update, delete:  if request.auth != null;
+    }
+
+    // Admin tokens — owner only
+    match /admin_tokens/{uid} {
+      allow read, write: if request.auth.uid == uid;
+    }
+
+  }
+}
+
