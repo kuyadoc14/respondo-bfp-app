@@ -146,23 +146,20 @@ public class AlertDetailActivity extends AppCompatActivity {
         bindReportSection(doc);
     }
 
-    @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked")
     private void bindReportSection(
             DocumentSnapshot doc) {
 
-        LinearLayout reportSection =
+        // Use View instead of LinearLayout
+        // because reportSection is a CardView in XML
+        View reportSection =
             findViewById(R.id.reportSection);
         if (reportSection == null) return;
 
-        // Check if any report data exists
-        Object victims =
-            doc.get("countOfVictims");
-        String accidentType =
-            doc.getString("accidentType");
-        String nature =
-            doc.getString("natureOfInjury");
-        String mode =
-            doc.getString("modeOfInjury");
+        Object victims      = doc.get("countOfVictims");
+        String accidentType = doc.getString("accidentType");
+        String nature       = doc.getString("natureOfInjury");
+        String mode         = doc.getString("modeOfInjury");
         List<Map<String, Object>> patients =
             (List<Map<String, Object>>)
                 doc.get("patients");
@@ -174,10 +171,10 @@ public class AlertDetailActivity extends AppCompatActivity {
             || (patients != null
                 && !patients.isEmpty());
 
+        TextView tvNoReport =
+            findViewById(R.id.tvNoReport);
+
         if (!hasReport) {
-            // No report submitted yet
-            TextView tvNoReport =
-                findViewById(R.id.tvNoReport);
             if (tvNoReport != null)
                 tvNoReport.setVisibility(View.VISIBLE);
             reportSection.setVisibility(View.GONE);
@@ -185,23 +182,17 @@ public class AlertDetailActivity extends AppCompatActivity {
         }
 
         reportSection.setVisibility(View.VISIBLE);
+        if (tvNoReport != null)
+            tvNoReport.setVisibility(View.GONE);
 
-        // Accident type
-        setField(R.id.tvAccidentTypeVal,
-            accidentType);
-
-        // Victims
+        setField(R.id.tvAccidentTypeVal, accidentType);
         setField(R.id.tvVictimsVal,
             victims != null
                 ? victims.toString() : null);
-
-        // Nature of injury
         setField(R.id.tvNatureVal, nature);
+        setField(R.id.tvModeVal,   mode);
 
-        // Mode of injury
-        setField(R.id.tvModeVal, mode);
-
-        // ── Patient cards ─────────────────────────
+        // Patient cards
         LinearLayout patientsContainer =
             findViewById(R.id.patientsContainer);
         if (patientsContainer == null
@@ -209,12 +200,9 @@ public class AlertDetailActivity extends AppCompatActivity {
                 || patients.isEmpty()) return;
 
         patientsContainer.removeAllViews();
-
-        for (int i = 0;
-                i < patients.size(); i++) {
-            Map<String, Object> p =
-                patients.get(i);
-            View card = buildPatientCard(i + 1, p);
+        for (int i = 0; i < patients.size(); i++) {
+            View card = buildPatientCard(
+                i + 1, patients.get(i));
             patientsContainer.addView(card);
         }
     }
