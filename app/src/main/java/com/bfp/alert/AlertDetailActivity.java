@@ -128,6 +128,16 @@ public class AlertDetailActivity extends AppCompatActivity {
             });
         }
 
+        // ── Navigate from BFP Station ─────────────
+        View btnStation =
+            findViewById(R.id.btnDirectionsFromStation);
+        if (btnStation != null && lat != null) {
+            final double finalLat = lat;
+            final double finalLng = lng;
+            btnStation.setOnClickListener(v ->
+                loadStationAndNavigate(finalLat, finalLng));
+        }
+
         // ── Resolve button ────────────────────────
         View btnResolve =
             findViewById(R.id.btnResolve);
@@ -344,6 +354,64 @@ public class AlertDetailActivity extends AppCompatActivity {
     private String str(Object o) {
         return o != null ? o.toString() : null;
     }
+
+    private void loadStationAndNavigate(
+        double destLat, double destLng) {
+    Toast.makeText(this,
+        "Loading BFP station...",
+        Toast.LENGTH_SHORT).show();
+
+    db.collection("bfp_stations")
+        .limit(1)
+        .get()
+        .addOnSuccessListener(snap -> {
+            if (snap.isEmpty()) {
+                Toast.makeText(this,
+                    "No BFP station found in Firestore.",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            DocumentSnapshot station =
+                snap.getDocuments().get(0);
+            Double sLat = station.getDouble("latitude");
+            Double sLng = station.getDouble("longitude");
+
+            if (sLat == null || sLng == null) {
+                Toast.makeText(this,
+                    "Station coordinates not set.",
+                    Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Open Google Maps with route from
+            // BFP station to alert location
+            String uri =
+                "https://www.google.com/maps/dir/"
+                + sLat + "," + sLng + "/"
+                + destLat + "," + destLng;
+
+            Intent intent = new Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(uri));
+            intent.setPackage(
+                "com.google.android.apps.maps");
+
+            if (intent.resolveActivity(
+                    getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                // Fallback to browser
+                startActivity(new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(uri)));
+            }
+        })
+        .addOnFailureListener(e ->
+            Toast.makeText(this,
+                "Failed: " + e.getMessage(),
+                Toast.LENGTH_SHORT).show());
+}
 
     private void resolveAlert() {
         db.collection("sos_alerts")
