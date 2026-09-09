@@ -3,76 +3,78 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black">
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:background="#0A0A0A">
 
-    <!-- BLE connection badge -->
+    <!-- BLE badge — top left pill -->
     <LinearLayout
         android:id="@+id/bleBadge"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="32dp"
         android:orientation="horizontal"
-        android:background="#1A1A1A"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
+        android:background="#1E1E1E"
+        android:paddingStart="12dp"
+        android:paddingEnd="14dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_margin="12dp"
+        android:layout_margin="16dp"
         android:visibility="gone"
         android:gravity="center_vertical">
 
         <View
-            android:layout_width="8dp"
-            android:layout_height="8dp"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
             android:background="@drawable/circle_dot_green"
-            android:layout_marginEnd="6dp"/>
+            android:layout_marginEnd="7dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ESP32 Connected"
+            android:text="ESP32"
             android:textColor="#FFFFFF"
-            android:textSize="10sp"/>
+            android:textSize="11sp"
+            android:letterSpacing="0.04"/>
 
     </LinearLayout>
 
-    <!-- Top bar -->
+    <!-- Top: Logo + title -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingTop="40dp"
-        android:paddingBottom="24dp">
+        android:paddingTop="52dp"
+        android:paddingBottom="16dp">
 
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/logo" />
+            android:src="@drawable/logo"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="RESPONDO"
             android:textColor="#FFFFFF"
-            android:textSize="20sp"
+            android:textSize="17sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:letterSpacing="0.18"
+            android:layout_marginTop="10dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bureau of Fire Protection Emergency Alert System"
-            android:textColor="#666666"
-            android:textSize="12sp"
+            android:text="Bureau of Fire Protection"
+            android:textColor="#444444"
+            android:textSize="11sp"
             android:layout_marginTop="2dp"/>
 
     </LinearLayout>
 
-    <!-- SOS button centered -->
+    <!-- Center: SOS button -->
     <LinearLayout
         android:id="@+id/sosCenter"
         android:layout_width="match_parent"
@@ -81,91 +83,97 @@
         android:gravity="center"
         android:layout_centerInParent="true">
 
-        <!-- Outer glow ring -->
         <FrameLayout
-            android:layout_width="240dp"
-            android:layout_height="240dp"
-            android:layout_gravity="center">
+            android:layout_width="280dp"
+            android:layout_height="280dp"
+            android:layout_gravity="center"
+            android:clipChildren="false">
 
-            <!-- Ring 1 -->
+            <!-- Outer ripple wave -->
             <View
-                android:layout_width="240dp"
-                android:layout_height="240dp"
-                android:background="@drawable/circle_ring_outer"
-                android:alpha="0.15"/>
+                android:id="@+id/ringOuter"
+                android:layout_width="280dp"
+                android:layout_height="280dp"
+                android:layout_gravity="center"
+                android:background="@drawable/circle_ring_outer"/>
 
-            <!-- Ring 2 -->
+            <!-- Mid ripple wave -->
             <View
-                android:layout_width="210dp"
-                android:layout_height="210dp"
-                android:background="@drawable/circle_ring_mid"
-                android:alpha="0.25"
-                android:layout_gravity="center"/>
+                android:id="@+id/ringMid"
+                android:layout_width="230dp"
+                android:layout_height="230dp"
+                android:layout_gravity="center"
+                android:background="@drawable/circle_ring_mid"/>
 
-            <!-- SOS Button -->
+            <!-- SOS button -->
             <Button
                 android:id="@+id/btnSOS"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
+                android:layout_width="186dp"
+                android:layout_height="186dp"
                 android:layout_gravity="center"
                 android:text="SOS"
-                android:textSize="44sp"
+                android:textSize="46sp"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
+                android:letterSpacing="-0.02"
                 android:background="@drawable/bg_sos_button"
                 android:stateListAnimator="@null"
                 android:elevation="0dp"/>
 
         </FrameLayout>
 
+        <!-- Instruction -->
         <TextView
             android:id="@+id/tvInstruction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Press to alert BFP immediately"
-            android:textColor="#666666"
+            android:text="Hold to send emergency alert"
+            android:textColor="#3A3A3A"
             android:textSize="13sp"
-            android:layout_marginTop="24dp"/>
+            android:layout_marginTop="28dp"
+            android:letterSpacing="0.01"/>
 
     </LinearLayout>
 
-    <!-- Status card -->
+    <!-- Status card — below SOS button -->
     <LinearLayout
         android:id="@+id/statusCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:gravity="center"
-        android:visibility="gone"
         android:layout_below="@id/sosCenter"
-        android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true">
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone"
+        android:background="#111111"
+        android:padding="16dp">
 
+        <!-- Live indicator row -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="8dp">
 
             <View
                 android:id="@+id/pulseDot"
-                android:layout_width="10dp"
-                android:layout_height="10dp"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
                 android:background="@drawable/circle_dot"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="7dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="LIVE"
                 android:textColor="@color/warning"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.12"/>
+                android:letterSpacing="0.15"/>
 
         </LinearLayout>
 
@@ -173,32 +181,34 @@
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:layout_gravity="center_horizontal"
+            android:textSize="13sp"
             android:gravity="center"
-            android:lineSpacingExtra="4dp"/>
+            android:lineSpacingExtra="4dp"
+            android:textColor="#CCCCCC"/>
 
     </LinearLayout>
 
-    <!-- Floating voice assistant button -->
+    <!-- Voice FAB — bottom right -->
     <LinearLayout
         android:id="@+id/btnVoice"
-        android:layout_width="58dp"
-        android:layout_height="58dp"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
         android:background="@drawable/bg_mic_button"
         android:gravity="center"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="28dp"
         android:layout_marginEnd="24dp"
         android:clickable="true"
         android:focusable="true"
-        android:elevation="8dp">
+        android:elevation="6dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🎙"
-            android:textSize="24sp"/>
+            android:textSize="22sp"/>
 
     </LinearLayout>
 

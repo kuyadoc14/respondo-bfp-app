@@ -1,137 +1,185 @@
 package com.bfp.alert;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class AlertAdapter extends
-        RecyclerView.Adapter<AlertAdapter.AlertViewHolder> {
+public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.VH> {
 
-    private final List<Map<String, Object>> alerts;
-    private final List<String>              alertIds;
+    private final List<Map<String, Object>> items;
+    private final List<String>              ids;
     private final FirebaseFirestore         db;
 
-    public AlertAdapter(List<Map<String, Object>> alerts,
-                        List<String> alertIds,
-                        FirebaseFirestore db) {
-        this.alerts   = alerts;
-        this.alertIds = alertIds;
-        this.db       = db;
+    public AlertAdapter(
+            List<Map<String, Object>> items,
+            List<String> ids,
+            FirebaseFirestore db) {
+        this.items = items;
+        this.ids   = ids;
+        this.db    = db;
     }
 
     @NonNull
     @Override
-    public AlertViewHolder onCreateViewHolder(
-            @NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_alert, parent, false);
-        return new AlertViewHolder(view);
+    public VH onCreateViewHolder(
+            @NonNull ViewGroup parent,
+            int viewType) {
+        View v = LayoutInflater.from(
+            parent.getContext()).inflate(
+                R.layout.item_alert_card,
+                parent, false);
+        return new VH(v);
     }
 
     @Override
     public void onBindViewHolder(
-            @NonNull AlertViewHolder holder, int position) {
-        Map<String, Object> alert   = alerts.get(position);
-        String              alertId = alertIds.get(position);
-        String              status  =
-                (String) alert.get("status");
-        boolean             isActive =
-                "active".equals(status);
+            @NonNull VH h, int pos) {
+        Map<String, Object> data = items.get(pos);
+        String alertId = ids.get(pos);
+        boolean isActive = "active".equals(
+            data.get("status"));
 
-        // Status badge
-        holder.tvStatus.setText(
-                isActive ? "ACTIVE" : "RESOLVED");
-        holder.tvStatus.setBackgroundResource(
-                isActive
-                        ? R.drawable.bg_badge_active
-                        : R.drawable.bg_badge_resolved);
+        // ── Status dot color ──────────────────────
+        h.statusDot.setBackgroundResource(
+            isActive
+                ? R.drawable.circle_dot
+                : R.drawable.circle_dot_green);
 
-        // Timestamp
-        Object ts = alert.get("timestamp");
-        if (ts instanceof Timestamp) {
-            Date date =
-                    ((Timestamp) ts).toDate();
-            String formatted = new SimpleDateFormat(
-                    "MMM dd, yyyy hh:mm a",
-                    Locale.getDefault()).format(date);
-            holder.tvTime.setText(formatted);
+        // ── Status label ──────────────────────────
+        h.tvStatus.setText(
+            isActive ? "ACTIVE" : "RESOLVED");
+        h.tvStatus.setTextColor(
+            isActive ? 0xFFFF3B30 : 0xFF34C759);
+
+        // ── Accident type ─────────────────────────
+        Object type = data.get("accidentType");
+        if (type != null) {
+            h.tvAccidentType.setText(
+                type.toString().toUpperCase());
+            h.tvAccidentType.setVisibility(
+                View.VISIBLE);
+            h.dotSeparator.setVisibility(
+                View.VISIBLE);
         } else {
-            holder.tvTime.setText("Just now");
+            h.tvAccidentType.setVisibility(
+                View.GONE);
+            h.dotSeparator.setVisibility(View.GONE);
         }
 
-        // Location
-        Object lat = alert.get("latitude");
-        Object lng = alert.get("longitude");
-        holder.tvLocation.setText(
-                "📍 " + lat + ", " + lng);
+        // ── User / device ─────────────────────────
+        String userId = data.get("userId") != null
+            ? data.get("userId").toString()
+            : "Unknown";
+        h.tvUser.setText(userId);
 
-        // User ID
-        holder.tvUserId.setText(
-                "User: " + alert.get("userId"));
-
-        // Show correct button based on status
-        if (isActive) {
-            holder.tvStatus.setText("● Active");
-            holder.tvStatus.setTextColor(0xFFFC4D4D);
-            holder.tvStatus.setBackgroundResource(
-                    R.drawable.bg_badge_active);
+        // ── Timestamp ─────────────────────────────
+        Object ts = data.get("timestamp");
+        if (ts instanceof
+                com.google.firebase.Timestamp) {
+            String time = new SimpleDateFormat(
+                "MMM dd  hh:mm a",
+                Locale.getDefault()).format(
+                    ((com.google.firebase.Timestamp) ts)
+                        .toDate());
+            h.tvTime.setText(time);
         } else {
-            holder.tvStatus.setText("● Resolved");
-            holder.tvStatus.setTextColor(0xFF10B981);
-            holder.tvStatus.setBackgroundResource(
-                    R.drawable.bg_badge_resolved);
+            h.tvTime.setText("—");
         }
 
-        // Tap card → open detail with routing options
-        holder.itemView.setOnClickListener(v -> {
-            android.content.Context ctx =
-                    v.getContext();
-            if (ctx instanceof AdminDashboardActivity) {
+        // ── Victim count ──────────────────────────
+        Object victims =
+            data.get("countOfVictims");
+        if (victims != null) {
+            h.rowVictims.setVisibility(View.VISIBLE);
+            h.tvVictimCount.setText(
+                victims.toString());
+        } else {
+            h.rowVictims.setVisibility(View.GONE);
+        }
+
+        // ── Nature + Mode of injury ───────────────
+        String nature = data.get("natureOfInjury")
+            != null
+            ? data.get("natureOfInjury").toString()
+            : null;
+        String mode = data.get("modeOfInjury")
+            != null
+            ? data.get("modeOfInjury").toString()
+            : null;
+
+        if (nature != null || mode != null) {
+            StringBuilder sb = new StringBuilder();
+            if (nature != null) sb.append(nature);
+            if (nature != null && mode != null)
+                sb.append("  ·  ");
+            if (mode != null) sb.append(mode);
+            h.tvNatureMode.setText(sb.toString());
+            h.tvNatureMode.setVisibility(
+                View.VISIBLE);
+        } else {
+            h.tvNatureMode.setVisibility(View.GONE);
+        }
+
+        // ── Click → alert detail ──────────────────
+        h.itemView.setOnClickListener(v -> {
+            Context ctx = v.getContext();
+            if (ctx instanceof
+                    AdminDashboardActivity) {
                 ((AdminDashboardActivity) ctx)
-                        .openAlertDetail(alertId, alert);
+                    .openAlertDetail(
+                        alertId, data);
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return alerts.size();
+        return items.size();
     }
 
-    static class AlertViewHolder
-            extends RecyclerView.ViewHolder {
-        TextView tvStatus, tvTime,
-                tvLocation, tvUserId;
-        Button   btnResolve, btnDelete;
+    static class VH extends RecyclerView.ViewHolder {
+        View         statusDot, dotSeparator;
+        TextView     tvStatus, tvAccidentType,
+                     tvUser, tvTime,
+                     tvVictimCount, tvNatureMode;
+        LinearLayout rowVictims;
 
-        AlertViewHolder(View itemView) {
-            super(itemView);
-            tvStatus   =
-                    itemView.findViewById(R.id.tvStatus);
-            tvTime     =
-                    itemView.findViewById(R.id.tvTime);
-            tvLocation =
-                    itemView.findViewById(R.id.tvLocation);
-            tvUserId   =
-                    itemView.findViewById(R.id.tvUserId);
-            btnResolve =
-                    itemView.findViewById(R.id.btnResolve);
-            btnDelete  =
-                    itemView.findViewById(R.id.btnDelete);
+        VH(View v) {
+            super(v);
+            statusDot       =
+                v.findViewById(R.id.statusDot);
+            dotSeparator    =
+                v.findViewById(R.id.dotSeparator);
+            tvStatus        =
+                v.findViewById(R.id.tvAlertStatus);
+            tvAccidentType  =
+                v.findViewById(R.id.tvAccidentType);
+            tvUser          =
+                v.findViewById(R.id.tvAlertUser);
+            tvTime          =
+                v.findViewById(R.id.tvAlertTime);
+            rowVictims      =
+                v.findViewById(R.id.rowVictims);
+            tvVictimCount   =
+                v.findViewById(R.id.tvVictimCount);
+            tvNatureMode    =
+                v.findViewById(R.id.tvNatureMode);
         }
     }
 }

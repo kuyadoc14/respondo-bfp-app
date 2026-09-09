@@ -46,6 +46,8 @@ public class SosFragment extends Fragment {
     private FusedLocationProviderClient locationClient;
 
     private Button       btnSOS;
+    private View         ringOuter;
+    private View         ringMid;
     private TextView     tvStatus;
     private LinearLayout statusCard;
 
@@ -70,13 +72,26 @@ public class SosFragment extends Fragment {
                         requireActivity());
 
         btnSOS     = view.findViewById(R.id.btnSOS);
+        ringOuter  = view.findViewById(R.id.ringOuter);
+        ringMid    = view.findViewById(R.id.ringMid);
         tvStatus   = view.findViewById(R.id.tvStatus);
         statusCard = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
 
-        Animation pulse = AnimationUtils.loadAnimation(
-                requireContext(), R.anim.pulse);
-        btnSOS.startAnimation(pulse);
+        // Tactile press & release spring effect
+        btnSOS.setOnTouchListener((v, event) -> {
+            if (!btnSOS.isEnabled()) return false;
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.animate().scaleX(0.93f).scaleY(0.93f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
+                    break;
+            }
+            return false;
+        });
 
         // Voice assistant button
         View btnVoice = view.findViewById(R.id.btnVoice);
@@ -90,11 +105,13 @@ public class SosFragment extends Fragment {
         // Init BLE
         initBLE();
 
-        // Restore state from SharedPreferences
-        // in case app was killed
+        // Restore state from SharedPreferences immediately
         String saved = getSavedAlertId();
         if (saved != null) {
             sAlertId = saved;
+            setSOSSentState();
+        } else {
+            startPulsingAnimation();
         }
 
         // Sync with current Firestore state
@@ -182,6 +199,9 @@ public class SosFragment extends Fragment {
 
     // ─────────────────────────────────────────────────────────
     // Send SOS from button tap
+    // Replace your existing sendSOSAlert() in SosFragment.java
+// with this complete version
+
     private void sendSOSAlert() {
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
@@ -195,11 +215,6 @@ public class SosFragment extends Fragment {
             return;
         }
 
-        if (!"SOS".equals(btnSOS.getText().toString())
-                && btnSOS.getText().toString().contains("SOS\nSENT")) {
-            return;
-        }
-
         btnSOS.setEnabled(false);
         btnSOS.setText("Sending...");
 
@@ -207,30 +222,47 @@ public class SosFragment extends Fragment {
                 .addOnSuccessListener(location -> {
                     String userId = getOrCreateUserId();
 
-                    Map<String, Object> alert = new HashMap<>();
-                    alert.put("userId",      userId);
-                    alert.put("latitude",    location != null
+                    Map<String, Object> alert =
+                            new HashMap<>();
+                    alert.put("userId",    userId);
+                    alert.put("latitude",  location != null
                             ? location.getLatitude()  : 0.0);
-                    alert.put("longitude",   location != null
+                    alert.put("longitude", location != null
                             ? location.getLongitude() : 0.0);
                     alert.put("timestamp",
-                            FieldValue.serverTimestamp());
+                            com.google.firebase.firestore
+                                    .FieldValue.serverTimestamp());
                     alert.put("status",      "active");
                     alert.put("deviceToken", "");
 
-                    db.collection("sos_alerts").add(alert)
+                    db.collection("sos_alerts")
+                            .add(alert)
                             .addOnSuccessListener(ref -> {
                                 sAlertId = ref.getId();
                                 saveAlertId(sAlertId);
                                 setSOSSentState();
                                 attachLiveListener(sAlertId);
+
+                                // ── Show accident report sheet
+                                // immediately after SOS is sent
+                                // so the bystander can send
+                                // patient data while waiting
+                                AccidentReportSheet sheet =
+                                        AccidentReportSheet
+                                                .newInstance(sAlertId);
+                                sheet.show(
+                                        getChildFragmentManager(),
+                                        "accident_report");
                             })
                             .addOnFailureListener(e -> {
                                 btnSOS.setEnabled(true);
                                 btnSOS.setText("SOS");
-                                Toast.makeText(requireContext(),
-                                        "Failed: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show();
+                                Toast.makeText(
+                                                requireContext(),
+                                                "Failed: "
+                                                        + e.getMessage(),
+                                                Toast.LENGTH_SHORT)
+                                        .show();
                             });
                 });
     }
@@ -342,7 +374,46 @@ public class SosFragment extends Fragment {
     }
 
     // ─────────────────────────────────────────────────────────
-    // UI states
+    // UI states & animations
+
+    private void startPulsingAnimation() {
+        if (getContext() == null || btnSOS == null) return;
+
+        // Button gentle heartbeat pulse
+        Animation pulse = AnimationUtils.loadAnimation(
+                requireContext(), R.anim.pulse);
+        btnSOS.startAnimation(pulse);
+
+        // Inner radar wave ripple
+        if (ringMid != null) {
+            ringMid.setVisibility(View.VISIBLE);
+            Animation ring1 = AnimationUtils.loadAnimation(
+                    requireContext(), R.anim.pulse_ring_1);
+            ringMid.startAnimation(ring1);
+        }
+
+        // Outer radar wave ripple (staggered delay)
+        if (ringOuter != null) {
+            ringOuter.setVisibility(View.VISIBLE);
+            Animation ring2 = AnimationUtils.loadAnimation(
+                    requireContext(), R.anim.pulse_ring_2);
+            ringOuter.startAnimation(ring2);
+        }
+    }
+
+    private void stopPulsingAnimation() {
+        if (btnSOS != null) {
+            btnSOS.clearAnimation();
+        }
+        if (ringMid != null) {
+            ringMid.clearAnimation();
+            ringMid.setVisibility(View.GONE);
+        }
+        if (ringOuter != null) {
+            ringOuter.clearAnimation();
+            ringOuter.setVisibility(View.GONE);
+        }
+    }
 
     private void setIdleState() {
         if (getView() == null) return;
@@ -353,9 +424,7 @@ public class SosFragment extends Fragment {
                 android.content.res.ColorStateList
                         .valueOf(0xFFFF3B30));
 
-        Animation pulse = AnimationUtils.loadAnimation(
-                requireContext(), R.anim.pulse);
-        btnSOS.startAnimation(pulse);
+        startPulsingAnimation();
 
         statusCard.setVisibility(View.GONE);
     }
@@ -363,18 +432,12 @@ public class SosFragment extends Fragment {
     private void setSOSSentState() {
         if (getView() == null) return;
 
-        btnSOS.clearAnimation();
+        stopPulsingAnimation();
         btnSOS.setEnabled(false);
         btnSOS.setText("SOS\nSENT");
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFF883333));
-
-        statusCard.setVisibility(View.VISIBLE);
-        tvStatus.setText(
-                "🚒  Help is on the way!\n"
-                        + "BFP has received your alert.");
-        tvStatus.setTextColor(0xFFFFBB33);
 
         // Pulse dot
         View pulseDot = getView().findViewById(
@@ -405,15 +468,7 @@ public class SosFragment extends Fragment {
                 android.content.res.ColorStateList
                         .valueOf(0xFFFF3B30));
 
-        Animation pulse = AnimationUtils.loadAnimation(
-                requireContext(), R.anim.pulse);
-        btnSOS.startAnimation(pulse);
-
-        statusCard.setVisibility(View.VISIBLE);
-        tvStatus.setText(
-                "✅  Help has arrived!\n"
-                        + "Your alert has been resolved.");
-        tvStatus.setTextColor(0xFF34C759);
+        startPulsingAnimation();
 
         Toast.makeText(requireContext(),
                 "Alert resolved by BFP.",
@@ -476,6 +531,7 @@ public class SosFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        stopPulsingAnimation();
         // Do NOT remove sListener here —
         // it needs to survive tab switches
     }

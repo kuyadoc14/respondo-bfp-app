@@ -1,905 +1,2329 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#e63946"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="BFP Alert"/>
-  <link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#e63946" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BFP Alert" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <title>BFP Alert Dashboard</title>
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ── Reset & Base ── */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0f111a;
+      --bg-secondary: #161929;
+      --bg-card: rgba(25, 30, 50, 0.7);
+      --bg-hover: rgba(35, 42, 70, 0.6);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-light: rgba(255, 255, 255, 0.1);
+      --text-primary: #e8eaf0;
+      --text-secondary: #8b8fa8;
+      --text-muted: #565b73;
+      --accent: #e63946;
+      --accent-glow: rgba(230, 57, 70, 0.25);
+      --green: #2dd4a8;
+      --green-dim: rgba(45, 212, 168, 0.15);
+      --blue: #5b8def;
+      --blue-dim: rgba(91, 141, 239, 0.15);
+      --purple: #a78bfa;
+      --purple-dim: rgba(167, 139, 250, 0.15);
+      --danger: #c0392b;
+      --danger-dim: rgba(192, 57, 43, 0.15);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
-      color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.14);
     }
 
     /* ── Login ── */
     #loginScreen {
       position: fixed;
       inset: 0;
-      background: #1a1a2e;
+      background: var(--bg-primary);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 999;
     }
-    .login-box {
-      background: #16213e;
-      padding: 40px;
-      border-radius: 12px;
-      width: 340px;
-      border: 1px solid #333355;
+
+    #loginScreen::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
     }
-    .login-box h2 { margin-bottom: 24px; text-align: center; }
+
+    .login-box {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 48px 40px;
+      border-radius: var(--radius-lg);
+      width: 380px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-box .login-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--accent);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .login-box .login-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    .login-box h2 {
+      margin-bottom: 8px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .login-box .login-subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .login-box label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .login-box input {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 16px;
-      background: #1a1a2e;
-      border: 1px solid #333355;
-      border-radius: 6px;
-      color: #ffffff;
+      padding: 11px 14px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
       font-size: 14px;
+      font-family: inherit;
       display: block;
+      transition: border var(--transition), background var(--transition);
+      outline: none;
     }
+
+    .login-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .login-box input:focus {
+      border-color: var(--accent);
+      background: rgba(230, 57, 70, 0.04);
+    }
+
     .login-box button {
       width: 100%;
       padding: 12px;
-      background: #e63946;
+      background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 6px;
-      font-size: 15px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.2px;
     }
-    .login-box button:disabled { background: #883333; cursor: not-allowed; }
+
+    .login-box button:hover {
+      background: #d32f3f;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .login-box button:active {
+      transform: translateY(0);
+    }
+
+    .login-box button:disabled {
+      background: #5a2028;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
     #loginError {
-      color: #e63946;
+      color: var(--accent);
       font-size: 12px;
-      margin-top: 10px;
+      margin-top: 14px;
       text-align: center;
       min-height: 18px;
     }
 
     /* ── Header ── */
     .header {
-      background: #16213e;
-      padding: 14px 24px;
+      background: var(--bg-secondary);
+      padding: 16px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 2px solid #e63946;
+      border-bottom: 1px solid var(--border);
     }
-    .header h1 { font-size: 18px; }
-    .header p  { font-size: 11px; color: #aaaaaa; margin-top: 2px; }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-logo svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    .header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    #adminEmail {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
 
     /* ── Tab bar ── */
     .tabs {
       display: flex;
-      background: #16213e;
-      border-bottom: 1px solid #333355;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      gap: 4px;
     }
+
     .tab-btn {
-      padding: 12px 28px;
+      padding: 12px 24px;
       border: none;
       background: transparent;
-      color: #aaaaaa;
-      font-size: 14px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+
+    .tab-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+      opacity: 0.7;
+      transition: opacity var(--transition);
+    }
+
     .tab-btn.active {
-      color: #ffffff;
-      border-bottom-color: #e63946;
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
     }
-    .tab-btn:hover { color: #ffffff; }
+
+    .tab-btn.active svg {
+      opacity: 1;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
 
     /* ── Tab panels ── */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
 
     /* ── Stats ── */
     .stats {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
-      padding: 20px 24px;
-      flex-wrap: wrap;
+      padding: 24px 28px;
     }
+
     .stat-card {
-      background: #16213e;
-      border-radius: 10px;
-      padding: 16px 24px;
-      flex: 1;
-      min-width: 130px;
-      text-align: center;
-      border-left: 4px solid #e63946;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
     }
-    .stat-card.resolved { border-left-color: #2a9d8f; }
-    .stat-card.total    { border-left-color: #457b9d; }
-    .stat-card h2 { font-size: 30px; }
-    .stat-card p  { font-size: 12px; color: #aaaaaa; margin-top: 4px; }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .stat-card.resolved::before {
+      background: var(--green);
+    }
+
+    .stat-card.total::before {
+      background: var(--blue);
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card h2 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .stat-card.resolved h2 {
+      color: var(--green);
+    }
+
+    .stat-card.total h2 {
+      color: var(--blue);
+    }
 
     /* ── Toolbar ── */
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 0 24px 16px;
+      gap: 10px;
+      padding: 0 28px 20px;
       flex-wrap: wrap;
     }
-    .toolbar select, .toolbar input {
-      padding: 8px 12px;
-      background: #16213e;
-      border: 1px solid #333355;
-      border-radius: 6px;
-      color: #ffffff;
+
+    .toolbar select,
+    .toolbar input[type="date"] {
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
       font-size: 13px;
+      font-family: inherit;
+      transition: border var(--transition);
+      outline: none;
+      cursor: pointer;
     }
+
+    .toolbar select:focus,
+    .toolbar input[type="date"]:focus {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
     .toolbar button {
-      padding: 8px 16px;
+      padding: 8px 18px;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 13px;
-      color: #ffffff;
+      font-weight: 500;
+      font-family: inherit;
+      color: #fff;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn-export { background: #457b9d; }
-    .btn-pdf    { background: #c77dff; }
-    .btn-logout { background: #444466; margin-left: auto; }
+
+    .toolbar button:hover {
+      transform: translateY(-1px);
+    }
+
+    .toolbar button:active {
+      transform: translateY(0);
+    }
+
+    .btn-export {
+      background: rgba(91, 141, 239, 0.2);
+      color: var(--blue);
+      border: 1px solid rgba(91, 141, 239, 0.2) !important;
+    }
+
+    .btn-export:hover {
+      background: rgba(91, 141, 239, 0.3);
+    }
+
+    .btn-pdf {
+      background: rgba(167, 139, 250, 0.2);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, 0.2) !important;
+    }
+
+    .btn-pdf:hover {
+      background: rgba(167, 139, 250, 0.3);
+    }
+
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-secondary);
+      margin-left: auto;
+      border: 1px solid var(--border) !important;
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
 
     /* ── Table ── */
     .table-wrap {
-      padding: 0 24px 40px;
+      padding: 0 28px 40px;
       overflow-x: auto;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
     thead th {
-      background: #16213e;
+      background: var(--bg-secondary);
       padding: 12px 16px;
       text-align: left;
-      color: #aaaaaa;
-      font-weight: normal;
-      border-bottom: 1px solid #333355;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
     }
-    tbody tr { border-bottom: 1px solid #222244; }
-    tbody tr:hover { background: #16213e; }
-    tbody td { padding: 12px 16px; vertical-align: middle; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    tbody td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
 
     .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-active {
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+
+    .badge-active::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .badge-resolved {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .btn-resolve {
+      padding: 6px 14px;
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(45, 212, 168, 0.2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+
+    .btn-resolve:hover {
+      background: rgba(45, 212, 168, 0.25);
+    }
+
+    .btn-delete {
+      padding: 6px 14px;
+      background: var(--danger-dim);
+      color: #e74c3c;
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+
+    .btn-delete:hover {
+      background: rgba(192, 57, 43, 0.25);
+    }
+
+    /* ── Incident Badges & Report Button ── */
+    .badge-incident {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .badge-fire {
+      background: rgba(230, 57, 70, 0.16);
+      color: #ff6b7a;
+      border: 1px solid rgba(230, 57, 70, 0.3);
+    }
+
+    .badge-medical {
+      background: rgba(45, 212, 168, 0.16);
+      color: #2dd4a8;
+      border: 1px solid rgba(45, 212, 168, 0.3);
+    }
+
+    .badge-vehicle {
+      background: rgba(245, 158, 11, 0.16);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-other {
+      background: rgba(167, 139, 250, 0.16);
+      color: #c4b5fd;
+      border: 1px solid rgba(167, 139, 250, 0.3);
+    }
+
+    .badge-pending {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+
+    .badge-victims {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 7px;
+      border-radius: 4px;
       display: inline-block;
+    }
+
+    .btn-view-report {
+      padding: 6px 12px;
+      background: rgba(91, 141, 239, 0.15);
+      color: var(--blue);
+      border: 1px solid rgba(91, 141, 239, 0.25);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-view-report:hover {
+      background: rgba(91, 141, 239, 0.28);
+      transform: translateY(-1px);
+    }
+
+    /* ── Accident Report Modal ── */
+    #reportModalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 18, 0.78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    #reportModalOverlay.show {
+      display: flex;
+    }
+
+    .report-modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 740px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      animation: dialog-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .report-modal-header {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .report-modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .report-modal-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid rgba(230, 57, 70, 0.3);
+    }
+
+    .report-modal-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--accent);
+    }
+
+    .report-modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+
+    .report-modal-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .report-modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .report-modal-close:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+    }
+
+    .report-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .report-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .report-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .report-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .report-meta-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      transition: border var(--transition);
+    }
+
+    .report-meta-card:hover {
+      border-color: var(--border-light);
+    }
+
+    .report-meta-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .report-meta-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .report-coords-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      flex-wrap: wrap;
+    }
+
+    .report-coords-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .report-coords-info svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .btn-nav-external {
+      padding: 6px 14px;
+      background: rgba(91, 141, 239, 0.15);
+      color: var(--blue);
+      border: 1px solid rgba(91, 141, 239, 0.25);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all var(--transition);
+    }
+
+    .btn-nav-external:hover {
+      background: rgba(91, 141, 239, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* ── Patient Cards Styling ── */
+    .patient-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition);
+    }
+
+    .patient-card:hover {
+      border-color: var(--border-light);
+      background: rgba(30, 36, 60, 0.7);
+    }
+
+    .patient-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .patient-name-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .patient-badge-num {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .patient-tags-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag-conscious-alert {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(45, 212, 168, 0.3);
       padding: 3px 8px;
       border-radius: 4px;
       font-size: 11px;
-      font-weight: bold;
+      font-weight: 600;
     }
-    .badge-active   { background: #e63946; color: #fff; }
-    .badge-resolved { background: #2a9d8f; color: #fff; }
 
-    .btn-resolve {
-      padding: 5px 12px;
-      background: #2a9d8f;
-      color: #fff;
-      border: none;
+    .tag-conscious-verbal {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid rgba(91, 141, 239, 0.3);
+      padding: 3px 8px;
       border-radius: 4px;
-      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tag-conscious-pain {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tag-conscious-unresponsive {
+      background: var(--danger-dim);
+      color: #ff6b7a;
+      border: 1px solid rgba(230, 57, 70, 0.4);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tag-seizure {
+      background: rgba(230, 57, 70, 0.2);
+      color: #ff6b7a;
+      border: 1px solid rgba(230, 57, 70, 0.4);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .patient-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px 16px;
       font-size: 12px;
     }
-    .btn-delete {
-      padding: 5px 12px;
-      background: #880000;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
+
+    .patient-field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
-    .btn-resolve:hover { background: #21867a; }
-    .btn-delete:hover  { background: #aa0000; }
+
+    .patient-field-label {
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+
+    .patient-field-val {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .patient-allergies-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #fde68a;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .patient-condition-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 8px 12px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .no-report-alert {
+      text-align: center;
+      padding: 36px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+    }
+
+    .no-report-alert svg {
+      width: 42px;
+      height: 42px;
+      fill: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .report-modal-footer {
+      padding: 16px 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
 
     #emptyMsg {
       text-align: center;
-      padding: 40px;
-      color: #555577;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
     }
 
     /* ── Map ── */
-    #mapPanel { padding: 20px 24px; }
+    #mapPanel {
+      padding: 24px 28px;
+    }
 
     #map {
       width: 100%;
       height: 540px;
-      border-radius: 12px;
-      border: 1px solid #333355;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
     }
 
     .map-legend {
       display: flex;
       gap: 20px;
-      margin-top: 12px;
-      font-size: 13px;
-      color: #aaaaaa;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-secondary);
       align-items: center;
     }
+
     .legend-dot {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       display: inline-block;
       margin-right: 6px;
     }
-    .dot-active   { background: #e63946; }
-    .dot-resolved { background: #2a9d8f; }
+
+    .dot-active {
+      background: var(--accent);
+    }
+
+    .dot-resolved {
+      background: var(--green);
+    }
 
     .map-alert-list {
-      margin-top: 16px;
+      margin-top: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
+
     .map-alert-item {
-      background: #16213e;
-      border-radius: 8px;
-      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
       cursor: pointer;
-      border-left: 4px solid #e63946;
-      transition: background 0.2s;
+      border-left: 3px solid var(--accent);
+      transition: all var(--transition);
     }
-    .map-alert-item.resolved { border-left-color: #2a9d8f; }
-    .map-alert-item:hover { background: #1e2a4a; }
+
+    .map-alert-item.resolved {
+      border-left-color: var(--green);
+    }
+
+    .map-alert-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
     .map-alert-item .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .map-alert-info { flex: 1; }
-    .map-alert-info strong { font-size: 13px; color: #fff; }
-    .map-alert-info span   { font-size: 11px; color: #aaaaaa; display: block; }
+
+    .map-alert-info {
+      flex: 1;
+    }
+
+    .map-alert-info strong {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .map-alert-info span {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: block;
+      margin-top: 2px;
+    }
 
     .map-layout {
       display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 16px;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
       align-items: start;
     }
 
     .map-sidebar {
-      background: #16213e;
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-lg);
+      padding: 20px 16px;
       max-height: 540px;
       overflow-y: auto;
+      border: 1px solid var(--border);
     }
+
     .map-sidebar h3 {
-      font-size: 14px;
-      color: #aaaaaa;
-      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
 
     /* ── Info popup on map ── */
-    .gm-style-iw { background: #16213e !important; color: #fff; }
-    .gm-style-iw-d { color: #fff; }
+    .gm-style-iw {
+      background: var(--bg-secondary) !important;
+      color: #fff;
+    }
+
+    .gm-style-iw-d {
+      color: #fff;
+    }
 
     /* ── Confirm dialog ── */
     #confirmOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
     }
-    #confirmOverlay.show { display: flex; }
-    .confirm-box {
-      background: #16213e;
-      border: 1px solid #333355;
-      border-radius: 12px;
-      padding: 32px;
-      width: 300px;
-      text-align: center;
+
+    #confirmOverlay.show {
+      display: flex;
     }
-    .confirm-box p { margin-bottom: 24px; color: #cccccc; font-size: 14px; }
-    .confirm-box div { display: flex; gap: 12px; justify-content: center; }
+
+    .confirm-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      width: 340px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      animation: dialog-in 0.2s ease-out;
+    }
+
+    @keyframes dialog-in {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .confirm-box .confirm-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--danger-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .confirm-box .confirm-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #e74c3c;
+    }
+
+    .confirm-box .confirm-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .confirm-box .confirm-desc {
+      margin-bottom: 28px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .confirm-box .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
     .confirm-box button {
-      padding: 8px 24px;
+      padding: 9px 24px;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
       color: #fff;
+      transition: all var(--transition);
     }
-    #confirmYes { background: #880000; }
-    #confirmNo  { background: #444466; }
+
+    .confirm-box button:hover {
+      transform: translateY(-1px);
+    }
+
+    #confirmYes {
+      background: var(--danger);
+    }
+
+    #confirmYes:hover {
+      background: #a93226;
+    }
+
+    #confirmNo {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+    }
+
+    #confirmNo:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-primary);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .map-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .map-sidebar {
+        max-height: 300px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .header {
+        padding: 14px 20px;
+      }
+
+      .toolbar {
+        padding: 0 20px 16px;
+      }
+
+      .table-wrap {
+        padding: 0 20px 40px;
+      }
+
+      #mapPanel {
+        padding: 20px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<!-- Login -->
-<div id="loginScreen">
-  <div class="login-box">
-    <h2>BFP Admin Login</h2>
-    <input type="email"    id="loginEmail"    placeholder="Email"/>
-    <input type="password" id="loginPassword" placeholder="Password"/>
-    <button id="loginBtn" onclick="doLogin()">Login</button>
-    <p id="loginError"></p>
-  </div>
-</div>
-
-<!-- Confirm dialog -->
-<div id="confirmOverlay">
-  <div class="confirm-box">
-    <p>Delete this resolved alert?<br/>This cannot be undone.</p>
-    <div>
-      <button id="confirmYes">Delete</button>
-      <button id="confirmNo" onclick="closeConfirm()">Cancel</button>
+  <!-- Login -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+        </svg>
+      </div>
+      <h2>Admin Login</h2>
+      <p class="login-subtitle">BFP Alert Dashboard — Secure Access</p>
+      <label for="loginEmail">Email Address</label>
+      <input type="email" id="loginEmail" placeholder="admin@bfp.gov.ph" />
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter password" />
+      <button id="loginBtn" onclick="doLogin()">Sign In</button>
+      <p id="loginError"></p>
     </div>
   </div>
-</div>
 
-<!-- Main app -->
-<div id="mainApp" style="display:none;">
-
-  <!-- Header -->
-  <div class="header">
-    <div>
-      <h1>🔥 BFP Alert Dashboard</h1>
-      <p>Bureau of Fire Protection — Live Monitoring</p>
-    </div>
-    <span id="adminEmail" style="font-size:13px;color:#aaaaaa;"></span>
-  </div>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('alerts', this)">
-      🚨 Alerts
-    </button>
-    <button class="tab-btn" onclick="switchTab('map', this)">
-      🗺️ Live Map
-    </button>
-  </div>
-
-  <!-- ── ALERTS TAB ── -->
-  <div id="tab-alerts" class="tab-panel active">
-
-    <div class="stats">
-      <div class="stat-card">
-        <h2 id="countActive">0</h2><p>Active Alerts</p>
+  <!-- Confirm dialog -->
+  <div id="confirmOverlay">
+    <div class="confirm-box">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </svg>
       </div>
-      <div class="stat-card resolved">
-        <h2 id="countResolved">0</h2><p>Resolved</p>
-      </div>
-      <div class="stat-card total">
-        <h2 id="countTotal">0</h2><p>Total Alerts</p>
+      <p class="confirm-title">Delete Alert</p>
+      <p class="confirm-desc">This resolved alert will be permanently removed. This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button id="confirmNo" onclick="closeConfirm()">Cancel</button>
+        <button id="confirmYes">Delete</button>
       </div>
     </div>
-
-    <div class="toolbar">
-      <select id="filterStatus" onchange="applyFilter()">
-        <option value="all">All Alerts</option>
-        <option value="active">Active Only</option>
-        <option value="resolved">Resolved Only</option>
-      </select>
-      <input type="date" id="filterDate" onchange="applyFilter()"/>
-      <button class="btn-export" onclick="exportCSV()">Export CSV</button>
-      <button class="btn-pdf"    onclick="exportPDF()">Export PDF</button>
-      <button class="btn-logout" onclick="doLogout()">Logout</button>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Date &amp; Time</th>
-          <th>Latitude</th>
-          <th>Longitude</th>
-          <th>User ID</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody id="alertTableBody"></tbody>
-      </table>
-      <p id="emptyMsg" style="display:none;">No alerts found.</p>
-    </div>
-
   </div>
 
-  <!-- ── MAP TAB ── -->
-  <div id="tab-map" class="tab-panel">
-    <div id="mapPanel">
-
-      <div class="map-layout">
-
-        <!-- Map -->
-        <div>
-          <div id="map"></div>
-          <div class="map-legend">
-            <span><span class="legend-dot dot-active"></span>Active alert</span>
-            <span><span class="legend-dot dot-resolved"></span>Resolved alert</span>
-            <span id="mapLastUpdated" style="margin-left:auto;font-size:11px;"></span>
+  <!-- Accident & Patient Report Modal -->
+  <div id="reportModalOverlay" onclick="handleModalOverlayClick(event)">
+    <div class="report-modal" role="dialog" aria-modal="true" aria-labelledby="rmTitle">
+      <div class="report-modal-header">
+        <div class="report-modal-header-left">
+          <div class="report-modal-icon">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+            </svg>
+          </div>
+          <div>
+            <div class="report-modal-title" id="rmTitle">Accident &amp; Patient Report</div>
+            <div class="report-modal-subtitle" id="rmSubtitle">Loading details...</div>
           </div>
         </div>
-
-        <!-- Sidebar list -->
-        <div class="map-sidebar">
-          <h3>📍 Alert Locations</h3>
-          <div id="mapAlertList" class="map-alert-list"></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="rmStatusBadge" class="badge"></span>
+          <button class="report-modal-close" onclick="closeReportModal()" title="Close (Esc)">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;">
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            </svg>
+          </button>
         </div>
+      </div>
 
+      <div class="report-modal-body" id="rmBody">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="report-modal-footer">
+        <div id="rmFooterActions" style="display:flex;gap:8px;margin-right:auto;"></div>
+        <button class="btn-logout" onclick="closeReportModal()">Close</button>
       </div>
     </div>
   </div>
 
-</div>
+  <!-- Main app -->
+  <div id="mainApp" style="display:none;">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+          </svg>
+        </div>
+        <div>
+          <h1>BFP Alert Dashboard</h1>
+          <p>Bureau of Fire Protection — Live Monitoring</p>
+        </div>
+      </div>
+      <span id="adminEmail"></span>
+    </div>
 
-<script>
-  // ── Firebase config — paste yours here ──
-  const firebaseConfig = {
-  apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
-  authDomain: "bfp-alert.firebaseapp.com",
-  databaseURL: "https://bfp-alert-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "bfp-alert",
-  storageBucket: "bfp-alert.firebasestorage.app",
-  messagingSenderId: "213714872271",
-  appId: "1:213714872271:web:85adbecc75a8ad45c594ba",
-  measurementId: "G-1QTYKR8882"
-};
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db   = firebase.firestore();
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('alerts', this)">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+        </svg>
+        Alerts
+      </button>
+      <button class="tab-btn" onclick="switchTab('map', this)">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
+        Live Map
+      </button>
+    </div>
 
-  let allAlerts       = [];
-  let pendingDeleteId = null;
-  let googleMap       = null;
-  let markers         = {};   // alertId → google.maps.Marker
-  let infoWindow      = null;
-  let mapInitialized  = false;
+    <!-- ── ALERTS TAB ── -->
+    <div id="tab-alerts" class="tab-panel active">
 
-  // ── Auth ──
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      document.getElementById("loginScreen").style.display  = "none";
-      document.getElementById("mainApp").style.display      = "block";
-      document.getElementById("adminEmail").textContent     = user.email;
-      listenForAlerts();
-    } else {
-      document.getElementById("loginScreen").style.display  = "flex";
-      document.getElementById("mainApp").style.display      = "none";
-    }
-  });
+      <div class="stats">
+        <div class="stat-card">
+          <p class="stat-label">Active Alerts</p>
+          <h2 id="countActive">0</h2>
+        </div>
+        <div class="stat-card resolved">
+          <p class="stat-label">Resolved</p>
+          <h2 id="countResolved">0</h2>
+        </div>
+        <div class="stat-card total">
+          <p class="stat-label">Total Alerts</p>
+          <h2 id="countTotal">0</h2>
+        </div>
+      </div>
 
-  // ── Login ──
-  function doLogin() {
-    const email    = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value.trim();
-    const errEl    = document.getElementById("loginError");
-    const btn      = document.getElementById("loginBtn");
-    errEl.textContent = "";
+      <div class="toolbar">
+        <select id="filterStatus" onchange="applyFilter()">
+          <option value="all">All Alerts</option>
+          <option value="active">Active Only</option>
+          <option value="resolved">Resolved Only</option>
+        </select>
+        <input type="date" id="filterDate" onchange="applyFilter()" />
+        <button class="btn-export" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+          </svg>
+          Export CSV
+        </button>
+        <button class="btn-pdf" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
+            <path
+              d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" />
+          </svg>
+          Export PDF
+        </button>
+        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      </div>
 
-    if (!email || !password) {
-      errEl.textContent = "Please enter email and password.";
-      return;
-    }
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date &amp; Time</th>
+              <th>Incident Details</th>
+              <th>Coordinates</th>
+              <th>User ID</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="alertTableBody"></tbody>
+        </table>
+        <p id="emptyMsg" style="display:none;">No alerts found.</p>
+      </div>
 
-    btn.disabled    = true;
-    btn.textContent = "Logging in...";
+    </div>
 
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => { btn.textContent = "Login"; btn.disabled = false; })
-      .catch(err => {
-        btn.textContent = "Login";
-        btn.disabled    = false;
-        if (err.code === "auth/wrong-password" ||
+    <!-- ── MAP TAB ── -->
+    <div id="tab-map" class="tab-panel">
+      <div id="mapPanel">
+
+        <div class="map-layout">
+
+          <!-- Map -->
+          <div>
+            <div id="map"></div>
+            <div class="map-legend">
+              <span><span class="legend-dot dot-active"></span>Active alert</span>
+              <span><span class="legend-dot dot-resolved"></span>Resolved alert</span>
+              <span id="mapLastUpdated" style="margin-left:auto;font-size:11px;"></span>
+            </div>
+          </div>
+
+          <!-- Sidebar list -->
+          <div class="map-sidebar">
+            <h3>Alert Locations</h3>
+            <div id="mapAlertList" class="map-alert-list"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ── Firebase config — paste yours here ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
+      authDomain: "bfp-alert.firebaseapp.com",
+      databaseURL: "https://bfp-alert-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "bfp-alert",
+      storageBucket: "bfp-alert.firebasestorage.app",
+      messagingSenderId: "213714872271",
+      appId: "1:213714872271:web:85adbecc75a8ad45c594ba",
+      measurementId: "G-1QTYKR8882"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let allAlerts = [];
+    let pendingDeleteId = null;
+    let googleMap = null;
+    let markers = {};   // alertId → google.maps.Marker
+    let infoWindow = null;
+    let mapInitialized = false;
+
+    // ── Auth ──
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        document.getElementById("adminEmail").textContent = user.email;
+        listenForAlerts();
+      } else {
+        document.getElementById("loginScreen").style.display = "flex";
+        document.getElementById("mainApp").style.display = "none";
+      }
+    });
+
+    // ── Login ──
+    function doLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const errEl = document.getElementById("loginError");
+      const btn = document.getElementById("loginBtn");
+      errEl.textContent = "";
+
+      if (!email || !password) {
+        errEl.textContent = "Please enter email and password.";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Signing in...";
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => { btn.textContent = "Sign In"; btn.disabled = false; })
+        .catch(err => {
+          btn.textContent = "Sign In";
+          btn.disabled = false;
+          if (err.code === "auth/wrong-password" ||
             err.code === "auth/user-not-found" ||
             err.code === "auth/invalid-credential") {
-          errEl.textContent = "Incorrect email or password.";
-        } else if (err.code === "auth/invalid-email") {
-          errEl.textContent = "Invalid email format.";
-        } else {
-          errEl.textContent = err.message;
-        }
-      });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("loginPassword")
-      .addEventListener("keydown", e => {
-        if (e.key === "Enter") doLogin();
-      });
-  });
-
-  // ── Logout ──
-  function doLogout() { auth.signOut(); }
-
-  // ── Tab switching ──
-  function switchTab(name, btn) {
-    document.querySelectorAll(".tab-panel").forEach(p =>
-      p.classList.remove("active"));
-    document.querySelectorAll(".tab-btn").forEach(b =>
-      b.classList.remove("active"));
-
-    document.getElementById("tab-" + name).classList.add("active");
-    btn.classList.add("active");
-
-    // Init map the first time the map tab is opened
-    if (name === "map" && !mapInitialized) {
-      initMap();
-    }
-  }
-
-  // ── Firestore real-time listener ──
-  function listenForAlerts() {
-    db.collection("sos_alerts")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(snapshot => {
-        allAlerts = [];
-        snapshot.forEach(doc => {
-          allAlerts.push({ id: doc.id, ...doc.data() });
+            errEl.textContent = "Incorrect email or password.";
+          } else if (err.code === "auth/invalid-email") {
+            errEl.textContent = "Invalid email format.";
+          } else {
+            errEl.textContent = err.message;
+          }
         });
-        updateStats();
-        applyFilter();
-        if (mapInitialized) updateMapMarkers();
-        updateMapSidebar();
-        document.getElementById("mapLastUpdated").textContent =
-          "Last updated: " + new Date().toLocaleTimeString();
-      }, err => console.error("Firestore:", err.message));
-  }
-
-  // ── Stats ──
-  function updateStats() {
-    const active   = allAlerts.filter(a => a.status === "active").length;
-    const resolved = allAlerts.filter(a => a.status === "resolved").length;
-    document.getElementById("countActive").textContent   = active;
-    document.getElementById("countResolved").textContent = resolved;
-    document.getElementById("countTotal").textContent    = allAlerts.length;
-  }
-
-  // ── Filter ──
-  function applyFilter() {
-    const statusFilter = document.getElementById("filterStatus").value;
-    const dateFilter   = document.getElementById("filterDate").value;
-    let filtered = [...allAlerts];
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(a => a.status === statusFilter);
     }
-    if (dateFilter) {
-      filtered = filtered.filter(a => {
-        if (!a.timestamp) return false;
-        return a.timestamp.toDate().toISOString().split("T")[0] === dateFilter;
-      });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("loginPassword")
+        .addEventListener("keydown", e => {
+          if (e.key === "Enter") doLogin();
+        });
+    });
+
+    // ── Logout ──
+    function doLogout() { auth.signOut(); }
+
+    // ── Tab switching ──
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-panel").forEach(p =>
+        p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b =>
+        b.classList.remove("active"));
+
+      document.getElementById("tab-" + name).classList.add("active");
+      btn.classList.add("active");
+
+      // Init map the first time the map tab is opened
+      if (name === "map" && !mapInitialized) {
+        initMap();
+      }
     }
-    renderTable(filtered);
-  }
 
-  // ── Table ──
-  function renderTable(alerts) {
-    const tbody    = document.getElementById("alertTableBody");
-    const emptyMsg = document.getElementById("emptyMsg");
-    tbody.innerHTML = "";
+    let currentModalAlertId = null;
 
-    if (alerts.length === 0) {
-      emptyMsg.style.display = "block";
-      return;
+    // Helper to safely escape HTML
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
-    emptyMsg.style.display = "none";
 
-    alerts.forEach((alert, index) => {
-      const isActive = alert.status === "active";
-      const time     = alert.timestamp
-        ? alert.timestamp.toDate().toLocaleString() : "—";
+    // ── Firestore real-time listener ──
+    function listenForAlerts() {
+      db.collection("sos_alerts")
+        .orderBy("timestamp", "desc")
+        .onSnapshot(snapshot => {
+          allAlerts = [];
+          snapshot.forEach(doc => {
+            allAlerts.push({ id: doc.id, ...doc.data() });
+          });
+          updateStats();
+          applyFilter();
+          if (mapInitialized) updateMapMarkers();
+          updateMapSidebar();
+          document.getElementById("mapLastUpdated").textContent =
+            "Updated " + new Date().toLocaleTimeString();
 
-      const actionBtn = isActive
-        ? `<button class="btn-resolve"
+          // Live update modal if it is currently open
+          if (currentModalAlertId) {
+            openReportModal(currentModalAlertId);
+          }
+        }, err => console.error("Firestore:", err.message));
+    }
+
+    // ── Stats ──
+    function updateStats() {
+      const active = allAlerts.filter(a => a.status === "active").length;
+      const resolved = allAlerts.filter(a => a.status === "resolved").length;
+      document.getElementById("countActive").textContent = active;
+      document.getElementById("countResolved").textContent = resolved;
+      document.getElementById("countTotal").textContent = allAlerts.length;
+    }
+
+    // ── Filter ──
+    function applyFilter() {
+      const statusFilter = document.getElementById("filterStatus").value;
+      const dateFilter = document.getElementById("filterDate").value;
+      let filtered = [...allAlerts];
+
+      if (statusFilter !== "all") {
+        filtered = filtered.filter(a => a.status === statusFilter);
+      }
+      if (dateFilter) {
+        filtered = filtered.filter(a => {
+          if (!a.timestamp) return false;
+          return a.timestamp.toDate().toISOString().split("T")[0] === dateFilter;
+        });
+      }
+      renderTable(filtered);
+    }
+
+    // ── Table ──
+    function renderTable(alerts) {
+      const tbody = document.getElementById("alertTableBody");
+      const emptyMsg = document.getElementById("emptyMsg");
+      tbody.innerHTML = "";
+
+      if (alerts.length === 0) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      alerts.forEach((alert, index) => {
+        const isActive = alert.status === "active";
+        const time = alert.timestamp
+          ? alert.timestamp.toDate().toLocaleString() : "—";
+        const coords = (alert.latitude != null && alert.longitude != null)
+          ? `${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}`
+          : "—";
+
+        // Incident info helper
+        const type = alert.accidentType;
+        const victims = alert.countOfVictims;
+        const patients = Array.isArray(alert.patients) ? alert.patients : [];
+        const hasReport = type || victims != null || alert.natureOfInjury || alert.modeOfInjury || patients.length > 0;
+
+        let incidentHtml = "";
+        if (hasReport) {
+          let badgeClass = "badge-other";
+          let iconSvg = "";
+          const tLower = (type || "").toLowerCase();
+          if (tLower.includes("fire")) {
+            badgeClass = "badge-fire";
+            iconSvg = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;margin-right:4px;"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>`;
+          } else if (tLower.includes("medic")) {
+            badgeClass = "badge-medical";
+            iconSvg = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;margin-right:4px;"><path d="M19 10.5h-5.5V5h-3v5.5H5v3h5.5V19h3v-5.5H19v-3z"/></svg>`;
+          } else if (tLower.includes("vehic")) {
+            badgeClass = "badge-vehicle";
+            iconSvg = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;margin-right:4px;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>`;
+          } else {
+            iconSvg = `<svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+          }
+
+          incidentHtml = `
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+              <span class="badge-incident ${badgeClass}">${iconSvg}${escapeHtml(type || "Reported")}</span>
+              ${victims != null ? `<span class="badge-victims">${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
+              ${patients.length > 0 ? `<span class="badge-victims" style="color:var(--blue);">${patients.length} patient${patients.length === 1 ? '' : 's'}</span>` : ''}
+            </div>`;
+        } else {
+          incidentHtml = `<span class="badge-incident badge-pending">Pending Report</span>`;
+        }
+
+        const viewReportBtn = `<button class="btn-view-report" onclick="openReportModal('${alert.id}')" title="View Incident &amp; Patient Report">
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+          Report
+        </button>`;
+
+        const actionBtn = isActive
+          ? `<button class="btn-resolve"
              onclick="resolveAlert('${alert.id}')">Resolve</button>`
-        : `<button class="btn-delete"
-             onclick="askDelete('${alert.id}')">✕ Delete</button>`;
+          : `<button class="btn-delete"
+             onclick="askDelete('${alert.id}')">Delete</button>`;
 
-      const row = document.createElement("tr");
-      row.innerHTML = `
+        const row = document.createElement("tr");
+        row.innerHTML = `
         <td>${index + 1}</td>
         <td>${time}</td>
-        <td>${alert.latitude  ?? "—"}</td>
-        <td>${alert.longitude ?? "—"}</td>
-        <td style="font-size:11px;color:#aaaaaa;">${alert.userId ?? "—"}</td>
+        <td>${incidentHtml}</td>
+        <td style="font-size:12px;white-space:nowrap;">${coords}</td>
+        <td style="font-size:11px;color:var(--text-muted);">${escapeHtml(alert.userId ?? "—")}</td>
         <td><span class="badge ${isActive
-          ? "badge-active" : "badge-resolved"}">
+            ? "badge-active" : "badge-resolved"}">
           ${isActive ? "ACTIVE" : "RESOLVED"}</span></td>
-        <td>${actionBtn}</td>`;
-      tbody.appendChild(row);
-    });
-  }
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${viewReportBtn}
+            ${actionBtn}
+          </div>
+        </td>`;
+        tbody.appendChild(row);
+      });
+    }
 
-  // ── Resolve / Delete ──
-  function resolveAlert(id) {
-    db.collection("sos_alerts").doc(id)
-      .update({ status: "resolved" })
-      .catch(err => console.error("Resolve:", err.message));
-  }
-
-  function askDelete(id) {
-    pendingDeleteId = id;
-    document.getElementById("confirmOverlay").classList.add("show");
-    document.getElementById("confirmYes").onclick = confirmDelete;
-  }
-
-  function confirmDelete() {
-    if (!pendingDeleteId) return;
-    db.collection("sos_alerts").doc(pendingDeleteId)
-      .delete()
-      .then(() => closeConfirm())
-      .catch(err => { closeConfirm(); alert("Delete failed: " + err.message); });
-  }
-
-  function closeConfirm() {
-    pendingDeleteId = null;
-    document.getElementById("confirmOverlay").classList.remove("show");
-  }
-
-  // ── Export CSV ──
-  function exportCSV() {
-    let csv = "No,Date & Time,Latitude,Longitude,User ID,Status\n";
-    allAlerts.forEach((a, i) => {
-      const time = a.timestamp ? a.timestamp.toDate().toLocaleString() : "";
-      csv += `${i+1},"${time}",${a.latitude ?? ""},`
-           + `${a.longitude ?? ""},"${a.userId ?? ""}",${a.status}\n`;
-    });
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href     = url;
-    link.download = "bfp_alerts_"
-      + new Date().toISOString().split("T")[0] + ".csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function exportPDF() { window.print(); }
-
-  // ════════════════════════════════════════════
-  //  MAP
-  // ════════════════════════════════════════════
-
-  function initMap() {
-    googleMap = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 12.8797, lng: 121.7740 },  // Philippines
-      zoom: 6,
-      mapTypeId: "roadmap",
-      styles: [
-        { elementType: "geometry",
-          stylers: [{ color: "#1a1a2e" }] },
-        { elementType: "labels.text.stroke",
-          stylers: [{ color: "#16213e" }] },
-        { elementType: "labels.text.fill",
-          stylers: [{ color: "#aaaaaa" }] },
-        { featureType: "road",
-          elementType: "geometry",
-          stylers: [{ color: "#2a2a4a" }] },
-        { featureType: "road",
-          elementType: "geometry.stroke",
-          stylers: [{ color: "#212121" }] },
-        { featureType: "water",
-          elementType: "geometry",
-          stylers: [{ color: "#0e1626" }] },
-        { featureType: "poi",
-          stylers: [{ visibility: "off" }] }
-      ]
-    });
-
-    infoWindow    = new google.maps.InfoWindow();
-    mapInitialized = true;
-
-    // Place markers for already-loaded alerts
-    updateMapMarkers();
-    updateMapSidebar();
-  }
-
-  function updateMapMarkers() {
-    const currentIds = new Set();
-
-    allAlerts.forEach(alert => {
-      if (alert.latitude == null || alert.longitude == null) return;
-      currentIds.add(alert.id);
+    // ── Open / Close Report Modal ──
+    function openReportModal(alertId) {
+      currentModalAlertId = alertId;
+      const alert = allAlerts.find(a => a.id === alertId);
+      if (!alert) return;
 
       const isActive = alert.status === "active";
-      const pos      = { lat: alert.latitude, lng: alert.longitude };
+      const time = alert.timestamp ? alert.timestamp.toDate().toLocaleString() : "—";
+      const lat = alert.latitude;
+      const lng = alert.longitude;
 
-      const time = alert.timestamp
-        ? alert.timestamp.toDate().toLocaleString() : "—";
+      document.getElementById("rmTitle").textContent = "Accident & Patient Report";
+      document.getElementById("rmSubtitle").textContent =
+        `SOS Alert #${alert.id.substring(0, 8)} • Reported on ${time}`;
 
-      const infoContent = `
-        <div style="background:#16213e;padding:12px;border-radius:8px;
-                    min-width:200px;color:#fff;">
-          <div style="font-weight:bold;font-size:14px;margin-bottom:6px;">
+      const statusBadge = document.getElementById("rmStatusBadge");
+      statusBadge.className = "badge " + (isActive ? "badge-active" : "badge-resolved");
+      statusBadge.textContent = isActive ? "ACTIVE" : "RESOLVED";
+
+      const body = document.getElementById("rmBody");
+
+      const type = alert.accidentType;
+      const victims = alert.countOfVictims;
+      const nature = alert.natureOfInjury;
+      const mode = alert.modeOfInjury;
+      const patients = Array.isArray(alert.patients) ? alert.patients : [];
+
+      const hasReport = type != null || victims != null || nature != null || mode != null || patients.length > 0;
+
+      let html = "";
+
+      // Coordinates & Navigation bar
+      if (lat != null && lng != null) {
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        html += `
+          <div class="report-coords-bar">
+            <div class="report-coords-info">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              <span><strong>Location Coordinates:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
+            </div>
+            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-nav-external">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+              Open in Google Maps
+            </a>
+          </div>`;
+      }
+
+      if (!hasReport) {
+        html += `
+          <div class="no-report-alert">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <h3 style="font-size:15px;color:var(--text-primary);margin-bottom:6px;">No Follow-up Accident Report Submitted</h3>
+            <p style="font-size:13px;max-width:460px;margin:0 auto;line-height:1.5;">
+              The caller sent an SOS distress signal from User ID: <code style="color:var(--blue);">${escapeHtml(alert.userId || "Unknown")}</code>, but hasn't submitted the detailed accident report sheet yet.
+            </p>
+          </div>`;
+      } else {
+        // Incident Overview Section
+        html += `
+          <div>
+            <div class="report-section-title">Incident Details</div>
+            <div class="report-meta-grid">
+              <div class="report-meta-card">
+                <div class="report-meta-label">Accident Type</div>
+                <div class="report-meta-val" style="color:var(--accent);">${escapeHtml(type || "Not specified")}</div>
+              </div>
+              <div class="report-meta-card">
+                <div class="report-meta-label">Count of Victims</div>
+                <div class="report-meta-val" style="color:var(--blue);">${victims != null ? victims : "Not specified"}</div>
+              </div>
+              <div class="report-meta-card">
+                <div class="report-meta-label">Nature of Injury</div>
+                <div class="report-meta-val">${escapeHtml(nature || "Not specified")}</div>
+              </div>
+              <div class="report-meta-card">
+                <div class="report-meta-label">Mode of Injury</div>
+                <div class="report-meta-val">${escapeHtml(mode || "Not specified")}</div>
+              </div>
+            </div>
+          </div>`;
+
+        // Patients List Section
+        html += `
+          <div>
+            <div class="report-section-title">Patient Records (${patients.length})</div>`;
+
+        if (patients.length === 0) {
+          html += `
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:18px;text-align:center;color:var(--text-secondary);font-size:13px;">
+              No individual patient profiles submitted with this report.
+            </div>`;
+        } else {
+          patients.forEach((p, idx) => {
+            const conscious = p.levelOfConsciousness || null;
+            let consciousTag = "";
+            if (conscious) {
+              const cLower = conscious.toLowerCase();
+              let cClass = "tag-conscious-alert";
+              if (cLower.includes("verbal")) cClass = "tag-conscious-verbal";
+              else if (cLower.includes("pain")) cClass = "tag-conscious-pain";
+              else if (cLower.includes("unresponsive")) cClass = "tag-conscious-unresponsive";
+              consciousTag = `<span class="${cClass}">Consciousness: ${escapeHtml(conscious)}</span>`;
+            }
+
+            const seizureTag = p.seizure === true
+              ? `<span class="tag-seizure">⚠️ Seizure Reported</span>`
+              : `<span style="font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:3px 8px;border-radius:4px;">No Seizure</span>`;
+
+            html += `
+              <div class="patient-card">
+                <div class="patient-card-header">
+                  <div class="patient-name-title">
+                    <span class="patient-badge-num">Patient ${idx + 1}</span>
+                    <span>${escapeHtml(p.name || "Unnamed Patient")}</span>
+                  </div>
+                  <div class="patient-tags-group">
+                    ${consciousTag}
+                    ${seizureTag}
+                  </div>
+                </div>
+
+                <div class="patient-details-grid">
+                  <div class="patient-field-row">
+                    <span class="patient-field-label">Age</span>
+                    <span class="patient-field-val">${p.age != null ? p.age + " yrs old" : "—"}</span>
+                  </div>
+                  <div class="patient-field-row">
+                    <span class="patient-field-label">Birthdate</span>
+                    <span class="patient-field-val">${escapeHtml(p.birthdate || "—")}</span>
+                  </div>
+                  <div class="patient-field-row">
+                    <span class="patient-field-label">Address</span>
+                    <span class="patient-field-val">${escapeHtml(p.address || "—")}</span>
+                  </div>
+                  <div class="patient-field-row">
+                    <span class="patient-field-label">Emergency Contact</span>
+                    <span class="patient-field-val" style="color:var(--blue);">${escapeHtml(p.emergencyContact || "—")}</span>
+                  </div>
+                </div>`;
+
+            if (p.allergies && p.allergies.trim()) {
+              html += `
+                <div class="patient-allergies-box">
+                  <span style="font-weight:700;">⚠️ Allergies:</span>
+                  <span>${escapeHtml(p.allergies)}</span>
+                </div>`;
+            }
+
+            if (p.condition && p.condition.trim()) {
+              html += `
+                <div class="patient-condition-box">
+                  <div style="font-size:11px;font-weight:600;color:var(--blue);margin-bottom:3px;text-transform:uppercase;">Condition / Symptoms:</div>
+                  <div>${escapeHtml(p.condition)}</div>
+                </div>`;
+            }
+
+            html += `</div>`;
+          });
+        }
+        html += `</div>`;
+      }
+
+      body.innerHTML = html;
+
+      // Footer actions inside modal
+      const footerActions = document.getElementById("rmFooterActions");
+      footerActions.innerHTML = "";
+      if (isActive) {
+        const btnResolveModal = document.createElement("button");
+        btnResolveModal.className = "btn-resolve";
+        btnResolveModal.textContent = "Mark as Resolved";
+        btnResolveModal.onclick = () => {
+          resolveAlert(alert.id);
+          closeReportModal();
+        };
+        footerActions.appendChild(btnResolveModal);
+      } else {
+        const btnDeleteModal = document.createElement("button");
+        btnDeleteModal.className = "btn-delete";
+        btnDeleteModal.textContent = "Delete Alert";
+        btnDeleteModal.onclick = () => {
+          closeReportModal();
+          askDelete(alert.id);
+        };
+        footerActions.appendChild(btnDeleteModal);
+      }
+
+      document.getElementById("reportModalOverlay").classList.add("show");
+    }
+
+    function closeReportModal() {
+      currentModalAlertId = null;
+      document.getElementById("reportModalOverlay").classList.remove("show");
+    }
+
+    function handleModalOverlayClick(e) {
+      if (e.target.id === "reportModalOverlay") {
+        closeReportModal();
+      }
+    }
+
+    // ── Resolve / Delete ──
+    function resolveAlert(id) {
+      db.collection("sos_alerts").doc(id)
+        .update({ status: "resolved" })
+        .catch(err => console.error("Resolve:", err.message));
+    }
+
+    function askDelete(id) {
+      pendingDeleteId = id;
+      document.getElementById("confirmOverlay").classList.add("show");
+      document.getElementById("confirmYes").onclick = confirmDelete;
+    }
+
+    function confirmDelete() {
+      if (!pendingDeleteId) return;
+      db.collection("sos_alerts").doc(pendingDeleteId)
+        .delete()
+        .then(() => closeConfirm())
+        .catch(err => { closeConfirm(); alert("Delete failed: " + err.message); });
+    }
+
+    function closeConfirm() {
+      pendingDeleteId = null;
+      document.getElementById("confirmOverlay").classList.remove("show");
+    }
+
+    // ── Export CSV ──
+    function exportCSV() {
+      let csv = "No,Date & Time,Latitude,Longitude,User ID,Status,Accident Type,Victims Count,Nature of Injury,Mode of Injury,Patients Count,Patients Details\n";
+      allAlerts.forEach((a, i) => {
+        const time = a.timestamp ? a.timestamp.toDate().toLocaleString() : "";
+        const type = a.accidentType || "";
+        const victims = a.countOfVictims != null ? a.countOfVictims : "";
+        const nature = a.natureOfInjury || "";
+        const mode = a.modeOfInjury || "";
+        const patients = Array.isArray(a.patients) ? a.patients : [];
+        const patientCount = patients.length;
+        const patientSummary = patients.map((p, idx) => {
+          let str = `P${idx + 1}: ${p.name || 'Unnamed'}`;
+          if (p.age) str += ` (${p.age}yo)`;
+          if (p.levelOfConsciousness) str += ` [${p.levelOfConsciousness}]`;
+          if (p.seizure) str += ` [Seizure]`;
+          if (p.allergies) str += ` [Allergies: ${p.allergies}]`;
+          return str;
+        }).join("; ");
+
+        const escapeCSV = val => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+        csv += `${i + 1},${escapeCSV(time)},${a.latitude ?? ""},`
+          + `${a.longitude ?? ""},${escapeCSV(a.userId ?? "")},${a.status},`
+          + `${escapeCSV(type)},${escapeCSV(victims)},${escapeCSV(nature)},`
+          + `${escapeCSV(mode)},${patientCount},${escapeCSV(patientSummary)}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "bfp_alerts_"
+        + new Date().toISOString().split("T")[0] + ".csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportPDF() { window.print(); }
+
+    // Close modal on Escape key
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        closeReportModal();
+        closeConfirm();
+      }
+    });
+
+    // ════════════════════════════════════════════
+    //  MAP
+    // ════════════════════════════════════════════
+
+    function initMap() {
+      googleMap = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 12.8797, lng: 121.7740 },  // Philippines
+        zoom: 6,
+        mapTypeId: "roadmap",
+        styles: [
+          {
+            elementType: "geometry",
+            stylers: [{ color: "#0f111a" }]
+          },
+          {
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#161929" }]
+          },
+          {
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#6b7094" }]
+          },
+          {
+            featureType: "road",
+            elementType: "geometry",
+            stylers: [{ color: "#1e2235" }]
+          },
+          {
+            featureType: "road",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#161929" }]
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#0a0c14" }]
+          },
+          {
+            featureType: "poi",
+            stylers: [{ visibility: "off" }]
+          }
+        ]
+      });
+
+      infoWindow = new google.maps.InfoWindow();
+      mapInitialized = true;
+
+      // Place markers for already-loaded alerts
+      updateMapMarkers();
+      updateMapSidebar();
+    }
+
+    function updateMapMarkers() {
+      const currentIds = new Set();
+
+      allAlerts.forEach(alert => {
+        if (alert.latitude == null || alert.longitude == null) return;
+        currentIds.add(alert.id);
+
+        const isActive = alert.status === "active";
+        const pos = { lat: alert.latitude, lng: alert.longitude };
+
+        const time = alert.timestamp
+          ? alert.timestamp.toDate().toLocaleString() : "—";
+
+        // Incident info snippet
+        const type = alert.accidentType;
+        const victims = alert.countOfVictims;
+        let incidentSnippet = "";
+        if (type || victims != null) {
+          incidentSnippet = `<div style="font-size:12px;font-weight:600;color:#ff6b7a;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span>${escapeHtml(type || "Incident")}</span>
+            ${victims != null ? `<span style="font-size:11px;color:#8b8fa8;font-weight:normal;">• ${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
+          </div>`;
+        }
+
+        const infoContent = `
+        <div style="background:#161929;padding:14px 16px;border-radius:10px;
+                    min-width:230px;color:#e8eaf0;font-family:Inter,sans-serif;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:8px;
+                      display:flex;align-items:center;gap:6px;">
+            <span style="width:8px;height:8px;border-radius:50%;
+                         background:${isActive ? '#e63946' : '#2dd4a8'};
+                         display:inline-block;"></span>
             ${isActive
-              ? '<span style="color:#e63946;">🔴 ACTIVE ALERT</span>'
-              : '<span style="color:#2a9d8f;">🟢 Resolved</span>'}
+            ? '<span style="color:#e63946;">Active Alert</span>'
+            : '<span style="color:#2dd4a8;">Resolved</span>'}
           </div>
-          <div style="font-size:12px;color:#aaaaaa;margin-bottom:4px;">
-            📍 ${alert.latitude.toFixed(5)}, ${alert.longitude.toFixed(5)}
+          ${incidentSnippet}
+          <div style="font-size:12px;color:#8b8fa8;margin-bottom:4px;">
+            ${alert.latitude.toFixed(5)}, ${alert.longitude.toFixed(5)}
           </div>
-          <div style="font-size:12px;color:#aaaaaa;margin-bottom:10px;">
-            🕐 ${time}
+          <div style="font-size:12px;color:#8b8fa8;margin-bottom:10px;">
+            ${time}
           </div>
+          <button onclick="openReportModal('${alert.id}')"
+            style="padding:7px 14px;background:rgba(91,141,239,0.2);color:#5b8def;
+                   border:1px solid rgba(91,141,239,0.3);border-radius:6px;cursor:pointer;
+                   font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:600;margin-bottom:6px;">
+            View Accident Report
+          </button>
           ${isActive
             ? `<button onclick="resolveAlertFromMap('${alert.id}')"
-                 style="padding:6px 14px;background:#2a9d8f;color:#fff;
-                        border:none;border-radius:4px;cursor:pointer;
-                        font-size:12px;width:100%;">
-                 ✓ Mark Resolved
+                 style="padding:7px 14px;background:rgba(45,212,168,0.15);color:#2dd4a8;
+                        border:1px solid rgba(45,212,168,0.2);border-radius:6px;cursor:pointer;
+                        font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+                 Mark Resolved
                </button>`
             : `<button onclick="deleteAlertFromMap('${alert.id}')"
-                 style="padding:6px 14px;background:#880000;color:#fff;
-                        border:none;border-radius:4px;cursor:pointer;
-                        font-size:12px;width:100%;">
-                 ✕ Delete
+                 style="padding:7px 14px;background:rgba(192,57,43,0.15);color:#e74c3c;
+                        border:1px solid rgba(192,57,43,0.2);border-radius:6px;cursor:pointer;
+                        font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+                 Delete
                </button>`
           }
         </div>`;
 
-      if (markers[alert.id]) {
-        // Update existing marker
-        markers[alert.id].setPosition(pos);
-        markers[alert.id].setIcon(markerIcon(isActive));
-        markers[alert.id]._infoContent = infoContent;
-      } else {
-        // Create new marker
-        const marker = new google.maps.Marker({
-          position: pos,
-          map:      googleMap,
-          icon:     markerIcon(isActive),
-          title:    isActive ? "ACTIVE ALERT" : "Resolved",
-          animation: google.maps.Animation.DROP
-        });
-        marker._infoContent = infoContent;
+        if (markers[alert.id]) {
+          // Update existing marker
+          markers[alert.id].setPosition(pos);
+          markers[alert.id].setIcon(markerIcon(isActive));
+          markers[alert.id]._infoContent = infoContent;
+        } else {
+          // Create new marker
+          const marker = new google.maps.Marker({
+            position: pos,
+            map: googleMap,
+            icon: markerIcon(isActive),
+            title: (type ? type + " - " : "") + (isActive ? "Active Alert" : "Resolved"),
+            animation: google.maps.Animation.DROP
+          });
+          marker._infoContent = infoContent;
 
-        marker.addListener("click", () => {
-          infoWindow.setContent(marker._infoContent);
-          infoWindow.open(googleMap, marker);
-        });
+          marker.addListener("click", () => {
+            infoWindow.setContent(marker._infoContent);
+            infoWindow.open(googleMap, marker);
+          });
 
-        markers[alert.id] = marker;
-      }
-    });
-
-    // Remove markers for deleted alerts
-    Object.keys(markers).forEach(id => {
-      if (!currentIds.has(id)) {
-        markers[id].setMap(null);
-        delete markers[id];
-      }
-    });
-
-    // Auto-pan to latest active alert
-    const latest = allAlerts.find(a => a.status === "active"
-      && a.latitude != null);
-    if (latest) {
-      googleMap.panTo({ lat: latest.latitude, lng: latest.longitude });
-      if (googleMap.getZoom() < 12) googleMap.setZoom(13);
-    }
-  }
-
-  // Custom colored marker icons
-  function markerIcon(isActive) {
-    return {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale:       12,
-      fillColor:   isActive ? "#e63946" : "#2a9d8f",
-      fillOpacity: 1,
-      strokeColor: isActive ? "#ff8080" : "#80d4c8",
-      strokeWeight: 2
-    };
-  }
-
-  // Update sidebar list of alerts
-  function updateMapSidebar() {
-    const list = document.getElementById("mapAlertList");
-    list.innerHTML = "";
-
-    const sorted = [...allAlerts]
-      .filter(a => a.latitude != null)
-      .sort((a, b) => {
-        // Active first, then by time
-        if (a.status === "active" && b.status !== "active") return -1;
-        if (a.status !== "active" && b.status === "active") return  1;
-        return 0;
+          markers[alert.id] = marker;
+        }
       });
 
-    if (sorted.length === 0) {
-      list.innerHTML =
-        '<p style="color:#555577;font-size:13px;">No alerts with location.</p>';
-      return;
+      // Remove markers for deleted alerts
+      Object.keys(markers).forEach(id => {
+        if (!currentIds.has(id)) {
+          markers[id].setMap(null);
+          delete markers[id];
+        }
+      });
+
+      // Auto-pan to latest active alert
+      const latest = allAlerts.find(a => a.status === "active"
+        && a.latitude != null);
+      if (latest) {
+        googleMap.panTo({ lat: latest.latitude, lng: latest.longitude });
+        if (googleMap.getZoom() < 12) googleMap.setZoom(13);
+      }
     }
 
-    sorted.forEach(alert => {
-      const isActive = alert.status === "active";
-      const time     = alert.timestamp
-        ? alert.timestamp.toDate().toLocaleString() : "—";
+    // Custom colored marker icons
+    function markerIcon(isActive) {
+      return {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: isActive ? "#e63946" : "#2dd4a8",
+        fillOpacity: 0.9,
+        strokeColor: isActive ? "#ff6b7a" : "#7af0d4",
+        strokeWeight: 2
+      };
+    }
 
-      const item = document.createElement("div");
-      item.className = "map-alert-item" + (isActive ? "" : " resolved");
-      item.innerHTML = `
+    // Update sidebar list of alerts
+    function updateMapSidebar() {
+      const list = document.getElementById("mapAlertList");
+      list.innerHTML = "";
+
+      const sorted = [...allAlerts]
+        .filter(a => a.latitude != null)
+        .sort((a, b) => {
+          // Active first, then by time
+          if (a.status === "active" && b.status !== "active") return -1;
+          if (a.status !== "active" && b.status === "active") return 1;
+          return 0;
+        });
+
+      if (sorted.length === 0) {
+        list.innerHTML =
+          '<p style="color:var(--text-muted);font-size:13px;">No alerts with location.</p>';
+        return;
+      }
+
+      sorted.forEach(alert => {
+        const isActive = alert.status === "active";
+        const time = alert.timestamp
+          ? alert.timestamp.toDate().toLocaleString() : "—";
+        const type = alert.accidentType;
+        const victims = alert.countOfVictims;
+
+        let incidentInfo = "";
+        if (type) {
+          incidentInfo = `<span style="color:#ff6b7a;font-weight:600;">[${escapeHtml(type)}]</span> `;
+        }
+        if (victims != null) {
+          incidentInfo += `<span style="color:var(--text-muted);font-size:10px;">(${victims} vic)</span> `;
+        }
+
+        const item = document.createElement("div");
+        item.className = "map-alert-item" + (isActive ? "" : " resolved");
+        item.innerHTML = `
         <div class="dot"
-             style="background:${isActive ? "#e63946" : "#2a9d8f"}">
+             style="background:${isActive ? "var(--accent)" : "var(--green)"}">
         </div>
         <div class="map-alert-info">
-          <strong>${isActive ? "🔴 Active Alert" : "🟢 Resolved"}</strong>
-          <span>📍 ${alert.latitude.toFixed(4)},
-                    ${alert.longitude.toFixed(4)}</span>
-          <span>🕐 ${time}</span>
+          <strong>${isActive ? "Active Alert" : "Resolved"} ${incidentInfo}</strong>
+          <span>${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}</span>
+          <span>${time}</span>
         </div>`;
 
-      // Click sidebar item → pan map and open info window
-      item.addEventListener("click", () => {
-        if (!mapInitialized) { switchTab("map",
-          document.querySelector(".tab-btn:nth-child(2)")); return; }
-        const marker = markers[alert.id];
-        if (marker) {
-          googleMap.panTo(marker.getPosition());
-          googleMap.setZoom(15);
-          infoWindow.setContent(marker._infoContent);
-          infoWindow.open(googleMap, marker);
-        }
-        // Switch to map tab if not already there
-        switchTab("map",
-          document.querySelectorAll(".tab-btn")[1]);
+        // Click sidebar item → pan map and open info window
+        item.addEventListener("click", () => {
+          if (!mapInitialized) {
+            switchTab("map",
+              document.querySelector(".tab-btn:nth-child(2)")); return;
+          }
+          const marker = markers[alert.id];
+          if (marker) {
+            googleMap.panTo(marker.getPosition());
+            googleMap.setZoom(15);
+            infoWindow.setContent(marker._infoContent);
+            infoWindow.open(googleMap, marker);
+          }
+          // Switch to map tab if not already there
+          switchTab("map",
+            document.querySelectorAll(".tab-btn")[1]);
+        });
+
+        list.appendChild(item);
       });
+    }
 
-      list.appendChild(item);
-    });
-  }
+    // Resolve/delete directly from map info window
+    function resolveAlertFromMap(id) {
+      db.collection("sos_alerts").doc(id)
+        .update({ status: "resolved" })
+        .then(() => infoWindow.close())
+        .catch(err => alert("Failed: " + err.message));
+    }
 
-  // Resolve/delete directly from map info window
-  function resolveAlertFromMap(id) {
-    db.collection("sos_alerts").doc(id)
-      .update({ status: "resolved" })
-      .then(() => infoWindow.close())
-      .catch(err => alert("Failed: " + err.message));
-  }
+    function deleteAlertFromMap(id) {
+      if (!confirm("Delete this resolved alert?")) return;
+      db.collection("sos_alerts").doc(id)
+        .delete()
+        .then(() => infoWindow.close())
+        .catch(err => alert("Failed: " + err.message));
+    }
+  </script>
 
-  function deleteAlertFromMap(id) {
-    if (!confirm("Delete this resolved alert?")) return;
-    db.collection("sos_alerts").doc(id)
-      .delete()
-      .then(() => infoWindow.close())
-      .catch(err => alert("Failed: " + err.message));
-  }
-</script>
+  <!-- Load Google Maps — replace YOUR_MAPS_API_KEY -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&callback=Function.prototype"
+    async defer>
+    </script>
 
-<!-- Load Google Maps — replace YOUR_MAPS_API_KEY -->
-<script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&callback=Function.prototype"
-        async defer>
-</script>
-
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js")
-        .then(reg => console.log("SW registered"))
-        .catch(err => console.log("SW failed:", err));
-    });
-  }
-</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+          .then(reg => console.log("SW registered"))
+          .catch(err => console.log("SW failed:", err));
+      });
+    }
+  </script>
 
 </body>
+
 </html>

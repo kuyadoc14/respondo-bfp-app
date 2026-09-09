@@ -49,4 +49,22 @@
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.5</item>
     </style>
+
+    <!-- Add this style inside your res/values/themes.xml -->
+    <style name="Theme.BFPAlert.BottomSheet"
+        parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">
+            @style/BFPBottomSheet
+        </item>
+    </style>
+
+    <style name="BFPBottomSheet"
+        parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="android:background">
+            @color/surface
+        </item>
+        <item name="behavior_peekHeight">600dp</item>
+        <item name="behavior_fitToContents">true</item>
+        <item name="behavior_skipCollapsed">true</item>
+    </style>
 </resources>

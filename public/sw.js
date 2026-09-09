@@ -20,7 +20,7 @@ self.addEventListener("activate", event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
+          .map(key => caches.delete(key))
       )
     )
   );
@@ -29,8 +29,8 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.url.includes("firebase") ||
-      event.request.url.includes("googleapis") ||
-      event.request.url.includes("gstatic")) {
+    event.request.url.includes("googleapis") ||
+    event.request.url.includes("gstatic")) {
     event.respondWith(fetch(event.request));
     return;
   }
