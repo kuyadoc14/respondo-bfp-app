@@ -82,6 +82,7 @@ public class AdminDashboardActivity extends AppCompatActivity
         // Guard — not logged in
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new Intent(this, AdminLoginActivity.class));
+            overridePendingTransition(0, 0);
             finish();
             return;
         }
@@ -109,8 +110,10 @@ public class AdminDashboardActivity extends AppCompatActivity
         // Header buttons
         // Change from Button to LinearLayout
         findViewById(R.id.btnManageFirstAid)
-                .setOnClickListener(v -> startActivity(
-                        new Intent(this, AdminFirstAidActivity.class)));
+                .setOnClickListener(v -> {
+                    startActivity(new Intent(this, AdminFirstAidActivity.class));
+                    overridePendingTransition(0, 0);
+                });
 
         findViewById(R.id.btnAdminLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
@@ -121,6 +124,7 @@ public class AdminDashboardActivity extends AppCompatActivity
                     Intent.FLAG_ACTIVITY_CLEAR_TASK |
                             Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+            overridePendingTransition(0, 0);
             finish();
         });
 

@@ -60,6 +60,36 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
+    public void openAdminLogin() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, new AdminLoginFragment())
+                .addToBackStack("admin_login")
+                .commit();
+    }
+
+    public void openAdminDashboard() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, new AdminDashboardFragment())
+                .commit();
+    }
+
+    public void openAdminFirstAid() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, new AdminFirstAidFragment())
+                .addToBackStack("admin_first_aid")
+                .commit();
+    }
+
+    public void returnToMain() {
+        getSupportFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        loadFragment(sosFragment);
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.sos);
+    }
+
     public void switchToFirstAid() {
         switchToFirstAid("");
     }

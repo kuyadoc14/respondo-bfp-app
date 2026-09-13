@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -136,14 +137,17 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.VH> {
             h.tvNatureMode.setVisibility(View.GONE);
         }
 
-        // ── Click → alert detail ──────────────────
+        // ── Click → alert detail fragment ─────────
         h.itemView.setOnClickListener(v -> {
             Context ctx = v.getContext();
-            if (ctx instanceof
-                    AdminDashboardActivity) {
-                ((AdminDashboardActivity) ctx)
-                    .openAlertDetail(
-                        alertId, data);
+            if (ctx instanceof FragmentActivity) {
+                ((FragmentActivity) ctx)
+                        .getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragmentContainer,
+                                AlertDetailFragment.newInstance(alertId, data))
+                        .addToBackStack("alert_detail")
+                        .commit();
             }
         });
     }

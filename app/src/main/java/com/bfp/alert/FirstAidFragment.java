@@ -49,26 +49,24 @@ public class FirstAidFragment extends Fragment {
                 new LinearLayoutManager(requireContext()));
 
         adapter = new FirstAidAdapter(filteredItems, item -> {
-            Intent intent = new Intent(requireContext(),
-                    FirstAidDetailActivity.class);
-            intent.putExtra("id",              item.id);
-            intent.putExtra("title",           item.title);
-            intent.putExtra("category",        item.category);
-            intent.putExtra("description",     item.description);
-            intent.putExtra("videoUrl",
-                    item.videoUrl != null ? item.videoUrl : "");
-            intent.putExtra("storageVideoUrl",
-                    item.storageVideoUrl != null
-                            ? item.storageVideoUrl : "");
-            intent.putExtra("iconEmoji",
-                    item.iconEmoji != null ? item.iconEmoji : "🩺");
-            intent.putStringArrayListExtra("steps",
-                    new ArrayList<>(item.steps != null
-                            ? item.steps : new ArrayList<>()));
-            intent.putStringArrayListExtra("photoUrls",
-                    new ArrayList<>(item.photoUrls != null
-                            ? item.photoUrls : new ArrayList<>()));
-            startActivity(intent);
+            FirstAidDetailFragment detailFragment =
+                    FirstAidDetailFragment.newInstance(
+                            item.title != null ? item.title : "",
+                            item.category != null ? item.category : "",
+                            item.description != null ? item.description : "",
+                            item.videoUrl != null ? item.videoUrl : "",
+                            item.storageVideoUrl != null ? item.storageVideoUrl : "",
+                            item.iconEmoji != null ? item.iconEmoji : "🩺",
+                            new ArrayList<>(item.steps != null
+                                    ? item.steps : new ArrayList<>()),
+                            new ArrayList<>(item.photoUrls != null
+                                    ? item.photoUrls : new ArrayList<>()));
+
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, detailFragment)
+                    .addToBackStack("first_aid_detail")
+                    .commit();
         });
         recycler.setAdapter(adapter);
 

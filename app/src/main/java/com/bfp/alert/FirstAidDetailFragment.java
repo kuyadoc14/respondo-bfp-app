@@ -125,11 +125,6 @@ public class FirstAidDetailFragment extends Fragment {
                                     idx, photoUrls);
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .setCustomAnimations(
-                                    R.anim.slide_in_right,
-                                    R.anim.slide_out_left,
-                                    R.anim.slide_in_left,
-                                    R.anim.slide_out_right)
                             .replace(R.id.fragmentContainer,
                                     photoFragment)
                             .addToBackStack(null)
@@ -146,30 +141,36 @@ public class FirstAidDetailFragment extends Fragment {
             for (int i = 0; i < steps.size(); i++) {
                 LinearLayout row = new LinearLayout(requireContext());
                 row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setPadding(0, 0, 0, dp(14));
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setBackgroundResource(R.drawable.card_bg);
+                row.setPadding(dp(12), dp(12), dp(12), dp(12));
+                LinearLayout.LayoutParams rowLp =
+                        new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT);
+                rowLp.setMargins(0, 0, 0, dp(10));
+                row.setLayoutParams(rowLp);
 
                 TextView num = new TextView(requireContext());
                 num.setText(String.valueOf(i + 1));
                 num.setTextColor(0xFFFFFFFF);
                 num.setTextSize(12);
                 num.setGravity(Gravity.CENTER);
-                num.setBackgroundColor(0xFFe63946);
+                num.setBackgroundResource(R.drawable.bg_step_number);
                 LinearLayout.LayoutParams np =
-                        new LinearLayout.LayoutParams(dp(32), dp(32));
+                        new LinearLayout.LayoutParams(dp(28), dp(28));
                 np.setMargins(0, 0, dp(12), 0);
                 num.setLayoutParams(np);
 
                 TextView step = new TextView(requireContext());
                 step.setText(steps.get(i));
-                step.setTextColor(0xFF000000);
+                step.setTextColor(0xFF1A1A2E);
                 step.setTextSize(14);
                 step.setLineSpacing(4, 1);
-                LinearLayout.LayoutParams sp =
-                        new LinearLayout.LayoutParams(
-                                0,
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                1f);
-                step.setLayoutParams(sp);
+                step.setLayoutParams(new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f));
 
                 row.addView(num);
                 row.addView(step);

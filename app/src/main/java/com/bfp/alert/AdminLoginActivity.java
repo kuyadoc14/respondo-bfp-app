@@ -36,6 +36,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                 && mAuth.getCurrentUser() != null) {
             startActivity(new Intent(
                     this, AdminDashboardActivity.class));
+            overridePendingTransition(0, 0);
             finish();
             return;
         }
@@ -46,7 +47,10 @@ public class AdminLoginActivity extends AppCompatActivity {
         Button   btnDismiss = findViewById(R.id.btnDismiss);
         TextView tvError    = findViewById(R.id.tvLoginError);
 
-        btnDismiss.setOnClickListener(v -> finish());
+        btnDismiss.setOnClickListener(v -> {
+            finish();
+            overridePendingTransition(0, 0);
+        });
 
         etPassword.setOnEditorActionListener(
                 (v, actionId, event) -> {
@@ -97,6 +101,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                                     Intent.FLAG_ACTIVITY_CLEAR_TOP |
                                             Intent.FLAG_ACTIVITY_SINGLE_TOP);
                             startActivity(intent);
+                            overridePendingTransition(0, 0);
                             finish();
 
                         } else {

@@ -25,15 +25,18 @@ public class ProfileFragment extends Fragment {
                     if (com.google.firebase.auth.FirebaseAuth
                             .getInstance()
                             .getCurrentUser() != null) {
-                        // Already logged in
-                        startActivity(new Intent(
-                                requireContext(),
-                                AdminDashboardActivity.class));
+                        ((MainActivity) requireActivity())
+                                .openAdminDashboard();
                     } else {
-                        // Show login popup
-                        startActivity(new Intent(
-                                requireContext(),
-                                AdminLoginActivity.class));
+                        Bundle args = new Bundle();
+                        args.putBoolean("fromLogout", false);
+                        AdminLoginFragment fragment = new AdminLoginFragment();
+                        fragment.setArguments(args);
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragmentContainer, fragment)
+                                .addToBackStack("admin_login")
+                                .commit();
                     }
                 });
 

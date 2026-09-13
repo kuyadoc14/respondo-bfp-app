@@ -36,7 +36,10 @@ public class AdminFirstAidActivity extends AppCompatActivity {
 
         // Back button is now a LinearLayout
         findViewById(R.id.btnBack)
-                .setOnClickListener(v -> finish());
+                .setOnClickListener(v -> {
+                    finish();
+                    overridePendingTransition(0, 0);
+                });
 
         RecyclerView recycler =
                 findViewById(R.id.recyclerAdminFirstAid);
@@ -64,6 +67,7 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                             new ArrayList<>(item.photoUrls != null
                                     ? item.photoUrls : new ArrayList<>()));
                     startActivity(intent);
+                    overridePendingTransition(0, 0);
                 },
                 item -> db.collection("first_aid")
                         .document(item.id)
@@ -84,6 +88,7 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                             this, FirstAidEditorActivity.class);
                     intent.putExtra("mode", "add");
                     startActivity(intent);
+                    overridePendingTransition(0, 0);
                 });
 
         loadItems();
