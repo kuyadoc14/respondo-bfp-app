@@ -13,11 +13,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/primary"
+        android:gravity="center_vertical"
         android:paddingStart="20dp"
-        android:paddingEnd="16dp"
+        android:paddingEnd="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="20dp"
-        android:gravity="center_vertical">
+        android:paddingBottom="20dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -38,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No active alerts"
-                android:textColor="#FFCCCC"
+                android:textColor="#FFD7D7"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp"/>
 

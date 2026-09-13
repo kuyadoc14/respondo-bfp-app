@@ -1,6 +1,7 @@
 package com.bfp.alert;
 
 import android.os.Bundle;
+import android.view.View;
 import java.util.HashMap;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -53,7 +54,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setBottomNavVisibility(boolean visible) {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (bottomNav != null) {
+            bottomNav.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
     private void loadFragment(Fragment fragment) {
+        setBottomNavVisibility(true);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, fragment)
@@ -61,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openAdminLogin() {
+        setBottomNavVisibility(false);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, new AdminLoginFragment())
@@ -69,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openAdminDashboard() {
+        setBottomNavVisibility(false);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, new AdminDashboardFragment())
@@ -76,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openAdminFirstAid() {
+        setBottomNavVisibility(false);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, new AdminFirstAidFragment())
@@ -84,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void returnToMain() {
+        setBottomNavVisibility(true);
         getSupportFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
         loadFragment(sosFragment);
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);

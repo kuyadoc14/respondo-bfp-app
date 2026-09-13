@@ -14,22 +14,23 @@
         android:background="@color/primary"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="20dp">
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="First Aid Guide"
             android:textColor="@color/white"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Quick reference for emergencies"
-            android:textColor="#FFCCCC"
+            android:textColor="#FFD7D7"
             android:textSize="12sp"
             android:layout_marginTop="2dp"/>
 

@@ -12,11 +12,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/primary"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="20dp"
-        android:gravity="center_vertical">
+        android:paddingBottom="20dp">
 
         <!-- Back button -->
         <LinearLayout
@@ -48,7 +48,7 @@
             android:layout_weight="1"
             android:text="Manage First Aid"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"/>
 
         <!-- Add button — using TextView avoids MaterialButton clipping -->

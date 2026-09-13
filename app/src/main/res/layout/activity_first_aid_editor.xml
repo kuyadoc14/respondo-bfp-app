@@ -10,17 +10,33 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:background="@color/primary"
-        android:padding="16dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_icon_circle_white"
+            android:contentDescription="Back"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_back"/>
 
         <TextView
             android:id="@+id/tvEditorTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Add First Aid"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="22sp"
             android:textStyle="bold"/>
 
     </LinearLayout>
@@ -35,6 +51,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="18dp">
 
             <TextView android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -109,6 +133,8 @@
                 android:gravity="top"
                 android:layout_marginBottom="16dp"/>
 
+            </LinearLayout>
+
             <!-- Steps label and add button -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -164,41 +190,63 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginBottom="20dp"/>
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/card_bg"
+                android:padding="14dp"/>
 
-            <TextView android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="YouTube URL (optional)"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="4dp"/>
-            <EditText android:id="@+id/etVideoUrl"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="https://youtube.com/watch?v=..."
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_hint"
-                android:background="@drawable/bg_input"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:inputType="textUri"
-                android:layout_marginBottom="24dp"/>
-
-            <!-- Divider -->
-            <View android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/border"
-                android:layout_marginBottom="20dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Media Upload"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Video Reference"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="YouTube URL (optional)"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
+                <EditText android:id="@+id/etVideoUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:hint="https://youtube.com/watch?v=..."
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_hint"
+                    android:background="@drawable/bg_input"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:inputType="textUri"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Media Upload"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
 
             <TextView android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -269,6 +317,8 @@
                 android:visibility="gone"
                 android:layout_marginBottom="16dp"/>
 
+            </LinearLayout>
+
             <Button android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
@@ -278,7 +328,8 @@
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:stateListAnimator="@null"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_button_primary"/>
 
             <Button android:id="@+id/btnCancel"
                 android:layout_width="match_parent"
