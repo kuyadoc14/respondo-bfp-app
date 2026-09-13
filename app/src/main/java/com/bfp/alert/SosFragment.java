@@ -50,6 +50,7 @@ public class SosFragment extends Fragment {
     private View         ringMid;
     private TextView     tvStatus;
     private LinearLayout statusCard;
+    private View         btnOpenReport;
 
     // BLE
     private BLEManager bleManager;
@@ -98,6 +99,21 @@ public class SosFragment extends Fragment {
         if (btnVoice != null) {
             btnVoice.setOnClickListener(
                     v -> showVoiceAssistant());
+        }
+
+        btnOpenReport = view.findViewById(R.id.btnOpenReport);
+        if (btnOpenReport != null) {
+            btnOpenReport.setOnClickListener(v -> {
+                String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+                if (alertId != null) {
+                    AccidentReportSheet sheet = AccidentReportSheet.newInstance(alertId);
+                    sheet.setOnReportSubmittedListener(() -> {
+                        markReportSubmitted(alertId);
+                        hideReportButton();
+                    });
+                    sheet.show(getChildFragmentManager(), "accident_report");
+                }
+            });
         }
 
         btnSOS.setOnClickListener(v -> sendSOSAlert());
@@ -160,6 +176,12 @@ public class SosFragment extends Fragment {
                         sAlertId = alertId;
                         setSOSSentState();
                         attachLiveListener(alertId);
+
+                        Boolean reportSubmitted = doc.getBoolean("reportSubmitted");
+                        if (Boolean.TRUE.equals(reportSubmitted) || doc.contains("patients") || doc.contains("accidentType") || isReportSubmitted(alertId)) {
+                            markReportSubmitted(alertId);
+                            hideReportButton();
+                        }
                     } else {
                         // Already resolved
                         clearAlertState();
@@ -184,6 +206,12 @@ public class SosFragment extends Fragment {
                 .document(alertId)
                 .addSnapshotListener((snap, e) -> {
                     if (e != null || snap == null) return;
+
+                    Boolean reportSubmitted = snap.getBoolean("reportSubmitted");
+                    if (Boolean.TRUE.equals(reportSubmitted) || snap.contains("patients") || snap.contains("accidentType")) {
+                        markReportSubmitted(alertId);
+                        hideReportButton();
+                    }
 
                     String status = snap.getString("status");
                     Log.d(TAG, "Live update: " + status);
@@ -250,6 +278,11 @@ public class SosFragment extends Fragment {
                                 AccidentReportSheet sheet =
                                         AccidentReportSheet
                                                 .newInstance(sAlertId);
+                                String currentAlertId = sAlertId;
+                                sheet.setOnReportSubmittedListener(() -> {
+                                    markReportSubmitted(currentAlertId);
+                                    hideReportButton();
+                                });
                                 sheet.show(
                                         getChildFragmentManager(),
                                         "accident_report");
@@ -426,7 +459,12 @@ public class SosFragment extends Fragment {
 
         startPulsingAnimation();
 
-        statusCard.setVisibility(View.GONE);
+        if (statusCard != null) {
+            statusCard.setVisibility(View.GONE);
+        }
+        if (btnOpenReport != null) {
+            btnOpenReport.setVisibility(View.GONE);
+        }
     }
 
     private void setSOSSentState() {
@@ -439,6 +477,22 @@ public class SosFragment extends Fragment {
                 android.content.res.ColorStateList
                         .valueOf(0xFF883333));
 
+        if (statusCard != null) {
+            statusCard.setVisibility(View.VISIBLE);
+        }
+        if (tvStatus != null) {
+            tvStatus.setText("Alert sent. Responders have been notified.");
+        }
+
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if (btnOpenReport != null) {
+            if (alertId != null && isReportSubmitted(alertId)) {
+                btnOpenReport.setVisibility(View.GONE);
+            } else {
+                btnOpenReport.setVisibility(View.VISIBLE);
+            }
+        }
+
         // Pulse dot
         View pulseDot = getView().findViewById(
                 R.id.pulseDot);
@@ -447,6 +501,26 @@ public class SosFragment extends Fragment {
                     AnimationUtils.loadAnimation(
                             requireContext(), R.anim.pulse_dot);
             pulseDot.startAnimation(dotAnim);
+        }
+    }
+
+    private void markReportSubmitted(String alertId) {
+        if (getContext() == null || alertId == null) return;
+        requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("report_sent_" + alertId, true)
+                .apply();
+    }
+
+    private boolean isReportSubmitted(String alertId) {
+        if (getContext() == null || alertId == null) return false;
+        return requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean("report_sent_" + alertId, false);
+    }
+
+    private void hideReportButton() {
+        if (btnOpenReport != null) {
+            btnOpenReport.setVisibility(View.GONE);
         }
     }
 

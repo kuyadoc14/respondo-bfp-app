@@ -27,6 +27,16 @@ import java.util.Map;
 public class AccidentReportSheet
         extends BottomSheetDialogFragment {
 
+    public interface OnReportSubmittedListener {
+        void onReportSubmitted();
+    }
+
+    private OnReportSubmittedListener reportSubmittedListener;
+
+    public void setOnReportSubmittedListener(OnReportSubmittedListener listener) {
+        this.reportSubmittedListener = listener;
+    }
+
     // The alert ID created when SOS was sent
     // We update this document with the report
     private static final String ARG_ALERT_ID =
@@ -103,6 +113,12 @@ public class AccidentReportSheet
             view.findViewById(R.id.btnSubmitReport);
         btnSubmit.setOnClickListener(v ->
             submitReport(view));
+
+        // Close button in header
+        View btnClose = view.findViewById(R.id.btnCloseReport);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dismiss());
+        }
 
         // Skip
         MaterialButton btnSkip =
@@ -316,6 +332,7 @@ public class AccidentReportSheet
             update.put("patients", patients);
 
         // ── Update Firestore document ─────────────
+        update.put("reportSubmitted", true);
         db.collection("sos_alerts")
             .document(alertId)
             .update(update)
@@ -323,6 +340,9 @@ public class AccidentReportSheet
                 Toast.makeText(requireContext(),
                     "Report sent to BFP.",
                     Toast.LENGTH_SHORT).show();
+                if (reportSubmittedListener != null) {
+                    reportSubmittedListener.onReportSubmitted();
+                }
                 dismiss();
             })
             .addOnFailureListener(e ->

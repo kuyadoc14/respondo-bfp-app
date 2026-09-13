@@ -92,6 +92,12 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
         btnTabList.setOnClickListener(v -> showListView());
         btnTabMap.setOnClickListener(v -> showMapView());
 
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v ->
+                    ((MainActivity) requireActivity()).returnToMain());
+        }
+
         view.findViewById(R.id.btnManageFirstAid).setOnClickListener(v ->
                 ((MainActivity) requireActivity()).openAdminFirstAid());
 

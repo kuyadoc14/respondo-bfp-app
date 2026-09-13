@@ -35,7 +35,7 @@ public class AdminLoginFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
 
-        boolean fromLogout = requireArguments().getBoolean("fromLogout", false);
+        boolean fromLogout = getArguments() != null && getArguments().getBoolean("fromLogout", false);
 
         if (!fromLogout && mAuth.getCurrentUser() != null) {
             ((MainActivity) requireActivity()).openAdminDashboard();

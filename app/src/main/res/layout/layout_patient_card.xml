@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#F8F8F8"
+    android:background="@drawable/card_bg"
     android:padding="16dp"
     android:layout_marginBottom="12dp">
 
@@ -34,6 +34,8 @@
             android:text="Remove"
             android:textColor="@color/primary"
             android:textSize="12sp"
+            android:textStyle="bold"
+            android:padding="6dp"
             android:clickable="true"
             android:focusable="true"/>
 

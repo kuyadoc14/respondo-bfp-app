@@ -45,7 +45,7 @@ public class FirstAidEditorFragment extends Fragment {
 
     private LinearLayout photoPreviewContainer;
     private LinearLayout stepsInputContainer;
-    private TextView tvVideoName, tvUploadStatus;
+    private TextView tvVideoName, tvUploadStatus, btnClearVideo;
     private ProgressBar uploadProgress;
     private Button btnSave;
 
@@ -74,6 +74,7 @@ public class FirstAidEditorFragment extends Fragment {
                 selectedVideoUri = result.getData().getData();
                 tvVideoName.setText("Video selected ✓");
                 tvVideoName.setTextColor(0xFF10B981);
+                if (btnClearVideo != null) btnClearVideo.setVisibility(View.VISIBLE);
             });
 
     @Nullable
@@ -101,8 +102,19 @@ public class FirstAidEditorFragment extends Fragment {
         stepsInputContainer = view.findViewById(R.id.stepsInputContainer);
         photoPreviewContainer = view.findViewById(R.id.photoPreviewContainer);
         tvVideoName = view.findViewById(R.id.tvVideoName);
+        btnClearVideo = view.findViewById(R.id.btnClearVideo);
         tvUploadStatus = view.findViewById(R.id.tvUploadStatus);
         uploadProgress = view.findViewById(R.id.uploadProgress);
+
+        if (btnClearVideo != null) {
+            btnClearVideo.setOnClickListener(v -> {
+                selectedVideoUri = null;
+                existingVideoUrl = "";
+                tvVideoName.setText("No video selected");
+                tvVideoName.setTextColor(0xFF9CA3AF);
+                btnClearVideo.setVisibility(View.GONE);
+            });
+        }
 
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
             requireActivity().getSupportFragmentManager().popBackStack());
@@ -115,6 +127,13 @@ public class FirstAidEditorFragment extends Fragment {
             etDesc.setText(requireArguments().getString("description"));
             etVideo.setText(requireArguments().getString("videoUrl"));
 
+            existingVideoUrl = requireArguments().getString("storageVideoUrl", "");
+            if (!existingVideoUrl.isEmpty()) {
+                tvVideoName.setText("Video uploaded ✓");
+                tvVideoName.setTextColor(0xFF10B981);
+                if (btnClearVideo != null) btnClearVideo.setVisibility(View.VISIBLE);
+            }
+
             ArrayList<String> steps = requireArguments().getStringArrayList("steps");
             if (steps != null && !steps.isEmpty()) {
                 for (String step : steps) addStepField(step);
@@ -123,16 +142,9 @@ public class FirstAidEditorFragment extends Fragment {
             }
 
             ArrayList<String> photos = requireArguments().getStringArrayList("photoUrls");
-            if (photos != null) {
+            if (photos != null && !photos.isEmpty()) {
                 existingPhotoUrls.addAll(photos);
                 refreshPhotoPreviews();
-            }
-
-            String sv = requireArguments().getString("storageVideoUrl");
-            existingVideoUrl = sv != null ? sv : "";
-            if (!existingVideoUrl.isEmpty()) {
-                tvVideoName.setText("Video uploaded ✓");
-                tvVideoName.setTextColor(0xFF10B981);
             }
         } else {
             addStepField("");

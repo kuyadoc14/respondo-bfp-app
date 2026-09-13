@@ -19,43 +19,54 @@
         android:paddingBottom="20dp">
 
         <!-- Back button -->
-        <LinearLayout
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginEnd="12dp"
             android:background="@drawable/bg_icon_circle_white"
-            android:gravity="center"
-            android:layout_marginEnd="14dp">
+            android:contentDescription="Back"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_back"
+            android:clickable="true"
+            android:focusable="true"/>
 
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_back"
-                android:scaleType="fitCenter"
-                android:background="@android:color/transparent"
-                android:textColor="@color/white"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true"/>
-
-        </LinearLayout>
-
-        <!-- Title -->
-        <TextView
+        <!-- Title + Subtitle -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Manage First Aid"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"/>
+            android:orientation="vertical">
 
-        <!-- Add button — using TextView avoids MaterialButton clipping -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Manage First Aid"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tvItemCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Loading guides..."
+                android:textColor="#FFD7D7"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"
+                android:singleLine="true"
+                android:ellipsize="end"/>
+
+        </LinearLayout>
+
+        <!-- Add button -->
         <TextView
             android:id="@+id/btnAddFirstAid"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="38dp"
             android:text="+ Add"
             android:textSize="13sp"
             android:textColor="@color/white"
@@ -63,23 +74,11 @@
             android:gravity="center"
             android:paddingStart="18dp"
             android:paddingEnd="18dp"
-            android:background="@drawable/rounded_button"
+            android:background="@drawable/bg_header_pill"
             android:clickable="true"
             android:focusable="true"/>
 
     </LinearLayout>
-
-    <!-- Count label -->
-    <TextView
-        android:id="@+id/tvItemCount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Loading..."
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginBottom="4dp"/>
 
     <!-- List -->
     <androidx.recyclerview.widget.RecyclerView

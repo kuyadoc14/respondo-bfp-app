@@ -19,6 +19,20 @@
         android:paddingTop="20dp"
         android:paddingBottom="20dp">
 
+        <!-- Back button -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_icon_circle_white"
+            android:contentDescription="Back"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_back"
+            android:clickable="true"
+            android:focusable="true"/>
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -31,7 +45,9 @@
                 android:text="BFP Dashboard"
                 android:textColor="@color/white"
                 android:textSize="22sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end"/>
 
             <TextView
                 android:id="@+id/tvAlertCount"
@@ -40,47 +56,38 @@
                 android:text="No active alerts"
                 android:textColor="#FFD7D7"
                 android:textSize="12sp"
-                android:layout_marginTop="2dp"/>
+                android:layout_marginTop="2dp"
+                android:singleLine="true"
+                android:ellipsize="end"/>
 
         </LinearLayout>
 
         <!-- First Aid icon button -->
-        <LinearLayout
+        <ImageButton
+            android:id="@+id/btnManageFirstAid"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:gravity="center"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/bg_icon_circle_white"
-            android:layout_marginEnd="10dp"
+            android:contentDescription="Manage First Aid"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_managefirstaid"
             android:clickable="true"
-            android:focusable="true">
-
-            <ImageButton
-                android:id="@+id/btnManageFirstAid"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:src="@drawable/ic_managefirstaid"
-                android:scaleType="fitCenter"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                />
-
-
-
-        </LinearLayout>
+            android:focusable="true"/>
 
         <TextView
             android:id="@+id/btnAdminLogout"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="38dp"
             android:text="Log Out"
             android:textSize="13sp"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingStart="18dp"
-            android:paddingEnd="18dp"
-            android:background="@drawable/rounded_button"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@drawable/bg_header_pill"
             android:clickable="true"
             android:focusable="true"/>
 

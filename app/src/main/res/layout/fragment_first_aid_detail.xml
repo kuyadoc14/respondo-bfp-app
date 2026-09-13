@@ -240,15 +240,20 @@
                     android:textSize="16sp"
                     android:textStyle="bold"/>
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnWatchVideo"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:background="@drawable/bg_button_primary"
                     android:text="▶ Watch on YouTube"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="14dp"
+                    app:elevation="0dp"
                     android:stateListAnimator="@null"/>
 
             </LinearLayout>
