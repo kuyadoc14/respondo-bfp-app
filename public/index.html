@@ -279,6 +279,16 @@
       border: 1px solid var(--border);
     }
 
+    #alertSoundButton {
+      background: rgba(231, 76, 60, 0.14);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 7px 11px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     /* ── Tab bar ── */
     .tabs {
       display: flex;
@@ -1419,7 +1429,12 @@
           <p>Bureau of Fire Protection — Live Monitoring</p>
         </div>
       </div>
-      <span id="adminEmail"></span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="alertSoundButton" type="button" onclick="stopAlertSound()">
+          Stop alarm
+        </button>
+        <span id="adminEmail"></span>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -1556,6 +1571,70 @@
     let markers = {};   // alertId → google.maps.Marker
     let infoWindow = null;
     let mapInitialized = false;
+    let alertAudioContext = null;
+    let activeAlertAudio = null;
+    let generatedAlertNodes = [];
+    let hasLoadedAlerts = false;
+    const alertSoundFile = "/sounds/alert.mp3";
+
+    async function unlockAlertAudio() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return false;
+
+      if (!alertAudioContext) alertAudioContext = new AudioContext();
+      if (alertAudioContext.state === "suspended") {
+        await alertAudioContext.resume();
+      }
+      return alertAudioContext.state === "running";
+    }
+
+    function playGeneratedAlertSound() {
+      if (!alertAudioContext || alertAudioContext.state !== "running") return;
+
+      const now = alertAudioContext.currentTime;
+      stopAlertSound();
+      [0, 0.18].forEach(offset => {
+        const oscillator = alertAudioContext.createOscillator();
+        const gain = alertAudioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.22, now + offset + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.14);
+        oscillator.connect(gain);
+        gain.connect(alertAudioContext.destination);
+        oscillator.start(now + offset);
+        oscillator.stop(now + offset + 0.15);
+        generatedAlertNodes.push(oscillator);
+      });
+    }
+
+    async function playAlertSound() {
+      if (!(await unlockAlertAudio())) return;
+
+      stopAlertSound();
+      const sound = new Audio(alertSoundFile);
+      sound.volume = 1;
+      sound.loop = true;
+      activeAlertAudio = sound;
+      sound.play().catch(() => playGeneratedAlertSound());
+    }
+
+    function stopAlertSound() {
+      if (activeAlertAudio) {
+        activeAlertAudio.pause();
+        activeAlertAudio.currentTime = 0;
+        activeAlertAudio = null;
+      }
+
+      generatedAlertNodes.forEach(node => {
+        try { node.stop(); } catch (error) { /* Already stopped. */ }
+      });
+      generatedAlertNodes = [];
+    }
+
+    document.addEventListener("pointerdown", unlockAlertAudio, { once: true });
+    document.addEventListener("keydown", unlockAlertAudio, { once: true });
 
     // ── Auth ──
     auth.onAuthStateChanged(user => {
@@ -1572,6 +1651,7 @@
 
     // ── Login ──
     function doLogin() {
+      unlockAlertAudio();
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value.trim();
       const errEl = document.getElementById("loginError");
@@ -1647,6 +1727,9 @@
       db.collection("sos_alerts")
         .orderBy("timestamp", "desc")
         .onSnapshot(snapshot => {
+          const hasNewActiveAlert = snapshot.docChanges().some(change =>
+            change.type === "added" && change.doc.data().status === "active");
+
           allAlerts = [];
           snapshot.forEach(doc => {
             allAlerts.push({ id: doc.id, ...doc.data() });
@@ -1657,6 +1740,11 @@
           updateMapSidebar();
           document.getElementById("mapLastUpdated").textContent =
             "Updated " + new Date().toLocaleTimeString();
+
+          if (hasLoadedAlerts) {
+            if (hasNewActiveAlert) playAlertSound();
+          }
+          hasLoadedAlerts = true;
 
           // Live update modal if it is currently open
           if (currentModalAlertId) {
