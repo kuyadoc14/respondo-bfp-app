@@ -16,6 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     /* ── Reset & Base ── */
     *,
@@ -1453,6 +1454,13 @@
         </svg>
         Live Map
       </button>
+      <button class="tab-btn" onclick="switchTab('heatmap',this)">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
+        Heatmap
+      </button>
     </div>
 
     <!-- ── ALERTS TAB ── -->
@@ -1480,11 +1488,11 @@
           <option value="resolved">Resolved Only</option>
         </select>
         <input type="date" id="filterDate" onchange="applyFilter()" />
-        <button class="btn-export" onclick="exportCSV()">
+        <button class="btn-export" onclick="exportExcel()">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
             <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
           </svg>
-          Export CSV
+          Export Excel
         </button>
         <button class="btn-pdf" onclick="exportPDF()">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
@@ -1539,6 +1547,127 @@
           </div>
 
         </div>
+      </div>
+    </div>
+
+    <!-- HEATMAP TAB -->
+    <div id="tab-heatmap" class="tab-panel">
+      <div id="heatmapPanel" style="padding:24px 28px;">
+
+        <!-- Controls -->
+        <div style="display:flex;align-items:center;
+                      gap:12px;margin-bottom:16px;
+                      flex-wrap:wrap;">
+
+          <select id="heatmapFilter" onchange="updateHeatmap()" style="padding:8px 14px;
+                          background:var(--bg-card);
+                          border:1px solid var(--border);
+                          border-radius:var(--radius-sm);
+                          color:var(--text-primary);
+                          font-size:13px;
+                          font-family:inherit;
+                          outline:none;cursor:pointer;">
+            <option value="all">All Alerts</option>
+            <option value="active">Active Only</option>
+            <option value="resolved">Resolved Only</option>
+          </select>
+
+          <select id="heatmapTypeFilter" onchange="updateHeatmap()" style="padding:8px 14px;
+                          background:var(--bg-card);
+                          border:1px solid var(--border);
+                          border-radius:var(--radius-sm);
+                          color:var(--text-primary);
+                          font-size:13px;
+                          font-family:inherit;
+                          outline:none;cursor:pointer;">
+            <option value="all">All Types</option>
+            <option value="Fire">Fire</option>
+            <option value="Medical">Medical</option>
+            <option value="Vehicle">Vehicle</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <!-- Radius slider -->
+          <div style="display:flex;align-items:center;
+                        gap:8px;">
+            <span style="font-size:12px;
+                          color:var(--text-secondary);">
+              Radius
+            </span>
+            <input type="range" id="heatRadius" min="10" max="100" value="40" oninput="updateHeatmapRadius(this.value)"
+              style="width:100px;accent-color:var(--accent);" />
+            <span id="heatRadiusVal" style="font-size:12px;
+                          color:var(--text-secondary);
+                          width:28px;">
+              40
+
+            </span>
+          </div>
+
+          <!-- Opacity slider -->
+          <div style="display:flex;align-items:center;
+                        gap:8px;">
+            <span style="font-size:12px;
+                          color:var(--text-secondary);">
+              Opacity
+            </span>
+            <input type="range" id="heatOpacity" min="10" max="100" value="90"
+              oninput="updateHeatmapOpacity(this.value)" style="width:100px;accent-color:var(--accent);" />
+            <span id="heatOpacityVal" style="font-size:12px;
+                          color:var(--text-secondary);
+                          width:28px;">
+              90%
+            </span>
+          </div>
+
+          <!-- Point count -->
+          <span id="heatmapCount" style="margin-left:auto;
+                        font-size:12px;
+                        color:var(--text-secondary);">
+            0 points
+          </span>
+
+        </div>
+
+        <!-- Map -->
+        <div id="heatmap" style="width:100%;height:580px;
+            border-radius:var(--radius-lg);
+            border:1px solid var(--border);
+            z-index:0;">
+        </div>
+
+        <!-- Legend -->
+        <div style="display:flex;align-items:center;
+                      gap:8px;margin-top:14px;">
+          <span style="font-size:12px;
+                        color:var(--text-secondary);">
+            Intensity:
+          </span>
+          <div style="display:flex;align-items:center;gap:0;">
+            <div style="width:20px;height:12px;
+              background:rgba(255,255,0,0.6);
+              border-radius:2px 0 0 2px;"></div>
+            <div style="width:20px;height:12px;
+              background:rgba(255,165,0,0.9);"></div>
+            <div style="width:20px;height:12px;
+              background:rgba(255,80,0,1);"></div>
+            <div style="width:20px;height:12px;
+              background:rgba(255,0,0,1);"></div>
+            <div style="width:20px;height:12px;
+              background:rgba(160,0,0,1);
+              border-radius:0 2px 2px 0;"></div>
+          </div>
+          <span style="font-size:11px;
+                        color:var(--text-secondary);">
+            Low
+          </span>
+          <span style="font-size:11px;
+                        color:var(--text-secondary);
+                        margin-left:60px;">
+            High
+          </span>
+        </div>
+
       </div>
     </div>
 
@@ -1695,17 +1824,28 @@
 
     // ── Tab switching ──
     function switchTab(name, btn) {
-      document.querySelectorAll(".tab-panel").forEach(p =>
-        p.classList.remove("active"));
-      document.querySelectorAll(".tab-btn").forEach(b =>
-        b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel")
+        .forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn")
+        .forEach(b => b.classList.remove("active"));
 
-      document.getElementById("tab-" + name).classList.add("active");
+      document.getElementById("tab-" + name)
+        .classList.add("active");
       btn.classList.add("active");
 
-      // Init map the first time the map tab is opened
-      if (name === "map" && !mapInitialized) {
+      if (name === "map" && !mapInitialized)
         initMap();
+
+      if (name === "heatmap") {
+        if (!heatmapReady) {
+          initHeatmap();
+        } else {
+          // Re-render when switching back
+          setTimeout(() => {
+            leafletMap.invalidateSize();
+            updateHeatmap();
+          }, 100);
+        }
       }
     }
 
@@ -1727,29 +1867,17 @@
       db.collection("sos_alerts")
         .orderBy("timestamp", "desc")
         .onSnapshot(snapshot => {
-          const hasNewActiveAlert = snapshot.docChanges().some(change =>
-            change.type === "added" && change.doc.data().status === "active");
-
           allAlerts = [];
-          snapshot.forEach(doc => {
-            allAlerts.push({ id: doc.id, ...doc.data() });
-          });
+          snapshot.forEach(doc =>
+            allAlerts.push({ id: doc.id, ...doc.data() }));
           updateStats();
           applyFilter();
           if (mapInitialized) updateMapMarkers();
+          if (heatmapReady) updateHeatmap();  // ← add this
           updateMapSidebar();
-          document.getElementById("mapLastUpdated").textContent =
+          document.getElementById("mapLastUpdated")
+            .textContent =
             "Updated " + new Date().toLocaleTimeString();
-
-          if (hasLoadedAlerts) {
-            if (hasNewActiveAlert) playAlertSound();
-          }
-          hasLoadedAlerts = true;
-
-          // Live update modal if it is currently open
-          if (currentModalAlertId) {
-            openReportModal(currentModalAlertId);
-          }
         }, err => console.error("Firestore:", err.message));
     }
 
@@ -2093,59 +2221,525 @@
     }
 
     // ── Export CSV ──
-    function exportCSV() {
-      let csv = "No,Date & Time,Latitude,Longitude,User ID,Status,Accident Type,Victims Count,Nature of Injury,Mode of Injury,Patients Count,Patients Details\n";
-      allAlerts.forEach((a, i) => {
-        const time = a.timestamp ? a.timestamp.toDate().toLocaleString() : "";
-        const type = a.accidentType || "";
-        const victims = a.countOfVictims != null ? a.countOfVictims : "";
-        const nature = a.natureOfInjury || "";
-        const mode = a.modeOfInjury || "";
-        const patients = Array.isArray(a.patients) ? a.patients : [];
-        const patientCount = patients.length;
-        const patientSummary = patients.map((p, idx) => {
-          let str = `P${idx + 1}: ${p.name || 'Unnamed'}`;
-          if (p.age) str += ` (${p.age}yo)`;
-          if (p.levelOfConsciousness) str += ` [${p.levelOfConsciousness}]`;
-          if (p.seizure) str += ` [Seizure]`;
-          if (p.allergies) str += ` [Allergies: ${p.allergies}]`;
-          return str;
-        }).join("; ");
+    function exportExcel() {
+      const wb = XLSX.utils.book_new();
 
-        const escapeCSV = val => `"${String(val ?? '').replace(/"/g, '""')}"`;
+      // ── Sheet 1: Alerts Summary ───────────────
+      const summaryHeaders = [
+        "No", "Date & Time", "Latitude", "Longitude",
+        "User ID", "Status", "Accident Type",
+        "Count of Victims", "Nature of Injury",
+        "Mode of Injury", "No. of Patients"
+      ];
 
-        csv += `${i + 1},${escapeCSV(time)},${a.latitude ?? ""},`
-          + `${a.longitude ?? ""},${escapeCSV(a.userId ?? "")},${a.status},`
-          + `${escapeCSV(type)},${escapeCSV(victims)},${escapeCSV(nature)},`
-          + `${escapeCSV(mode)},${patientCount},${escapeCSV(patientSummary)}\n`;
+      const summaryRows = allAlerts.map((a, i) => {
+        const time = a.timestamp
+          ? a.timestamp.toDate().toLocaleString() : "";
+        return [
+          i + 1,
+          time,
+          a.latitude ?? "",
+          a.longitude ?? "",
+          a.userId ?? "",
+          a.status ?? "",
+          a.accidentType ?? "",
+          a.countOfVictims ?? "",
+          a.natureOfInjury ?? "",
+          a.modeOfInjury ?? "",
+          a.patients ? a.patients.length : 0
+        ];
       });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "bfp_alerts_"
-        + new Date().toISOString().split("T")[0] + ".csv";
-      link.click();
-      URL.revokeObjectURL(url);
-    }
 
-    function exportPDF() { window.print(); }
+      const summaryData = [summaryHeaders, ...summaryRows];
+      const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
 
-    // Close modal on Escape key
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape") {
-        closeReportModal();
-        closeConfirm();
+      // Column widths
+      ws1["!cols"] = [
+        { wch: 5 },  // No
+        { wch: 22 },  // Date
+        { wch: 12 },  // Lat
+        { wch: 12 },  // Lng
+        { wch: 28 },  // User ID
+        { wch: 10 },  // Status
+        { wch: 16 },  // Accident Type
+        { wch: 16 },  // Victims
+        { wch: 20 },  // Nature
+        { wch: 20 },  // Mode
+        { wch: 14 },  // Patients
+      ];
+
+      // Style header row — bold + background
+      summaryHeaders.forEach((_, col) => {
+        const cell = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!ws1[cell]) return;
+        ws1[cell].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "CC2E25" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            bottom: { style: "thin", color: { rgb: "AAAAAA" } }
+          }
+        };
+      });
+
+      // Style data rows — alternate row colors
+      summaryRows.forEach((_, rowIdx) => {
+        const r = rowIdx + 1;
+        const isEven = rowIdx % 2 === 0;
+        summaryHeaders.forEach((__, col) => {
+          const cell = XLSX.utils.encode_cell({ r, c: col });
+          if (!ws1[cell]) ws1[cell] = { t: "z", v: "" };
+          ws1[cell].s = {
+            fill: { fgColor: { rgb: isEven ? "F9F9F9" : "FFFFFF" } },
+            alignment: { vertical: "center" },
+            border: {
+              bottom: { style: "thin", color: { rgb: "EEEEEE" } }
+            }
+          };
+        });
+
+        // Status cell color
+        const statusCell =
+          XLSX.utils.encode_cell({ r, c: 5 });
+        const statusVal =
+          allAlerts[rowIdx].status;
+        if (ws1[statusCell]) {
+          ws1[statusCell].s = {
+            ...ws1[statusCell].s,
+            font: {
+              bold: true,
+              color: {
+                rgb: statusVal === "active"
+                  ? "CC2E25" : "1A7A4A"
+              }
+            }
+          };
+        }
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws1, "Alerts");
+
+      // ── Sheet 2: Patient Records ──────────────
+      const hasPatients = allAlerts.some(
+        a => a.patients && a.patients.length > 0);
+
+      if (hasPatients) {
+        const patientHeaders = [
+          "Alert No", "Alert Date", "Alert Status",
+          "Accident Type", "Patient No",
+          "Name", "Age", "Birthdate", "Address",
+          "Allergies", "Emergency Contact",
+          "Level of Consciousness", "Condition",
+          "Seizure"
+        ];
+
+        const patientRows = [];
+        allAlerts.forEach((a, alertIdx) => {
+          if (!a.patients || a.patients.length === 0)
+            return;
+          const time = a.timestamp
+            ? a.timestamp.toDate().toLocaleString() : "";
+          a.patients.forEach((p, patIdx) => {
+            patientRows.push([
+              alertIdx + 1,
+              time,
+              a.status ?? "",
+              a.accidentType ?? "",
+              patIdx + 1,
+              p.name ?? "",
+              p.age ?? "",
+              p.birthdate ?? "",
+              p.address ?? "",
+              p.allergies ?? "",
+              p.emergencyContact ?? "",
+              p.levelOfConsciousness ?? "",
+              p.condition ?? "",
+              p.seizure === true ? "Yes"
+                : p.seizure === false ? "No" : ""
+            ]);
+          });
+        });
+
+        const patientData = [patientHeaders, ...patientRows];
+        const ws2 = XLSX.utils.aoa_to_sheet(patientData);
+
+        ws2["!cols"] = [
+          { wch: 10 }, { wch: 22 }, { wch: 10 },
+          { wch: 16 }, { wch: 10 }, { wch: 20 },
+          { wch: 6 }, { wch: 14 }, { wch: 28 },
+          { wch: 18 }, { wch: 22 }, { wch: 22 },
+          { wch: 24 }, { wch: 8 }
+        ];
+
+        // Header styling
+        patientHeaders.forEach((_, col) => {
+          const cell =
+            XLSX.utils.encode_cell({ r: 0, c: col });
+          if (!ws2[cell]) return;
+          ws2[cell].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "1A4A8A" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              bottom: { style: "thin", color: { rgb: "AAAAAA" } }
+            }
+          };
+        });
+
+        // Row styling
+        patientRows.forEach((_, rowIdx) => {
+          const r = rowIdx + 1;
+          const isEven = rowIdx % 2 === 0;
+          patientHeaders.forEach((__, col) => {
+            const cell =
+              XLSX.utils.encode_cell({ r, c: col });
+            if (!ws2[cell]) ws2[cell] = { t: "z", v: "" };
+            ws2[cell].s = {
+              fill: { fgColor: { rgb: isEven ? "EEF4FF" : "FFFFFF" } },
+              alignment: { vertical: "center" },
+              border: {
+                bottom: { style: "thin", color: { rgb: "DDDDDD" } }
+              }
+            };
+          });
+
+          // Seizure cell color
+          const seizureCell =
+            XLSX.utils.encode_cell({ r, c: 13 });
+          const seizureVal = patientRows[rowIdx][13];
+          if (ws2[seizureCell] && seizureVal) {
+            ws2[seizureCell].s = {
+              ...ws2[seizureCell].s,
+              font: {
+                bold: true,
+                color: {
+                  rgb: seizureVal === "Yes"
+                    ? "CC2E25" : "1A7A4A"
+                }
+              }
+            };
+          }
+        });
+
+        XLSX.utils.book_append_sheet(
+          wb, ws2, "Patient Records");
       }
-    });
+
+      // ── Sheet 3: Summary Statistics ───────────
+      const active =
+        allAlerts.filter(a => a.status === "active").length;
+      const resolved =
+        allAlerts.filter(a => a.status === "resolved").length;
+      const totalPatients = allAlerts.reduce(
+        (sum, a) => sum + (a.patients
+          ? a.patients.length : 0), 0);
+
+      // Count by accident type
+      const typeCounts = {};
+      allAlerts.forEach(a => {
+        if (!a.accidentType) return;
+        typeCounts[a.accidentType] =
+          (typeCounts[a.accidentType] || 0) + 1;
+      });
+
+      const statsData = [
+        ["BFP Alert Dashboard — Export Report"],
+        ["Generated", new Date().toLocaleString()],
+        [""],
+        ["OVERVIEW", ""],
+        ["Total Alerts", allAlerts.length],
+        ["Active Alerts", active],
+        ["Resolved", resolved],
+        ["Total Patients", totalPatients],
+        [""],
+        ["ALERTS BY TYPE", "Count"],
+        ...Object.entries(typeCounts).map(
+          ([type, count]) => [type, count]),
+        [""],
+        ["NATURE OF INJURY", "Count"],
+        ...Object.entries(
+          allAlerts.reduce((acc, a) => {
+            if (a.natureOfInjury)
+              acc[a.natureOfInjury] =
+                (acc[a.natureOfInjury] || 0) + 1;
+            return acc;
+          }, {})
+        ).map(([k, v]) => [k, v])
+      ];
+
+      const ws3 = XLSX.utils.aoa_to_sheet(statsData);
+      ws3["!cols"] = [{ wch: 28 }, { wch: 16 }];
+
+      // Title styling
+      if (ws3["A1"]) {
+        ws3["A1"].s = {
+          font: {
+            bold: true, sz: 14,
+            color: { rgb: "CC2E25" }
+          }
+        };
+      }
+
+      // Section header styling
+      ["A4", "A10", "A13"].forEach(addr => {
+        if (!ws3[addr]) return;
+        ws3[addr].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "333333" } }
+        };
+      });
+
+      XLSX.utils.book_append_sheet(
+        wb, ws3, "Summary");
+
+
+      // ── Sheet 4: Heatmap Data ─────────────────
+      // Raw coordinate data for heatmap analysis
+      const heatmapHeaders = [
+        "Alert No", "Date & Time", "Latitude",
+        "Longitude", "Status", "Accident Type",
+        "Victims", "Nature of Injury"
+      ];
+
+      const heatmapRows = allAlerts
+        .filter(a => a.latitude != null
+          && a.longitude != null)
+        .map((a, i) => {
+          const time = a.timestamp
+            ? a.timestamp.toDate().toLocaleString()
+            : "";
+          return [
+            i + 1, time,
+            a.latitude, a.longitude,
+            a.status ?? "",
+            a.accidentType ?? "",
+            a.countOfVictims ?? 0,
+            a.natureOfInjury ?? ""
+          ];
+        });
+
+      const heatmapData = [heatmapHeaders, ...heatmapRows];
+      const ws4 = XLSX.utils.aoa_to_sheet(heatmapData);
+
+      ws4["!cols"] = [
+        { wch: 8 }, { wch: 22 },
+        { wch: 14 }, { wch: 14 },
+        { wch: 10 }, { wch: 16 },
+        { wch: 8 }, { wch: 20 }
+      ];
+
+      // Header row styling
+      heatmapHeaders.forEach((_, col) => {
+        const cell =
+          XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!ws4[cell]) return;
+        ws4[cell].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "7B2FBE" } },
+          alignment: { horizontal: "center" }
+        };
+      });
+
+      // Data rows
+      heatmapRows.forEach((row, rowIdx) => {
+        const r = rowIdx + 1;
+        heatmapHeaders.forEach((_, col) => {
+          const cell =
+            XLSX.utils.encode_cell({ r, c: col });
+          if (!ws4[cell]) ws4[cell] = { t: "z", v: "" };
+          ws4[cell].s = {
+            fill: {
+              fgColor: {
+                rgb: rowIdx % 2 === 0
+                  ? "F5EEFF" : "FFFFFF"
+              }
+            },
+            alignment: { vertical: "center" },
+            border: {
+              bottom: {
+                style: "thin",
+                color: { rgb: "DDDDDD" }
+              }
+            }
+          };
+        });
+      });
+
+      XLSX.utils.book_append_sheet(
+        wb, ws4, "Heatmap Data");
+
+      // ── Sheet 5: Location Frequency ───────────
+      // Groups alerts by rounded coordinates
+      // to show hotspot areas
+      const gridSize = 0.01; // ~1km grid
+
+      const freqMap = {};
+      allAlerts
+        .filter(a => a.latitude != null)
+        .forEach(a => {
+          const gridLat =
+            (Math.round(a.latitude / gridSize)
+              * gridSize).toFixed(4);
+          const gridLng =
+            (Math.round(a.longitude / gridSize)
+              * gridSize).toFixed(4);
+          const key = `${gridLat},${gridLng}`;
+
+          if (!freqMap[key]) {
+            freqMap[key] = {
+              lat: parseFloat(gridLat),
+              lng: parseFloat(gridLng),
+              count: 0,
+              active: 0,
+              victims: 0,
+              types: {}
+            };
+          }
+          freqMap[key].count++;
+          if (a.status === "active")
+            freqMap[key].active++;
+          if (a.countOfVictims)
+            freqMap[key].victims +=
+              Number(a.countOfVictims);
+          if (a.accidentType) {
+            freqMap[key].types[a.accidentType] =
+              (freqMap[key].types[a.accidentType] || 0) + 1;
+          }
+        });
+
+      // Sort by alert count descending
+      const freqRows = Object.values(freqMap)
+        .sort((a, b) => b.count - a.count)
+        .map((loc, i) => {
+          const topType = Object.entries(loc.types)
+            .sort((a, b) => b[1] - a[1])[0];
+          return [
+            i + 1,
+            loc.lat,
+            loc.lng,
+            loc.count,
+            loc.active,
+            loc.count - loc.active,
+            loc.victims,
+            topType ? topType[0] : "—",
+            // Heat intensity: 1-5 scale
+            loc.count >= 10 ? 5
+              : loc.count >= 7 ? 4
+                : loc.count >= 4 ? 3
+                  : loc.count >= 2 ? 2 : 1
+          ];
+        });
+
+      const freqHeaders = [
+        "Rank", "Latitude", "Longitude",
+        "Total Alerts", "Active", "Resolved",
+        "Total Victims", "Common Type",
+        "Heat Intensity (1-5)"
+      ];
+
+      const freqData = [freqHeaders, ...freqRows];
+      const ws5 = XLSX.utils.aoa_to_sheet(freqData);
+
+      ws5["!cols"] = [
+        { wch: 6 }, { wch: 12 }, { wch: 12 },
+        { wch: 13 }, { wch: 8 }, { wch: 10 },
+        { wch: 14 }, { wch: 16 }, { wch: 20 }
+      ];
+
+      // Header styling
+      freqHeaders.forEach((_, col) => {
+        const cell =
+          XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!ws5[cell]) return;
+        ws5[cell].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "7B2FBE" } },
+          alignment: { horizontal: "center" }
+        };
+      });
+
+      // Heat intensity color scale
+      // 5 = darkest red, 1 = lightest
+      const heatColors = [
+        "FFFFFF",  // 0 — unused
+        "FFE8E8",  // 1 — very low
+        "FFBDBD",  // 2 — low
+        "FF8080",  // 3 — medium
+        "FF4040",  // 4 — high
+        "CC0000"   // 5 — very high
+      ];
+
+      freqRows.forEach((row, rowIdx) => {
+        const r = rowIdx + 1;
+        const intensity = row[8]; // Heat Intensity column
+
+        freqHeaders.forEach((_, col) => {
+          const cell =
+            XLSX.utils.encode_cell({ r, c: col });
+          if (!ws5[cell]) ws5[cell] = { t: "z", v: "" };
+
+          // All cells get heat color based on intensity
+          ws5[cell].s = {
+            fill: {
+              fgColor: { rgb: heatColors[intensity] }
+            },
+            alignment: { vertical: "center" },
+            border: {
+              bottom: {
+                style: "thin",
+                color: { rgb: "DDDDDD" }
+              }
+            }
+          };
+        });
+
+        // Rank column — bold
+        const rankCell =
+          XLSX.utils.encode_cell({ r, c: 0 });
+        if (ws5[rankCell]) {
+          ws5[rankCell].s = {
+            ...ws5[rankCell].s,
+            font: { bold: true }
+          };
+        }
+
+        // Heat intensity cell — bold + white text
+        // for high intensity rows
+        const heatCell =
+          XLSX.utils.encode_cell({ r, c: 8 });
+        if (ws5[heatCell]) {
+          ws5[heatCell].s = {
+            ...ws5[heatCell].s,
+            font: {
+              bold: true,
+              color: {
+                rgb: intensity >= 4
+                  ? "FFFFFF" : "333333"
+              }
+            }
+          };
+        }
+      });
+
+      XLSX.utils.book_append_sheet(
+        wb, ws5, "Hotspot Map");
+
+      // ── Write file ────────────────────────────
+      const date =
+        new Date().toISOString().split("T")[0];
+      XLSX.writeFile(wb,
+        `BFP_Alert_Report_${date}.xlsx`,
+        { cellStyles: true });
+    }
 
     // ════════════════════════════════════════════
     //  MAP
     // ════════════════════════════════════════════
 
     function initMap() {
-      googleMap = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 12.8797, lng: 121.7740 },  // Philippines
+      googleMap = new google.maps.Map(
+        document.getElementById("map"), {
+        center: { lat: 12.8797, lng: 121.7740 },
         zoom: 6,
         mapTypeId: "roadmap",
         styles: [
@@ -2183,12 +2777,13 @@
         ]
       });
 
-      infoWindow = new google.maps.InfoWindow();
-      mapInitialized = true;
-
-      // Place markers for already-loaded alerts
-      updateMapMarkers();
-      updateMapSidebar();
+      google.maps.event.addListenerOnce(
+        googleMap, "idle", () => {
+          infoWindow = new google.maps.InfoWindow();
+          mapInitialized = true;
+          updateMapMarkers();
+          updateMapSidebar();
+        });
     }
 
     function updateMapMarkers() {
@@ -2398,9 +2993,16 @@
 
   <!-- Load Google Maps — replace YOUR_MAPS_API_KEY -->
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&callback=Function.prototype"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&libraries=visualization&callback=Function.prototype"
     async defer>
     </script>
+
+  <!-- Leaflet for heatmap only -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js">
+  </script>
 
   <script>
     if ("serviceWorker" in navigator) {
@@ -2410,7 +3012,131 @@
           .catch(err => console.log("SW failed:", err));
       });
     }
+
+
+    function onMapsReady() {
+      console.log("Google Maps API ready");
+    }
+
+    // ── Heatmap ──────────────────────────────
+    let leafletMap = null;
+    let leafletHeat = null;
+    let heatmapReady = false;
+
+    function initHeatmap() {
+      if (leafletMap) return;
+
+      leafletMap = L.map("heatmap", {
+        center: [14.1152, 122.9577],
+        zoom: 14,
+        zoomControl: true
+      });
+
+      // Dark tile layer matching your theme
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution: "&copy; OpenStreetMap &copy; CARTO",
+          maxZoom: 19
+        }
+      ).addTo(leafletMap);
+
+      // Initialize heat layer with no data yet
+      leafletHeat = L.heatLayer([], {
+        radius: 40,
+        blur: 25,
+        maxZoom: 17,
+        max: 1.0,
+        gradient: {
+          0.2: "#ffff00",
+          0.4: "#ffa500",
+          0.6: "#ff5000",
+          0.8: "#ff0000",
+          1.0: "#a00000"
+        }
+      }).addTo(leafletMap);
+
+      heatmapReady = true;
+
+      // Fix Leaflet tile rendering when
+      // tab becomes visible
+      setTimeout(() => {
+        leafletMap.invalidateSize();
+        updateHeatmap();
+      }, 200);
+    }
+
+    function updateHeatmap() {
+      if (!heatmapReady || !leafletHeat) return;
+
+      const statusFilter =
+        document.getElementById(
+          "heatmapFilter").value;
+      const typeFilter =
+        document.getElementById(
+          "heatmapTypeFilter").value;
+
+      const points = [];
+
+      allAlerts.forEach(a => {
+        const lat = parseFloat(a.latitude);
+        const lng = parseFloat(a.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        if (lat === 0 && lng === 0) return;
+        if (statusFilter !== "all"
+          && a.status !== statusFilter) return;
+        if (typeFilter !== "all"
+          && a.accidentType !== typeFilter) return;
+
+        // intensity — higher victims = hotter
+        const intensity = a.countOfVictims
+          ? Math.min(1.0,
+            Number(a.countOfVictims) / 5)
+          : 0.6;
+
+        // Leaflet.heat format: [lat, lng, intensity]
+        points.push([lat, lng, intensity]);
+      });
+
+      leafletHeat.setLatLngs(points);
+
+      document.getElementById("heatmapCount")
+        .textContent = points.length + " point"
+        + (points.length !== 1 ? "s" : "");
+
+      if (points.length === 0) return;
+
+      // Fit map to all points
+      const bounds = L.latLngBounds(
+        points.map(p => [p[0], p[1]]));
+
+      leafletMap.fitBounds(bounds, {
+        padding: [60, 60],
+        maxZoom: 15
+      });
+
+      // Force redraw
+      leafletMap.invalidateSize();
+    }
+
+    function updateHeatmapRadius(val) {
+      document.getElementById("heatRadiusVal")
+        .textContent = val;
+      if (leafletHeat)
+        leafletHeat.setOptions({ radius: Number(val) });
+    }
+
+    function updateHeatmapOpacity(val) {
+      document.getElementById("heatOpacityVal")
+        .textContent = val + "%";
+      if (leafletHeat)
+        leafletHeat.setOptions({
+          minOpacity: Number(val) / 100
+        });
+    }
   </script>
+
+
 
 </body>
 
