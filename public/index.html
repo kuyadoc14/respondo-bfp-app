@@ -2378,6 +2378,7 @@
     let activeAlertAudio = null;
     let generatedAlertNodes = [];
     let hasLoadedAlerts = false;
+    const appLoadedAt = performance.timeOrigin || Date.now() - performance.now();
     let currentModalAlertId = null;
     const alertSoundFile = "/sounds/alert.mp3";
 
@@ -2603,8 +2604,16 @@
       db.collection("sos_alerts")
         .orderBy("timestamp", "desc")
         .onSnapshot(snapshot => {
-          const hasNewActiveAlert = snapshot.docChanges().some(change =>
-            change.type === "added" && change.doc.data().status === "active");
+          const hasNewActiveAlert = snapshot.docChanges().some(change => {
+            if (change.type !== "added") return false;
+
+            const alert = change.doc.data();
+            if (alert.status !== "active") return false;
+            if (hasLoadedAlerts) return true;
+
+            const alertDate = parseTimestamp(alert.timestamp);
+            return alertDate && alertDate.getTime() >= appLoadedAt;
+          });
 
           allAlerts = [];
           snapshot.forEach(doc => {
@@ -2624,9 +2633,7 @@
             lastUpdatedEl.textContent = "Synced " + updateTime;
           }
 
-          if (hasLoadedAlerts && hasNewActiveAlert) {
-            playAlertSound();
-          }
+          if (hasNewActiveAlert) playAlertSound();
           hasLoadedAlerts = true;
 
           // Live update modal if currently viewing this alert
