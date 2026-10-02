@@ -86,14 +86,19 @@ public class AdminFirstAidFragment extends Fragment {
                     .commit();
         });
 
-        loadItems();
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadItems();
     }
 
     private void loadItems() {
         db.collection("first_aid")
                 .orderBy("title")
-                .addSnapshotListener((snapshots, e) -> {
+            .addSnapshotListener(getViewLifecycleOwner(), (snapshots, e) -> {
                     if (e != null || snapshots == null) return;
                     items.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
@@ -102,7 +107,10 @@ public class AdminFirstAidFragment extends Fragment {
                         items.add(item);
                     }
 
-                    TextView tvCount = requireView().findViewById(R.id.tvItemCount);
+                    View currentView = getView();
+                    if (currentView == null || adapter == null) return;
+
+                    TextView tvCount = currentView.findViewById(R.id.tvItemCount);
                     tvCount.setText(items.size() + " guide" + (items.size() != 1 ? "s" : ""));
                     adapter.notifyDataSetChanged();
                 });
