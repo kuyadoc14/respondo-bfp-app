@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 public class AdminFirstAidFragment extends Fragment {
 
     private FirebaseFirestore db;
+    private ListenerRegistration itemsListener;
     private final List<FirstAidItem> items = new ArrayList<>();
     private AdminFirstAidAdapter adapter;
 
@@ -96,9 +98,9 @@ public class AdminFirstAidFragment extends Fragment {
     }
 
     private void loadItems() {
-        db.collection("first_aid")
+        itemsListener = db.collection("first_aid")
                 .orderBy("title")
-            .addSnapshotListener(getViewLifecycleOwner(), (snapshots, e) -> {
+            .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
                     items.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
@@ -114,6 +116,15 @@ public class AdminFirstAidFragment extends Fragment {
                     tvCount.setText(items.size() + " guide" + (items.size() != 1 ? "s" : ""));
                     adapter.notifyDataSetChanged();
                 });
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (itemsListener != null) {
+            itemsListener.remove();
+            itemsListener = null;
+        }
+        super.onDestroyView();
     }
 
     static class AdminFirstAidAdapter extends RecyclerView.Adapter<AdminFirstAidAdapter.VH> {
