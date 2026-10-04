@@ -8,8 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,6 +53,13 @@ public class ProfileFragment extends Fragment {
     private EditText etProfileEmergencyPhone;
     private MaterialButton btnSaveProfile;
 
+    private LinearLayout cardPrivacyPrompt;
+    private LinearLayout cardPrivacyAccepted;
+    private LinearLayout layoutMedicalFormFields;
+    private TextView tvPrivacyConsentDate;
+    private MaterialButton btnReviewPrivacy;
+    private TextView btnViewPrivacyPolicy;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -76,6 +88,18 @@ public class ProfileFragment extends Fragment {
         etProfileEmergencyName = view.findViewById(R.id.etProfileEmergencyName);
         etProfileEmergencyPhone = view.findViewById(R.id.etProfileEmergencyPhone);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
+
+        cardPrivacyPrompt = view.findViewById(R.id.cardPrivacyPrompt);
+        cardPrivacyAccepted = view.findViewById(R.id.cardPrivacyAccepted);
+        layoutMedicalFormFields = view.findViewById(R.id.layoutMedicalFormFields);
+        tvPrivacyConsentDate = view.findViewById(R.id.tvPrivacyConsentDate);
+        btnReviewPrivacy = view.findViewById(R.id.btnReviewPrivacy);
+        btnViewPrivacyPolicy = view.findViewById(R.id.btnViewPrivacyPolicy);
+
+        btnReviewPrivacy.setOnClickListener(v -> showPrivacyConsentDialog());
+        if (btnViewPrivacyPolicy != null) {
+            btnViewPrivacyPolicy.setOnClickListener(v -> showPrivacyConsentDialog());
+        }
 
         // Load existing profile (local first, then cloud)
         loadProfileData();
@@ -135,12 +159,14 @@ public class ProfileFragment extends Fragment {
 
         UserProfile local = UserProfileManager.getLocalProfile(context);
         populateFields(local);
+        applyPrivacyConsentState(local);
 
         UserProfileManager.loadProfile(context, new UserProfileManager.ProfileCallback() {
             @Override
             public void onSuccess(UserProfile profile) {
                 if (isAdded()) {
                     populateFields(profile);
+                    applyPrivacyConsentState(profile);
                 }
             }
 
@@ -149,6 +175,28 @@ public class ProfileFragment extends Fragment {
                 // Keep local
             }
         });
+    }
+
+    private void applyPrivacyConsentState(@Nullable UserProfile profile) {
+        boolean accepted = profile != null && profile.isPrivacyConsentAccepted();
+
+        if (cardPrivacyPrompt != null) {
+            cardPrivacyPrompt.setVisibility(accepted ? View.GONE : View.VISIBLE);
+        }
+        if (cardPrivacyAccepted != null) {
+            cardPrivacyAccepted.setVisibility(accepted ? View.VISIBLE : View.GONE);
+        }
+        if (layoutMedicalFormFields != null) {
+            layoutMedicalFormFields.setVisibility(accepted ? View.VISIBLE : View.GONE);
+        }
+        if (tvPrivacyConsentDate != null) {
+            String date = profile != null ? profile.getPrivacyConsentDate() : "";
+            if (accepted && !date.isEmpty()) {
+                tvPrivacyConsentDate.setText("RA 10173 Data Privacy Consent Accepted • " + date);
+            } else if (accepted) {
+                tvPrivacyConsentDate.setText("RA 10173 Data Privacy Consent Accepted");
+            }
+        }
     }
 
     private void populateFields(UserProfile p) {
@@ -169,6 +217,14 @@ public class ProfileFragment extends Fragment {
         Context context = getContext();
         if (context == null) return;
 
+        if (!UserProfileManager.isPrivacyConsentAccepted(context)) {
+            Toast.makeText(requireContext(),
+                    "Please review and agree to the RA 10173 data privacy consent before saving your emergency profile.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        UserProfile existing = UserProfileManager.getLocalProfile(context);
         UserProfile p = new UserProfile();
         p.setFullName(etProfileName.getText().toString().trim());
         p.setPhone(etProfilePhone.getText().toString().trim());
@@ -180,6 +236,10 @@ public class ProfileFragment extends Fragment {
         p.setMedicalConditions(etProfileConditions.getText().toString().trim());
         p.setEmergencyContactName(etProfileEmergencyName.getText().toString().trim());
         p.setEmergencyContact(etProfileEmergencyPhone.getText().toString().trim());
+        p.setPrivacyConsentAccepted(true);
+        p.setPrivacyConsentDate(existing.getPrivacyConsentDate().isEmpty() ?
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()) :
+                existing.getPrivacyConsentDate());
 
         btnSaveProfile.setEnabled(false);
         btnSaveProfile.setText("Saving...");
@@ -203,6 +263,39 @@ public class ProfileFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void showPrivacyConsentDialog() {
+        PrivacyActDialog dialog = PrivacyActDialog.newInstance();
+        dialog.setOnPrivacyConsentListener(new PrivacyActDialog.OnPrivacyConsentListener() {
+            @Override
+            public void onConsentGranted() {
+                Context context = getContext();
+                if (context == null) return;
+
+                String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                UserProfile current = UserProfileManager.getLocalProfile(context);
+                current.setPrivacyConsentAccepted(true);
+                current.setPrivacyConsentDate(date);
+                UserProfileManager.saveLocalProfile(context, current);
+                applyPrivacyConsentState(current);
+                Toast.makeText(requireContext(), "RA 10173 consent accepted.", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onConsentDeclined() {
+                Context context = getContext();
+                if (context == null) return;
+
+                UserProfile current = UserProfileManager.getLocalProfile(context);
+                current.setPrivacyConsentAccepted(false);
+                current.setPrivacyConsentDate("");
+                UserProfileManager.saveLocalProfile(context, current);
+                applyPrivacyConsentState(current);
+                Toast.makeText(requireContext(), "Consent not accepted. Medical fields are hidden until you agree.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        dialog.show(getParentFragmentManager(), "privacy_consent");
     }
 
     // ── Optional Civilian Sign In / Register Dialog ─────────────────
