@@ -86,8 +86,9 @@
 
             </LinearLayout>
 
-            <!-- SOS sent confirmation banner -->
+            <!-- SOS sent confirmation / role banner -->
             <LinearLayout
+                android:id="@+id/bannerRoleInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_status_resolved"
@@ -97,14 +98,17 @@
                 android:layout_marginBottom="20dp">
 
                 <View
+                    android:id="@+id/dotRoleInfo"
                     android:layout_width="8dp"
                     android:layout_height="8dp"
                     android:background="@drawable/circle_dot_green"
                     android:layout_marginEnd="10dp"/>
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/tvRoleBannerText"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="SOS alert sent to BFP"
                     android:textColor="#34C759"
                     android:textSize="13sp"
@@ -401,6 +405,86 @@
                 android:stateListAnimator="@null"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="24dp"/>
+
+            <!-- Bystander Contact Info Card (Visible only when role is bystander) -->
+            <LinearLayout
+                android:id="@+id/sectionBystanderContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Bystander Information"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchIncludeBystanderInfo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Share your contact info with BFP for verification and follow-up."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="12dp"/>
+
+                <LinearLayout
+                    android:id="@+id/containerBystanderFields"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/etBystanderName"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:hint="Your Full Name"
+                        android:textColorHint="@color/text_hint"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:inputType="textPersonName"
+                        android:layout_marginBottom="8dp"/>
+
+                    <EditText
+                        android:id="@+id/etBystanderPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:hint="Your Phone Number"
+                        android:textColorHint="@color/text_hint"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:background="@drawable/bg_input"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:inputType="phone"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
             <!-- Divider -->
             <View

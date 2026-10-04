@@ -20,8 +20,8 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #12131C;
       color: #ffffff;
       min-height: 100vh;
       display: flex;
@@ -29,10 +29,53 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
+      position: relative;
+    }
+
+    /* Top navigation bar */
+    .top-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: #e63946;
+      text-transform: uppercase;
+      background: rgba(230, 57, 70, 0.12);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(230, 57, 70, 0.25);
+    }
+
+    .btn-profile-top {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-profile-top:hover {
+      background: rgba(255, 255, 255, 0.16);
     }
 
     .logo {
-      font-size: 48px;
+      font-size: 44px;
       margin-bottom: 8px;
     }
 
@@ -40,12 +83,14 @@
       font-size: 20px;
       margin-bottom: 4px;
       text-align: center;
+      font-weight: 800;
+      letter-spacing: -0.3px;
     }
 
     .subtitle {
       font-size: 13px;
-      color: #aaaaaa;
-      margin-bottom: 48px;
+      color: #8E92A8;
+      margin-bottom: 36px;
       text-align: center;
     }
 
@@ -133,8 +178,8 @@
 
     .instruction {
       font-size: 13px;
-      color: #aaaaaa;
-      margin-bottom: 32px;
+      color: #8E92A8;
+      margin-bottom: 24px;
       text-align: center;
     }
 
@@ -142,21 +187,21 @@
     #statusCard {
       display: none;
       width: 100%;
-      max-width: 340px;
-      border-radius: 12px;
+      max-width: 360px;
+      border-radius: 14px;
       padding: 16px 20px;
       text-align: center;
       margin-top: 8px;
     }
 
     #statusCard.warning {
-      background: #2A1A00;
-      border: 1px solid #FFBB33;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.4);
     }
 
     #statusCard.resolved {
-      background: #0A2A1F;
-      border: 1px solid #2a9d8f;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.4);
     }
 
     .live-indicator {
@@ -171,54 +216,49 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #FFBB33;
+      background: #F59E0B;
       animation: blink 0.8s infinite alternate;
     }
 
     .dot.green {
-      background: #2a9d8f;
+      background: #10B981;
       animation: none;
     }
 
     @keyframes blink {
-      from {
-        opacity: 1;
-      }
-
-      to {
-        opacity: 0.2;
-      }
+      from { opacity: 1; }
+      to { opacity: 0.2; }
     }
 
     .live-label {
       font-size: 11px;
       font-weight: bold;
-      color: #FFBB33;
+      color: #F59E0B;
       letter-spacing: 1px;
     }
 
     .live-label.green {
-      color: #2a9d8f;
+      color: #10B981;
     }
 
     #statusText {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
     }
 
     #statusText.warning {
-      color: #FFBB33;
+      color: #FBBF24;
     }
 
     #statusText.resolved {
-      color: #2a9d8f;
+      color: #34D399;
     }
 
     /* Location status */
     #locationStatus {
       font-size: 11px;
-      color: #555577;
-      margin-top: 12px;
+      color: #646882;
+      margin-top: 14px;
       text-align: center;
     }
 
@@ -228,13 +268,214 @@
       bottom: 16px;
       right: 16px;
       font-size: 11px;
-      color: #333355;
+      color: #4A4D68;
       text-decoration: none;
+    }
+
+    /* Modal Overlay & Card System */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #1A1C29;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .modal-subtitle {
+      font-size: 12px;
+      color: #8E92A8;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .btn-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #8E92A8;
+      font-size: 16px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #A0A5BA;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      height: 42px;
+      background: #11121C;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 13px;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: #e63946;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 46px;
+      background: #e63946;
+      border: none;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      height: 40px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: #A0A5BA;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Role selection cards */
+    .role-option-card {
+      background: #131522;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .role-option-card:hover {
+      border-color: rgba(230, 57, 70, 0.5);
+      transform: translateY(-1px);
+      background: #17192A;
+    }
+
+    .role-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .role-text-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .role-text-desc {
+      font-size: 12px;
+      color: #8E92A8;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    .bystander-opt-box {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="brand-tag">BFP Respondo</span>
+    <button class="btn-profile-top" onclick="openProfileModal()">
+      <span>👤</span>
+      <span id="topProfileLabel">My Profile</span>
+    </button>
+  </div>
 
   <div class="logo">🔥</div>
   <h1>Bureau of Fire Protection</h1>
@@ -256,8 +497,116 @@
 
   <a class="admin-link" href="/index.html">Admin</a>
 
-  <!-- Firebase -->
+  <!-- ══════════════════════════════════════════════════════════════
+       ROLE SELECTION MODAL (Prompted after SOS is sent)
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="roleModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">🚨 SOS Alert Dispatched</div>
+          <div class="modal-subtitle">GPS coordinates sent. Are you involved in this emergency?</div>
+        </div>
+      </div>
+
+      <!-- Option 1: Victim -->
+      <div class="role-option-card" onclick="selectRoleVictim()">
+        <div class="role-icon">🙋</div>
+        <div>
+          <div class="role-text-title" style="color:#ff6b7a;">I AM the Victim</div>
+          <div class="role-text-desc" id="roleVictimDesc">I am injured or directly involved. Attaches my saved medical profile for BFP responders.</div>
+        </div>
+      </div>
+
+      <!-- Option 2: Bystander -->
+      <div class="role-option-card" onclick="selectRoleBystander()">
+        <div class="role-icon">👥</div>
+        <div>
+          <div class="role-text-title">I am a Bystander</div>
+          <div class="role-text-desc">Reporting for someone else. You can choose whether to include your contact details.</div>
+        </div>
+      </div>
+
+      <!-- Bystander follow-up form (Hidden by default, shown if Bystander is picked) -->
+      <div id="bystanderOptBox" class="bystander-opt-box" style="display:none;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#ffffff;cursor:pointer;margin-bottom:10px;">
+          <input type="checkbox" id="chkShareBystander" checked style="accent-color:#e63946;width:16px;height:16px;" onchange="toggleBystanderInputs()" />
+          <span>Share my contact info with BFP for follow-up</span>
+        </label>
+        <div id="bystanderInputs">
+          <div class="form-group">
+            <input type="text" id="pwaBystanderName" placeholder="Your Name" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="tel" id="pwaBystanderPhone" placeholder="Your Phone Number" />
+          </div>
+        </div>
+        <button class="btn-primary" style="margin-top:12px;" onclick="confirmBystanderAlert()">Confirm &amp; Notify BFP</button>
+      </div>
+
+      <!-- Skip Button -->
+      <button class="btn-secondary" onclick="closeRoleModal()">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       EMERGENCY PROFILE & ACCOUNT MODAL (Optional)
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="profileModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Emergency Medical Profile</div>
+          <div class="modal-subtitle">Auto-filled when you trigger SOS alone or as a victim.</div>
+        </div>
+        <button class="btn-close" onclick="closeProfileModal()">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="pName" placeholder="Juan Dela Cruz" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label>Mobile Phone</label>
+          <input type="tel" id="pPhone" placeholder="+63 9XX XXX XXXX" />
+        </div>
+        <div class="form-group" style="width:90px;">
+          <label>Blood Type</label>
+          <input type="text" id="pBlood" placeholder="e.g. O+" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="width:80px;">
+          <label>Age</label>
+          <input type="number" id="pAge" placeholder="28" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Known Allergies</label>
+          <input type="text" id="pAllergies" placeholder="Penicillin, Seafood" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Medical Conditions</label>
+        <input type="text" id="pConditions" placeholder="Asthma, Hypertension, etc." />
+      </div>
+
+      <div class="form-group">
+        <label>Emergency Contact Person &amp; Phone</label>
+        <input type="text" id="pContact" placeholder="Maria Dela Cruz (+63 918 987 6543)" />
+      </div>
+
+      <button class="btn-primary" onclick="saveProfileModal()">Save Emergency Profile</button>
+      <button class="btn-secondary" onclick="closeProfileModal()">Done</button>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
@@ -278,6 +627,60 @@
     let activeAlertId = null;
     let alertListener = null;
     let userCoords = null;
+
+    // ── Profile Management (Local Cache & Optional Cloud Sync) ──
+    function getStoredProfile() {
+      try {
+        const raw = localStorage.getItem("pwa_user_profile");
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveStoredProfile(p) {
+      localStorage.setItem("pwa_user_profile", JSON.stringify(p));
+      updateTopProfileLabel();
+    }
+
+    function updateTopProfileLabel() {
+      const p = getStoredProfile();
+      const label = document.getElementById("topProfileLabel");
+      if (label) {
+        label.textContent = p.fullName ? p.fullName.split(" ")[0] : "My Profile";
+      }
+    }
+
+    function openProfileModal() {
+      const p = getStoredProfile();
+      document.getElementById("pName").value = p.fullName || "";
+      document.getElementById("pPhone").value = p.phone || "";
+      document.getElementById("pBlood").value = p.bloodType || "";
+      document.getElementById("pAge").value = p.age || "";
+      document.getElementById("pAllergies").value = p.allergies || "";
+      document.getElementById("pConditions").value = p.medicalConditions || "";
+      document.getElementById("pContact").value = p.emergencyContact || "";
+      document.getElementById("profileModal").classList.add("active");
+    }
+
+    function closeProfileModal() {
+      document.getElementById("profileModal").classList.remove("active");
+    }
+
+    function saveProfileModal() {
+      const p = {
+        fullName: document.getElementById("pName").value.trim(),
+        phone: document.getElementById("pPhone").value.trim(),
+        bloodType: document.getElementById("pBlood").value.trim(),
+        age: document.getElementById("pAge").value.trim(),
+        allergies: document.getElementById("pAllergies").value.trim(),
+        medicalConditions: document.getElementById("pConditions").value.trim(),
+        emergencyContact: document.getElementById("pContact").value.trim()
+      };
+      saveStoredProfile(p);
+      alert("Emergency profile saved to device!");
+      closeProfileModal();
+    }
 
     // ── Get or create stable user ID ──
     function getUserId() {
@@ -342,7 +745,6 @@
       btn.disabled = true;
       btn.textContent = "...";
 
-      // Try to get fresh location if we don't have it
       if (!userCoords) {
         navigator.geolocation.getCurrentPosition(
           pos => {
@@ -352,7 +754,7 @@
             };
             saveAlert();
           },
-          () => saveAlert(), // Send anyway even without location
+          () => saveAlert(),
           { enableHighAccuracy: true, timeout: 8000 }
         );
       } else {
@@ -369,19 +771,101 @@
         longitude: userCoords ? userCoords.lng : 0,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         status: "active",
-        source: "pwa",          // marks it came from PWA
+        source: "pwa",
         deviceToken: ""
       })
         .then(ref => {
           activeAlertId = ref.id;
           setSOSSentState();
           listenForResolution(activeAlertId);
+          promptRoleSelection();
         })
         .catch(err => {
           const btn = document.getElementById("btnSOS");
           btn.disabled = false;
           btn.textContent = "SOS";
           alert("Failed to send: " + err.message);
+        });
+    }
+
+    // ── Role Selection Handling ──
+    function promptRoleSelection() {
+      const p = getStoredProfile();
+      const desc = document.getElementById("roleVictimDesc");
+      if (p.fullName && desc) {
+        desc.textContent = `Auto-fills emergency profile for ${p.fullName} to responders.`;
+      }
+      document.getElementById("roleModal").classList.add("active");
+    }
+
+    function closeRoleModal() {
+      document.getElementById("roleModal").classList.remove("active");
+      document.getElementById("bystanderOptBox").style.display = "none";
+    }
+
+    function selectRoleVictim() {
+      if (!activeAlertId) return;
+      const p = getStoredProfile();
+      const updateData = {
+        reporterRole: "victim"
+      };
+      if (p.fullName) updateData.reporterName = p.fullName;
+      if (p.phone) updateData.reporterPhone = p.phone;
+      if (Object.keys(p).length > 0) updateData.reporterProfile = p;
+
+      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
+        .then(() => {
+          closeRoleModal();
+          const text = document.getElementById("statusText");
+          if (text) {
+            text.textContent = "🚒 Help is on the way!\nYour medical profile was attached to the alert.";
+          }
+        })
+        .catch(e => {
+          console.error("Failed to update role:", e);
+          closeRoleModal();
+        });
+    }
+
+    function selectRoleBystander() {
+      const p = getStoredProfile();
+      const box = document.getElementById("bystanderOptBox");
+      const nameInput = document.getElementById("pwaBystanderName");
+      const phoneInput = document.getElementById("pwaBystanderPhone");
+      if (nameInput) nameInput.value = p.fullName || "";
+      if (phoneInput) phoneInput.value = p.phone || "";
+      box.style.display = "block";
+    }
+
+    function toggleBystanderInputs() {
+      const chk = document.getElementById("chkShareBystander");
+      const inputs = document.getElementById("bystanderInputs");
+      if (inputs && chk) {
+        inputs.style.display = chk.checked ? "block" : "none";
+      }
+    }
+
+    function confirmBystanderAlert() {
+      if (!activeAlertId) return;
+      const chk = document.getElementById("chkShareBystander");
+      const updateData = {
+        reporterRole: "bystander"
+      };
+
+      if (chk && chk.checked) {
+        const bName = document.getElementById("pwaBystanderName").value.trim();
+        const bPhone = document.getElementById("pwaBystanderPhone").value.trim();
+        if (bName) updateData.reporterName = bName;
+        if (bPhone) updateData.reporterPhone = bPhone;
+      }
+
+      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
+        .then(() => {
+          closeRoleModal();
+        })
+        .catch(e => {
+          console.error("Failed to update bystander details:", e);
+          closeRoleModal();
         });
     }
 
@@ -451,6 +935,7 @@
     }
 
     // ── Init ──
+    updateTopProfileLabel();
     initLocation();
     checkExistingAlert();
   </script>

@@ -37,15 +37,23 @@ public class AccidentReportSheet
         this.reportSubmittedListener = listener;
     }
 
-    // The alert ID created when SOS was sent
-    // We update this document with the report
-    private static final String ARG_ALERT_ID =
-        "alertId";
+    private static final String ARG_ALERT_ID = "alertId";
+    private static final String ARG_ROLE = "role";
+    private static final String ARG_PROFILE = "profile";
 
     private String              alertId;
+    private String              role = "bystander";
+    private UserProfile         userProfile;
     private FirebaseFirestore   db;
     private LinearLayout        patientContainer;
     private int                 patientCount = 0;
+
+    // Bystander views
+    private LinearLayout   sectionBystanderContact;
+    private LinearLayout   containerBystanderFields;
+    private SwitchMaterial switchIncludeBystanderInfo;
+    private EditText       etBystanderName;
+    private EditText       etBystanderPhone;
 
     // Patient view holder for easy reading
     private static class PatientView {
@@ -60,13 +68,19 @@ public class AccidentReportSheet
     private final List<PatientView> patientViews =
         new ArrayList<>();
 
-    // ── Factory ──────────────────────────────────
-    public static AccidentReportSheet newInstance(
-            String alertId) {
-        AccidentReportSheet sheet =
-            new AccidentReportSheet();
+    // ── Factories ──────────────────────────────────
+    public static AccidentReportSheet newInstance(String alertId) {
+        return newInstance(alertId, "bystander", null);
+    }
+
+    public static AccidentReportSheet newInstance(String alertId, String role, UserProfile profile) {
+        AccidentReportSheet sheet = new AccidentReportSheet();
         Bundle args = new Bundle();
         args.putString(ARG_ALERT_ID, alertId);
+        args.putString(ARG_ROLE, role != null ? role : "bystander");
+        if (profile != null) {
+            args.putSerializable(ARG_PROFILE, profile);
+        }
         sheet.setArguments(args);
         return sheet;
     }
@@ -77,12 +91,16 @@ public class AccidentReportSheet
         super.onCreate(savedInstanceState);
         db = FirebaseFirestore.getInstance();
         if (getArguments() != null) {
-            alertId = getArguments()
-                .getString(ARG_ALERT_ID);
+            alertId = getArguments().getString(ARG_ALERT_ID);
+            role = getArguments().getString(ARG_ROLE, "bystander");
+            userProfile = (UserProfile) getArguments().getSerializable(ARG_PROFILE);
         }
+        if (userProfile == null && getContext() != null) {
+            userProfile = UserProfileManager.getLocalProfile(getContext());
+        }
+
         // Full screen bottom sheet
-        setStyle(STYLE_NORMAL,
-            R.style.Theme_BFPAlert_BottomSheet);
+        setStyle(STYLE_NORMAL, R.style.Theme_BFPAlert_BottomSheet);
     }
 
     @Nullable
@@ -96,8 +114,51 @@ public class AccidentReportSheet
             R.layout.layout_accident_report,
             container, false);
 
-        patientContainer =
-            view.findViewById(R.id.patientContainer);
+        patientContainer = view.findViewById(R.id.patientContainer);
+
+        // Role banner setup
+        TextView tvRoleBannerText = view.findViewById(R.id.tvRoleBannerText);
+        if ("victim".equalsIgnoreCase(role)) {
+            if (tvRoleBannerText != null) {
+                tvRoleBannerText.setText("🙋 Patient 1 pre-filled from your profile. Feel free to adjust.");
+            }
+        } else {
+            if (tvRoleBannerText != null) {
+                tvRoleBannerText.setText("👥 Bystander Report. Please record incident details.");
+            }
+        }
+
+        // Bystander section setup
+        sectionBystanderContact = view.findViewById(R.id.sectionBystanderContact);
+        containerBystanderFields = view.findViewById(R.id.containerBystanderFields);
+        switchIncludeBystanderInfo = view.findViewById(R.id.switchIncludeBystanderInfo);
+        etBystanderName = view.findViewById(R.id.etBystanderName);
+        etBystanderPhone = view.findViewById(R.id.etBystanderPhone);
+
+        if ("bystander".equalsIgnoreCase(role)) {
+            if (sectionBystanderContact != null) {
+                sectionBystanderContact.setVisibility(View.VISIBLE);
+            }
+            if (userProfile != null) {
+                if (etBystanderName != null && !userProfile.getFullName().isEmpty()) {
+                    etBystanderName.setText(userProfile.getFullName());
+                }
+                if (etBystanderPhone != null && !userProfile.getPhone().isEmpty()) {
+                    etBystanderPhone.setText(userProfile.getPhone());
+                }
+            }
+            if (switchIncludeBystanderInfo != null) {
+                switchIncludeBystanderInfo.setOnCheckedChangeListener((btn, isChecked) -> {
+                    if (containerBystanderFields != null) {
+                        containerBystanderFields.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                    }
+                });
+            }
+        } else {
+            if (sectionBystanderContact != null) {
+                sectionBystanderContact.setVisibility(View.GONE);
+            }
+        }
 
         // Add first patient card by default
         addPatientCard();
@@ -138,44 +199,56 @@ public class AccidentReportSheet
                 patientContainer, false);
 
         PatientView pv = new PatientView();
-        pv.etName = card.findViewById(
-            R.id.etPatientName);
-        pv.etAge = card.findViewById(
-            R.id.etPatientAge);
-        pv.etBirthdate = card.findViewById(
-            R.id.etPatientBirthdate);
-        pv.etAddress = card.findViewById(
-            R.id.etPatientAddress);
-        pv.etAllergies = card.findViewById(
-            R.id.etPatientAllergies);
-        pv.etEmergencyContact = card.findViewById(
-            R.id.etEmergencyContact);
-        pv.etCondition = card.findViewById(
-            R.id.etPatientCondition);
-        pv.chipGroupConsciousness = card.findViewById(
-            R.id.chipGroupConsciousness);
-        pv.switchSeizure = card.findViewById(
-            R.id.switchSeizure);
+        pv.etName = card.findViewById(R.id.etPatientName);
+        pv.etAge = card.findViewById(R.id.etPatientAge);
+        pv.etBirthdate = card.findViewById(R.id.etPatientBirthdate);
+        pv.etAddress = card.findViewById(R.id.etPatientAddress);
+        pv.etAllergies = card.findViewById(R.id.etPatientAllergies);
+        pv.etEmergencyContact = card.findViewById(R.id.etEmergencyContact);
+        pv.etCondition = card.findViewById(R.id.etPatientCondition);
+        pv.chipGroupConsciousness = card.findViewById(R.id.chipGroupConsciousness);
+        pv.switchSeizure = card.findViewById(R.id.switchSeizure);
 
         // Patient number label
-        TextView tvNum = card.findViewById(
-            R.id.tvPatientNumber);
+        TextView tvNum = card.findViewById(R.id.tvPatientNumber);
         tvNum.setText("Patient " + patientCount);
 
+        // Pre-fill Patient 1 if user is the victim
+        if (patientCount == 1 && "victim".equalsIgnoreCase(role) && userProfile != null && !userProfile.isEmpty()) {
+            if (!userProfile.getFullName().isEmpty()) pv.etName.setText(userProfile.getFullName());
+            if (!userProfile.getAge().isEmpty()) pv.etAge.setText(userProfile.getAge());
+            if (!userProfile.getBirthdate().isEmpty()) pv.etBirthdate.setText(userProfile.getBirthdate());
+            if (!userProfile.getAddress().isEmpty()) pv.etAddress.setText(userProfile.getAddress());
+            if (!userProfile.getAllergies().isEmpty()) pv.etAllergies.setText(userProfile.getAllergies());
+
+            String contactInfo = userProfile.getEmergencyContact();
+            if (!userProfile.getEmergencyContactName().isEmpty()) {
+                contactInfo = userProfile.getEmergencyContactName() + (!contactInfo.isEmpty() ? " (" + contactInfo + ")" : "");
+            }
+            if (!contactInfo.isEmpty()) pv.etEmergencyContact.setText(contactInfo);
+
+            String cond = userProfile.getMedicalConditions();
+            if (!userProfile.getBloodType().isEmpty()) {
+                cond = (cond.isEmpty() ? "" : cond + "\n") + "Blood Type: " + userProfile.getBloodType();
+            }
+            if (!cond.isEmpty()) pv.etCondition.setText(cond);
+        }
+
         // Remove button
-        TextView btnRemove = card.findViewById(
-            R.id.btnRemovePatient);
+        TextView btnRemove = card.findViewById(R.id.btnRemovePatient);
 
         // Hide remove on first card
         if (patientCount == 1) {
             btnRemove.setVisibility(View.GONE);
         }
 
-        final int index = patientViews.size();
         btnRemove.setOnClickListener(v -> {
-            patientContainer.removeView(card);
-            patientViews.remove(index);
-            renumberPatients();
+            int idx = patientViews.indexOf(pv);
+            if (idx != -1) {
+                patientContainer.removeView(card);
+                patientViews.remove(idx);
+                renumberPatients();
+            }
         });
 
         patientViews.add(pv);
@@ -185,151 +258,112 @@ public class AccidentReportSheet
     // Renumber patient cards after removal
     private void renumberPatients() {
         patientCount = 0;
-        for (int i = 0;
-                i < patientContainer.getChildCount();
-                i++) {
-            View card =
-                patientContainer.getChildAt(i);
-            TextView tvNum = card.findViewById(
-                R.id.tvPatientNumber);
+        for (int i = 0; i < patientContainer.getChildCount(); i++) {
+            View card = patientContainer.getChildAt(i);
+            TextView tvNum = card.findViewById(R.id.tvPatientNumber);
             if (tvNum != null) {
                 patientCount++;
-                tvNum.setText(
-                    "Patient " + patientCount);
+                tvNum.setText("Patient " + patientCount);
             }
-            // Show remove on all except first
-            TextView btnRemove = card.findViewById(
-                R.id.btnRemovePatient);
+            TextView btnRemove = card.findViewById(R.id.btnRemovePatient);
             if (btnRemove != null) {
-                btnRemove.setVisibility(
-                    i == 0 ? View.GONE : View.VISIBLE);
+                btnRemove.setVisibility(patientCount == 1 ? View.GONE : View.VISIBLE);
             }
         }
     }
 
-    // ── Read selected chip text ───────────────────
-    private String getSelectedChip(
-            ChipGroup group) {
+    // ── Helper: get selected chip text ────────────
+    private String getSelectedChipText(ChipGroup group) {
         int id = group.getCheckedChipId();
         if (id == View.NO_ID) return null;
         Chip chip = group.findViewById(id);
-        return chip != null
-            ? chip.getText().toString() : null;
+        return chip != null ? chip.getText().toString() : null;
     }
 
     // ── Submit report to Firestore ────────────────
     private void submitReport(View root) {
         if (alertId == null) {
             Toast.makeText(requireContext(),
-                "No SOS alert linked.",
+                "Error: No active alert.",
                 Toast.LENGTH_SHORT).show();
+            dismiss();
             return;
         }
 
-        // ── Validate victim count ─────────────────
-        EditText etCount =
-            root.findViewById(R.id.etVictimCount);
-        String countStr = etCount.getText()
-            .toString().trim();
-        if (countStr.isEmpty()) {
-            etCount.setError("Required");
-            etCount.requestFocus();
-            return;
-        }
-        int victimCount =
-            Integer.parseInt(countStr);
+        // ── Incident fields ───────────────────────
+        ChipGroup cgAccident = root.findViewById(R.id.chipGroupAccidentType);
+        ChipGroup cgInjury   = root.findViewById(R.id.chipGroupNature);
+        ChipGroup cgMode     = root.findViewById(R.id.chipGroupMode);
+        EditText  etVictims  = root.findViewById(R.id.etVictimCount);
 
-        // ── Read incident fields ──────────────────
-        ChipGroup cgType =
-            root.findViewById(
-                R.id.chipGroupAccidentType);
-        ChipGroup cgNature =
-            root.findViewById(R.id.chipGroupNature);
-        ChipGroup cgMode =
-            root.findViewById(R.id.chipGroupMode);
+        String accidentType   = getSelectedChipText(cgAccident);
+        String natureOfInjury = getSelectedChipText(cgInjury);
+        String modeOfInjury   = getSelectedChipText(cgMode);
 
-        String accidentType =
-            getSelectedChip(cgType);
-        String natureOfInjury =
-            getSelectedChip(cgNature);
-        String modeOfInjury =
-            getSelectedChip(cgMode);
+        String victimCountStr = etVictims.getText().toString().trim();
+        int victimCount = victimCountStr.isEmpty()
+            ? patientViews.size()
+            : Integer.parseInt(victimCountStr);
 
-        // ── Build patients list ───────────────────
-        List<Map<String, Object>> patients =
-            new ArrayList<>();
-
+        // ── Patient fields ────────────────────────
+        List<Map<String, Object>> patients = new ArrayList<>();
         for (PatientView pv : patientViews) {
-            Map<String, Object> patient =
-                new HashMap<>();
+            String name             = pv.etName.getText().toString().trim();
+            String age              = pv.etAge.getText().toString().trim();
+            String birthdate        = pv.etBirthdate.getText().toString().trim();
+            String address          = pv.etAddress.getText().toString().trim();
+            String allergies        = pv.etAllergies.getText().toString().trim();
+            String emergencyContact = pv.etEmergencyContact.getText().toString().trim();
+            String condition        = pv.etCondition.getText().toString().trim();
+            String consciousness    = getSelectedChipText(pv.chipGroupConsciousness);
+            boolean seizure         = pv.switchSeizure.isChecked();
 
-            String name = pv.etName.getText()
-                .toString().trim();
-            String age = pv.etAge.getText()
-                .toString().trim();
-            String birthdate =
-                pv.etBirthdate.getText()
-                    .toString().trim();
-            String address = pv.etAddress.getText()
-                .toString().trim();
-            String allergies =
-                pv.etAllergies.getText()
-                    .toString().trim();
-            String emergencyContact =
-                pv.etEmergencyContact.getText()
-                    .toString().trim();
-            String condition =
-                pv.etCondition.getText()
-                    .toString().trim();
-            String consciousness =
-                getSelectedChip(
-                    pv.chipGroupConsciousness);
-            boolean seizure =
-                pv.switchSeizure.isChecked();
-
-            // Only add non-empty fields
-            if (!name.isEmpty())
-                patient.put("name", name);
-            if (!age.isEmpty())
-                patient.put("age",
-                    Integer.parseInt(age));
-            if (!birthdate.isEmpty())
-                patient.put("birthdate", birthdate);
-            if (!address.isEmpty())
-                patient.put("address", address);
-            if (!allergies.isEmpty())
-                patient.put("allergies",
-                    allergies);
-            if (!emergencyContact.isEmpty())
-                patient.put("emergencyContact",
-                    emergencyContact);
-            if (!condition.isEmpty())
-                patient.put("condition", condition);
-            if (consciousness != null)
-                patient.put("levelOfConsciousness",
-                    consciousness);
+            Map<String, Object> patient = new HashMap<>();
             patient.put("seizure", seizure);
 
-            // Only include if at least one field
-            if (patient.size() > 1)
+            if (!name.isEmpty()) patient.put("name", name);
+            if (!age.isEmpty()) {
+                try {
+                    patient.put("age", Integer.parseInt(age));
+                } catch (NumberFormatException ignored) {}
+            }
+            if (!birthdate.isEmpty()) patient.put("birthdate", birthdate);
+            if (!address.isEmpty()) patient.put("address", address);
+            if (!allergies.isEmpty()) patient.put("allergies", allergies);
+            if (!emergencyContact.isEmpty()) patient.put("emergencyContact", emergencyContact);
+            if (!condition.isEmpty()) patient.put("condition", condition);
+            if (consciousness != null) patient.put("levelOfConsciousness", consciousness);
+
+            if (patient.size() > 1 || !name.isEmpty() || !condition.isEmpty()) {
                 patients.add(patient);
+            }
         }
 
         // ── Build update map ──────────────────────
-        Map<String, Object> update =
-            new HashMap<>();
+        Map<String, Object> update = new HashMap<>();
         update.put("countOfVictims", victimCount);
-        if (accidentType != null)
-            update.put("accidentType",
-                accidentType);
-        if (natureOfInjury != null)
-            update.put("natureOfInjury",
-                natureOfInjury);
-        if (modeOfInjury != null)
-            update.put("modeOfInjury",
-                modeOfInjury);
-        if (!patients.isEmpty())
-            update.put("patients", patients);
+        if (accidentType != null) update.put("accidentType", accidentType);
+        if (natureOfInjury != null) update.put("natureOfInjury", natureOfInjury);
+        if (modeOfInjury != null) update.put("modeOfInjury", modeOfInjury);
+        if (!patients.isEmpty()) update.put("patients", patients);
+
+        // Role & Reporter details
+        update.put("reporterRole", role);
+
+        if ("victim".equalsIgnoreCase(role)) {
+            if (userProfile != null && !userProfile.isEmpty()) {
+                update.put("reporterName", userProfile.getFullName());
+                update.put("reporterPhone", userProfile.getPhone());
+                update.put("reporterProfile", userProfile.toMap());
+            }
+        } else if ("bystander".equalsIgnoreCase(role)) {
+            if (switchIncludeBystanderInfo != null && switchIncludeBystanderInfo.isChecked()) {
+                String bName = etBystanderName != null ? etBystanderName.getText().toString().trim() : "";
+                String bPhone = etBystanderPhone != null ? etBystanderPhone.getText().toString().trim() : "";
+                if (!bName.isEmpty()) update.put("reporterName", bName);
+                if (!bPhone.isEmpty()) update.put("reporterPhone", bPhone);
+            }
+        }
 
         // ── Update Firestore document ─────────────
         update.put("reportSubmitted", true);

@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FirebaseAuth.getInstance().signOut();
 
         // Request BLE permissions on Android 12+
         if (android.os.Build.VERSION.SDK_INT >= 31) {

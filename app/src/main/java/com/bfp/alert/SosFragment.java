@@ -106,12 +106,7 @@ public class SosFragment extends Fragment {
             btnOpenReport.setOnClickListener(v -> {
                 String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
                 if (alertId != null) {
-                    AccidentReportSheet sheet = AccidentReportSheet.newInstance(alertId);
-                    sheet.setOnReportSubmittedListener(() -> {
-                        markReportSubmitted(alertId);
-                        hideReportButton();
-                    });
-                    sheet.show(getChildFragmentManager(), "accident_report");
+                    promptRoleSelection(alertId);
                 }
             });
         }
@@ -271,21 +266,9 @@ public class SosFragment extends Fragment {
                                 setSOSSentState();
                                 attachLiveListener(sAlertId);
 
-                                // ── Show accident report sheet
+                                // ── Show role selection dialog
                                 // immediately after SOS is sent
-                                // so the bystander can send
-                                // patient data while waiting
-                                AccidentReportSheet sheet =
-                                        AccidentReportSheet
-                                                .newInstance(sAlertId);
-                                String currentAlertId = sAlertId;
-                                sheet.setOnReportSubmittedListener(() -> {
-                                    markReportSubmitted(currentAlertId);
-                                    hideReportButton();
-                                });
-                                sheet.show(
-                                        getChildFragmentManager(),
-                                        "accident_report");
+                                promptRoleSelection(sAlertId);
                             })
                             .addOnFailureListener(e -> {
                                 btnSOS.setEnabled(true);
@@ -298,6 +281,48 @@ public class SosFragment extends Fragment {
                                         .show();
                             });
                 });
+    }
+
+    private void promptRoleSelection(String alertId) {
+        if (!isAdded()) return;
+        RoleSelectionDialog dialog = RoleSelectionDialog.newInstance(alertId);
+        dialog.setOnRoleSelectedListener(new RoleSelectionDialog.OnRoleSelectedListener() {
+            @Override
+            public void onRoleSelected(String role, UserProfile profile) {
+                // If victim, update alert immediately with role and profile if available
+                if ("victim".equalsIgnoreCase(role)) {
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("reporterRole", "victim");
+                    if (profile != null && !profile.isEmpty()) {
+                        update.put("reporterName", profile.getFullName());
+                        update.put("reporterPhone", profile.getPhone());
+                        update.put("reporterProfile", profile.toMap());
+                    }
+                    db.collection("sos_alerts").document(alertId).update(update);
+                }
+                openAccidentReportSheet(alertId, role, profile);
+            }
+
+            @Override
+            public void onRoleSkipped() {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(),
+                            "SOS active. You can add report details anytime.",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.show(getChildFragmentManager(), "role_selection");
+    }
+
+    private void openAccidentReportSheet(String alertId, String role, UserProfile profile) {
+        if (!isAdded()) return;
+        AccidentReportSheet sheet = AccidentReportSheet.newInstance(alertId, role, profile);
+        sheet.setOnReportSubmittedListener(() -> {
+            markReportSubmitted(alertId);
+            hideReportButton();
+        });
+        sheet.show(getChildFragmentManager(), "accident_report");
     }
 
     // ─────────────────────────────────────────────────────────

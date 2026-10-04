@@ -28,11 +28,11 @@ public class ClaudeVoiceAssistant {
 
     // ── Groq API config (free) ────────────────────────────────────
     private static final String API_KEY  =
-            "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";
+            "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";
     private static final String API_URL  =
             "https://api.groq.com/openai/v1/chat/completions";
     private static final String MODEL    =
-            "llama-3.3-70b-versatile";
+            "openai/gpt-oss-120b";
 
     // ── Actions ───────────────────────────────────────────────────
     public static final String ACTION_SEND_SOS        = "SEND_SOS";
