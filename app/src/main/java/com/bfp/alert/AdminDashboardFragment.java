@@ -7,9 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -76,6 +78,33 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
             return view;
         }
 
+        AdminAccess.check(FirebaseAuth.getInstance().getCurrentUser(), (isAdmin, error) -> {
+            if (!isAdded()) return;
+            if (error != null || !isAdmin) {
+                if (error != null) {
+                    Toast.makeText(requireContext(),
+                            AdminAccess.getVerificationErrorMessage(error),
+                            Toast.LENGTH_LONG).show();
+                }
+                ((MainActivity) requireActivity()).openAdminLogin();
+                return;
+            }
+            initializeDashboard(view);
+        });
+        return view;
+    }
+
+    private void initializeDashboard(View view) {
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        FirebaseAuth.getInstance().signOut();
+                        ((MainActivity) requireActivity()).returnToMain();
+                    }
+                });
+
         db = FirebaseFirestore.getInstance();
         tvAlertCount = view.findViewById(R.id.tvAlertCount);
         recyclerView = view.findViewById(R.id.recyclerView);
@@ -94,8 +123,10 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
 
         View btnBack = view.findViewById(R.id.btnBack);
         if (btnBack != null) {
-            btnBack.setOnClickListener(v ->
-                    ((MainActivity) requireActivity()).returnToMain());
+            btnBack.setOnClickListener(v -> {
+                FirebaseAuth.getInstance().signOut();
+                ((MainActivity) requireActivity()).returnToMain();
+            });
         }
 
         view.findViewById(R.id.btnManageFirstAid).setOnClickListener(v ->
@@ -107,7 +138,6 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
         });
 
         listenForAlerts();
-        return view;
     }
 
     private void initMapFragment() {

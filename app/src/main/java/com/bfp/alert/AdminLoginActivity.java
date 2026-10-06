@@ -27,20 +27,6 @@ public class AdminLoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Only skip login if we came here from a
-        // non-logout source AND user is logged in
-        boolean fromLogout = getIntent()
-                .getBooleanExtra("fromLogout", false);
-
-        if (!fromLogout
-                && mAuth.getCurrentUser() != null) {
-            startActivity(new Intent(
-                    this, AdminDashboardActivity.class));
-            overridePendingTransition(0, 0);
-            finish();
-            return;
-        }
-
         EditText etEmail    = findViewById(R.id.etEmail);
         EditText etPassword = findViewById(R.id.etPassword);
         Button   btnLogin   = findViewById(R.id.btnLogin);
@@ -78,31 +64,21 @@ public class AdminLoginActivity extends AppCompatActivity {
                             email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
+                            AdminAccess.check(mAuth.getCurrentUser(), (isAdmin, error) -> {
+                                if (isFinishing()) return;
+                                if (error != null || !isAdmin) {
+                                    mAuth.signOut();
+                                    btnLogin.setEnabled(true);
+                                    btnLogin.setText("Sign In");
+                                    tvError.setText(error != null
+                                            ? AdminAccess.getVerificationErrorMessage(error)
+                                            : "This account is not set up as an administrator.");
+                                    return;
+                                }
 
-                            // Save FCM token
-                            FirebaseMessaging.getInstance()
-                                    .getToken()
-                                    .addOnSuccessListener(token -> {
-                                        String uid = mAuth
-                                                .getCurrentUser().getUid();
-                                        Map<String, Object> data =
-                                                new HashMap<>();
-                                        data.put("fcmToken", token);
-                                        FirebaseFirestore.getInstance()
-                                                .collection("admin_tokens")
-                                                .document(uid)
-                                                .set(data);
-                                    });
-
-                            // Go to dashboard cleanly
-                            Intent intent = new Intent(
-                                    this, AdminDashboardActivity.class);
-                            intent.addFlags(
-                                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                                            Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                            startActivity(intent);
-                            overridePendingTransition(0, 0);
-                            finish();
+                                saveAdminToken();
+                                openDashboard();
+                            });
 
                         } else {
                             btnLogin.setEnabled(true);
@@ -129,5 +105,38 @@ public class AdminLoginActivity extends AppCompatActivity {
                         }
                     });
         });
+
+        AdminAccess.check(mAuth.getCurrentUser(), (isAdmin, error) -> {
+            if (isFinishing()) return;
+            if (error != null) {
+                    tvError.setText(AdminAccess.getVerificationErrorMessage(error));
+            } else if (isAdmin) {
+                    openDashboard();
+            }
+        });
+    }
+
+    private void saveAdminToken() {
+        FirebaseMessaging.getInstance()
+                    .getToken()
+                    .addOnSuccessListener(token -> {
+                        if (mAuth.getCurrentUser() == null) return;
+                        String uid = mAuth.getCurrentUser().getUid();
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("fcmToken", token);
+                        FirebaseFirestore.getInstance()
+                                .collection("admin_tokens")
+                                .document(uid)
+                                .set(data);
+                    });
+    }
+
+    private void openDashboard() {
+        Intent intent = new Intent(this, AdminDashboardActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+        finish();
     }
 }

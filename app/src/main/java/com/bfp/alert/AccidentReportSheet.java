@@ -17,6 +17,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -40,10 +42,12 @@ public class AccidentReportSheet
     private static final String ARG_ALERT_ID = "alertId";
     private static final String ARG_ROLE = "role";
     private static final String ARG_PROFILE = "profile";
+    private static final String ARG_PROFILE_UID = "profile_uid";
 
     private String              alertId;
     private String              role = "bystander";
     private UserProfile         userProfile;
+    private String              profileOwnerUid;
     private FirebaseFirestore   db;
     private LinearLayout        patientContainer;
     private int                 patientCount = 0;
@@ -80,6 +84,10 @@ public class AccidentReportSheet
         args.putString(ARG_ROLE, role != null ? role : "bystander");
         if (profile != null) {
             args.putSerializable(ARG_PROFILE, profile);
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                args.putString(ARG_PROFILE_UID, user.getUid());
+            }
         }
         sheet.setArguments(args);
         return sheet;
@@ -94,9 +102,10 @@ public class AccidentReportSheet
             alertId = getArguments().getString(ARG_ALERT_ID);
             role = getArguments().getString(ARG_ROLE, "bystander");
             userProfile = (UserProfile) getArguments().getSerializable(ARG_PROFILE);
+            profileOwnerUid = getArguments().getString(ARG_PROFILE_UID);
         }
-        if (userProfile == null && getContext() != null) {
-            userProfile = UserProfileManager.getLocalProfile(getContext());
+        if (!isCurrentProfileOwner()) {
+            userProfile = null;
         }
 
         // Full screen bottom sheet
@@ -351,11 +360,12 @@ public class AccidentReportSheet
         update.put("reporterRole", role);
 
         if ("victim".equalsIgnoreCase(role)) {
-            if (userProfile != null && !userProfile.isEmpty()) {
+            if (isCurrentProfileOwner() && userProfile != null && !userProfile.isEmpty()) {
                 update.put("reporterName", userProfile.getFullName());
                 update.put("reporterPhone", userProfile.getPhone());
                 update.put("reporterProfile", userProfile.toMap());
             }
+
         } else if ("bystander".equalsIgnoreCase(role)) {
             if (switchIncludeBystanderInfo != null && switchIncludeBystanderInfo.isChecked()) {
                 String bName = etBystanderName != null ? etBystanderName.getText().toString().trim() : "";
@@ -383,5 +393,11 @@ public class AccidentReportSheet
                 Toast.makeText(requireContext(),
                     "Failed: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show());
+    }
+
+    private boolean isCurrentProfileOwner() {
+        if (profileOwnerUid == null) return false;
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        return user != null && profileOwnerUid.equals(user.getUid());
     }
 }

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.OnBackPressedCallback;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -79,13 +80,32 @@ public class AdminDashboardActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
 
-        // Guard — not logged in
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            startActivity(new Intent(this, AdminLoginActivity.class));
-            overridePendingTransition(0, 0);
-            finish();
-            return;
-        }
+        AdminAccess.check(FirebaseAuth.getInstance().getCurrentUser(), (isAdmin, error) -> {
+            if (isFinishing()) return;
+            if (error != null || !isAdmin) {
+                if (error != null) {
+                    Toast.makeText(this,
+                            AdminAccess.getVerificationErrorMessage(error),
+                            Toast.LENGTH_LONG).show();
+                }
+                startActivity(new Intent(this, AdminLoginActivity.class));
+                overridePendingTransition(0, 0);
+                finish();
+                return;
+            }
+            initializeDashboard();
+        });
+    }
+
+    private void initializeDashboard() {
+        getOnBackPressedDispatcher().addCallback(this,
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        FirebaseAuth.getInstance().signOut();
+                        finish();
+                    }
+                });
 
         db           = FirebaseFirestore.getInstance();
         tvAlertCount = findViewById(R.id.tvAlertCount);

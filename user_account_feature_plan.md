@@ -173,3 +173,15 @@ When SOS is pressed and the alert is sent, **before the Accident Report Sheet**,
 
 > [!IMPORTANT]
 > This plan covers both Android (Java) and Web (PWA + Admin). Should I proceed with implementation? If so, which parts should I start with?
+
+## Admin Account Provisioning
+
+Admin accounts use Firebase Authentication like user accounts, but an account is
+treated as an administrator only when a trusted administrator provisions a
+document at `admin_users/{uid}`. Create that document from the Firebase Console
+or Admin SDK using the Firebase Authentication UID. App clients cannot create
+or edit admin membership documents.
+
+The admin login surfaces require this document, while regular user login
+rejects accounts that have it. Anyone who needs both roles must use separate
+Firebase Authentication accounts.

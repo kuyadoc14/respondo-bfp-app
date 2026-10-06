@@ -35,13 +35,6 @@ public class AdminLoginFragment extends Fragment {
 
         mAuth = FirebaseAuth.getInstance();
 
-        boolean fromLogout = getArguments() != null && getArguments().getBoolean("fromLogout", false);
-
-        if (!fromLogout && mAuth.getCurrentUser() != null) {
-            ((MainActivity) requireActivity()).openAdminDashboard();
-            return view;
-        }
-
         EditText etEmail = view.findViewById(R.id.etEmail);
         EditText etPassword = view.findViewById(R.id.etPassword);
         Button btnLogin = view.findViewById(R.id.btnLogin);
@@ -73,22 +66,35 @@ public class AdminLoginFragment extends Fragment {
             mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            FirebaseMessaging.getInstance().getToken()
-                                    .addOnSuccessListener(token -> {
-                                        String uid = mAuth.getCurrentUser() != null
-                                                ? mAuth.getCurrentUser().getUid()
-                                                : "";
-                                        if (!uid.isEmpty()) {
-                                            Map<String, Object> data = new HashMap<>();
-                                            data.put("fcmToken", token);
-                                            FirebaseFirestore.getInstance()
-                                                    .collection("admin_tokens")
-                                                    .document(uid)
-                                                    .set(data);
-                                        }
-                                    });
+                            AdminAccess.check(mAuth.getCurrentUser(), (isAdmin, error) -> {
+                                if (!isAdded()) return;
+                                if (error != null || !isAdmin) {
+                                    mAuth.signOut();
+                                    btnLogin.setEnabled(true);
+                                    btnLogin.setText("Sign In");
+                                    tvError.setText(error != null
+                                            ? AdminAccess.getVerificationErrorMessage(error)
+                                            : "This account is not set up as an administrator.");
+                                    return;
+                                }
 
-                            ((MainActivity) requireActivity()).openAdminDashboard();
+                                FirebaseMessaging.getInstance().getToken()
+                                        .addOnSuccessListener(token -> {
+                                            String uid = mAuth.getCurrentUser() != null
+                                                    ? mAuth.getCurrentUser().getUid()
+                                                    : "";
+                                            if (!uid.isEmpty()) {
+                                                Map<String, Object> data = new HashMap<>();
+                                                data.put("fcmToken", token);
+                                                FirebaseFirestore.getInstance()
+                                                        .collection("admin_tokens")
+                                                        .document(uid)
+                                                        .set(data);
+                                            }
+                                        });
+
+                                ((MainActivity) requireActivity()).openAdminDashboard();
+                            });
                         } else {
                             btnLogin.setEnabled(true);
                             btnLogin.setText("Sign In");
@@ -106,6 +112,15 @@ public class AdminLoginFragment extends Fragment {
                             }
                         }
                     });
+        });
+
+        AdminAccess.check(mAuth.getCurrentUser(), (isAdmin, error) -> {
+            if (!isAdded()) return;
+            if (error == null && isAdmin) {
+                ((MainActivity) requireActivity()).openAdminDashboard();
+            } else if (error != null) {
+                tvError.setText(AdminAccess.getVerificationErrorMessage(error));
+            }
         });
 
         return view;

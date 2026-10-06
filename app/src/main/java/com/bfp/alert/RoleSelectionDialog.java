@@ -5,11 +5,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class RoleSelectionDialog extends BottomSheetDialogFragment {
 
@@ -23,6 +28,10 @@ public class RoleSelectionDialog extends BottomSheetDialogFragment {
     private String alertId;
     private OnRoleSelectedListener listener;
     private UserProfile currentProfile;
+    private String profileOwnerUid;
+    private TextView tvVictimSubtext;
+    private View cardRoleVictim;
+    private View cardRoleBystander;
 
     public static RoleSelectionDialog newInstance(String alertId) {
         RoleSelectionDialog dialog = new RoleSelectionDialog();
@@ -52,23 +61,23 @@ public class RoleSelectionDialog extends BottomSheetDialogFragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_role_selection, container, false);
 
-        currentProfile = UserProfileManager.getLocalProfile(requireContext());
-        TextView tvVictimSubtext = view.findViewById(R.id.tvVictimSubtext);
-        if (currentProfile != null && !currentProfile.getFullName().isEmpty()) {
-            tvVictimSubtext.setText("Auto-fills profile for " + currentProfile.getFullName() + " into Patient 1.");
-        }
+        currentProfile = new UserProfile();
+        tvVictimSubtext = view.findViewById(R.id.tvVictimSubtext);
+        cardRoleVictim = view.findViewById(R.id.cardRoleVictim);
+        cardRoleBystander = view.findViewById(R.id.cardRoleBystander);
+        loadSignedInProfile();
 
-        view.findViewById(R.id.cardRoleVictim).setOnClickListener(v -> {
+        cardRoleVictim.setOnClickListener(v -> {
             dismiss();
             if (listener != null) {
-                listener.onRoleSelected("victim", currentProfile);
+                listener.onRoleSelected("victim", getCurrentAccountProfile());
             }
         });
 
-        view.findViewById(R.id.cardRoleBystander).setOnClickListener(v -> {
+        cardRoleBystander.setOnClickListener(v -> {
             dismiss();
             if (listener != null) {
-                listener.onRoleSelected("bystander", currentProfile);
+                listener.onRoleSelected("bystander", getCurrentAccountProfile());
             }
         });
 
@@ -80,5 +89,64 @@ public class RoleSelectionDialog extends BottomSheetDialogFragment {
         });
 
         return view;
+    }
+
+    private void loadSignedInProfile() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            tvVictimSubtext.setText("Auto-fill is available when signed in.");
+            return;
+        }
+
+        profileOwnerUid = user.getUid();
+        tvVictimSubtext.setText("Loading your saved profile...");
+        cardRoleVictim.setEnabled(false);
+        cardRoleBystander.setEnabled(false);
+
+        FirebaseFirestore.getInstance()
+                .collection("user_profiles")
+                .document(profileOwnerUid)
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (!isAdded()) return;
+                    if (isCurrentProfileOwner()) {
+                        if (document.exists() && document.getData() != null) {
+                            currentProfile = UserProfile.fromMap(document.getData());
+                        }
+                        if (!currentProfile.getFullName().isEmpty()) {
+                            tvVictimSubtext.setText("Auto-fills profile for "
+                                    + currentProfile.getFullName() + " into Patient 1.");
+                        } else {
+                            tvVictimSubtext.setText("No saved profile found. You can enter details manually.");
+                        }
+                    } else {
+                        currentProfile = new UserProfile();
+                        tvVictimSubtext.setText("Signed-out profile won't be used. Enter details manually.");
+                    }
+                    cardRoleVictim.setEnabled(true);
+                    cardRoleBystander.setEnabled(true);
+                })
+                .addOnFailureListener(error -> {
+                    Log.e("RoleSelectionDialog", "Failed to load signed-in profile", error);
+                    if (!isAdded()) return;
+                    currentProfile = new UserProfile();
+                    tvVictimSubtext.setText("Profile couldn't be loaded. You can enter details manually.");
+                    cardRoleVictim.setEnabled(true);
+                    cardRoleBystander.setEnabled(true);
+                    Toast.makeText(requireContext(),
+                            "Saved profile unavailable; report can still be entered manually.",
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    @Nullable
+    private UserProfile getCurrentAccountProfile() {
+        return isCurrentProfileOwner() ? currentProfile : null;
+    }
+
+    private boolean isCurrentProfileOwner() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        return profileOwnerUid != null && currentUser != null
+                && profileOwnerUid.equals(currentUser.getUid());
     }
 }

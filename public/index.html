@@ -2467,15 +2467,38 @@
       const mainApp = document.getElementById("mainApp");
       const adminEmail = document.getElementById("adminEmail");
 
-      if (user) {
-        loginScreen.style.display = "none";
-        mainApp.style.display = "block";
-        adminEmail.textContent = user.email || "admin@bfp.gov.ph";
-        listenForAlerts();
-      } else {
+      if (!user) {
         loginScreen.style.display = "flex";
         mainApp.style.display = "none";
+        return;
       }
+
+      loginScreen.style.display = "flex";
+      mainApp.style.display = "none";
+      db.collection("admin_users").doc(user.uid).get()
+        .then(adminRecord => {
+          if (!auth.currentUser || auth.currentUser.uid !== user.uid) return;
+          if (!adminRecord.exists) {
+            return auth.signOut().then(() => {
+              const errEl = document.getElementById("loginError");
+              errEl.textContent = "This account is not set up as an administrator.";
+              errEl.classList.add("show");
+            });
+          }
+
+          loginScreen.style.display = "none";
+          mainApp.style.display = "block";
+          adminEmail.textContent = user.email || "admin@bfp.gov.ph";
+          listenForAlerts();
+        })
+        .catch(error => {
+          console.error("Admin access verification failed:", error);
+          auth.signOut().then(() => {
+            const errEl = document.getElementById("loginError");
+            errEl.textContent = "Unable to verify admin access. Check your connection and try again.";
+            errEl.classList.add("show");
+          });
+        });
     });
 
     function doLogin() {

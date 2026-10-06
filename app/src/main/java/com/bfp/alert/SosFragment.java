@@ -289,15 +289,10 @@ public class SosFragment extends Fragment {
         dialog.setOnRoleSelectedListener(new RoleSelectionDialog.OnRoleSelectedListener() {
             @Override
             public void onRoleSelected(String role, UserProfile profile) {
-                // If victim, update alert immediately with role and profile if available
+                // Save only the selected role now; report details are submitted later.
                 if ("victim".equalsIgnoreCase(role)) {
                     Map<String, Object> update = new HashMap<>();
                     update.put("reporterRole", "victim");
-                    if (profile != null && !profile.isEmpty()) {
-                        update.put("reporterName", profile.getFullName());
-                        update.put("reporterPhone", profile.getPhone());
-                        update.put("reporterProfile", profile.toMap());
-                    }
                     db.collection("sos_alerts").document(alertId).update(update);
                 }
                 openAccidentReportSheet(alertId, role, profile);
@@ -648,4 +643,3 @@ public class SosFragment extends Fragment {
         }
     }
 }
-

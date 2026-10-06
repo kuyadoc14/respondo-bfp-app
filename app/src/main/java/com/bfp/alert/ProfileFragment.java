@@ -127,11 +127,23 @@ public class ProfileFragment extends Fragment {
         view.findViewById(R.id.btnGoToAdmin)
                 .setOnClickListener(v -> {
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    if (user != null && user.getEmail() != null && user.getEmail().contains("bfp")) {
-                        ((MainActivity) requireActivity()).openAdminDashboard();
-                    } else {
+                    if (user == null) {
                         showAdminLoginPopup();
+                        return;
                     }
+
+                    AdminAccess.check(user, (isAdmin, error) -> {
+                        if (!isAdded()) return;
+                        if (error != null) {
+                            Toast.makeText(requireContext(),
+                                    AdminAccess.getVerificationErrorMessage(error),
+                                    Toast.LENGTH_LONG).show();
+                        } else if (isAdmin) {
+                            ((MainActivity) requireActivity()).openAdminDashboard();
+                        } else {
+                            showAdminLoginPopup();
+                        }
+                    });
                 });
 
         adminLoginOverlay.setOnClickListener(v -> hideAdminLoginPopup());
@@ -147,7 +159,7 @@ public class ProfileFragment extends Fragment {
             tvAccountStatusSubtitle.setText("Profile synced with BFP cloud database.");
             btnUserAuthAction.setText("Sign Out");
         } else {
-            tvAccountStatusTitle.setText("Guest Mode (Local Only)");
+            tvAccountStatusTitle.setText("Not signed in");
             tvAccountStatusSubtitle.setText("Profile stored locally. Sign in to sync across devices.");
             btnUserAuthAction.setText("Sign In / Register");
         }
@@ -298,7 +310,7 @@ public class ProfileFragment extends Fragment {
         dialog.show(getParentFragmentManager(), "privacy_consent");
     }
 
-    // ── Optional Civilian Sign In / Register Dialog ─────────────────
+    // ── User Sign In / Register Dialog ──────────────────────────────
     private void showCivilianAuthDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.Theme_BFPAlert_BottomSheet);
         View sheet = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_user_auth, null);
@@ -378,14 +390,30 @@ public class ProfileFragment extends Fragment {
                 // Sign In
                 auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(task -> {
-                            btnSubmit.setEnabled(true);
-                            btnSubmit.setText("Sign In");
                             if (task.isSuccessful()) {
-                                Toast.makeText(requireContext(), "Signed in successfully!", Toast.LENGTH_SHORT).show();
-                                updateAccountUI();
-                                loadProfileData(); // Fetch existing cloud profile
-                                dialog.dismiss();
+                                FirebaseUser user = task.getResult().getUser();
+                                AdminAccess.check(user, (isAdmin, error) -> {
+                                    if (!isAdded()) return;
+                                    btnSubmit.setEnabled(true);
+                                    btnSubmit.setText("Sign In");
+                                    if (error != null) {
+                                        auth.signOut();
+                                        tvError.setText(AdminAccess.getVerificationErrorMessage(error));
+                                        tvError.setVisibility(View.VISIBLE);
+                                    } else if (isAdmin) {
+                                        auth.signOut();
+                                        tvError.setText("Admin accounts can't sign in here. Create a separate user account.");
+                                        tvError.setVisibility(View.VISIBLE);
+                                    } else {
+                                        Toast.makeText(requireContext(), "Signed in successfully!", Toast.LENGTH_SHORT).show();
+                                        updateAccountUI();
+                                        loadProfileData();
+                                        dialog.dismiss();
+                                    }
+                                });
                             } else {
+                                btnSubmit.setEnabled(true);
+                                btnSubmit.setText("Sign In");
                                 String msg = task.getException() != null ? task.getException().getMessage() : "Sign in failed.";
                                 tvError.setText(msg);
                                 tvError.setVisibility(View.VISIBLE);
@@ -448,23 +476,36 @@ public class ProfileFragment extends Fragment {
             mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            FirebaseMessaging.getInstance().getToken()
-                                    .addOnSuccessListener(token -> {
-                                        String uid = mAuth.getCurrentUser() != null
-                                                ? mAuth.getCurrentUser().getUid()
-                                                : "";
-                                        if (!uid.isEmpty()) {
-                                            Map<String, Object> data = new HashMap<>();
-                                            data.put("fcmToken", token);
-                                            FirebaseFirestore.getInstance()
-                                                    .collection("admin_tokens")
-                                                    .document(uid)
-                                                    .set(data);
-                                        }
-                                    });
+                            AdminAccess.check(mAuth.getCurrentUser(), (isAdmin, error) -> {
+                                if (!isAdded()) return;
+                                if (error != null || !isAdmin) {
+                                    mAuth.signOut();
+                                    btnLogin.setEnabled(true);
+                                    btnLogin.setText("Sign In");
+                                    tvError.setText(error != null
+                                            ? AdminAccess.getVerificationErrorMessage(error)
+                                            : "This account is not set up as an administrator.");
+                                    return;
+                                }
 
-                            hideAdminLoginPopup();
-                            ((MainActivity) requireActivity()).openAdminDashboard();
+                                FirebaseMessaging.getInstance().getToken()
+                                        .addOnSuccessListener(token -> {
+                                            String uid = mAuth.getCurrentUser() != null
+                                                    ? mAuth.getCurrentUser().getUid()
+                                                    : "";
+                                            if (!uid.isEmpty()) {
+                                                Map<String, Object> data = new HashMap<>();
+                                                data.put("fcmToken", token);
+                                                FirebaseFirestore.getInstance()
+                                                        .collection("admin_tokens")
+                                                        .document(uid)
+                                                        .set(data);
+                                            }
+                                        });
+
+                                hideAdminLoginPopup();
+                                ((MainActivity) requireActivity()).openAdminDashboard();
+                            });
                         } else {
                             btnLogin.setEnabled(true);
                             btnLogin.setText("Sign In");

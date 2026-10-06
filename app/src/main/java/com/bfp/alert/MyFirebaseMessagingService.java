@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -66,17 +67,24 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         com.google.firebase.auth.FirebaseAuth auth =
                 com.google.firebase.auth.FirebaseAuth.getInstance();
 
-        // Only save if an admin is logged in
-        if (auth.getCurrentUser() == null) return;
+        AdminAccess.check(auth.getCurrentUser(), (isAdmin, error) -> {
+            if (error != null) {
+                Log.e("FCM", "Unable to verify admin access for token update", error);
+                return;
+            }
+            if (!isAdmin || auth.getCurrentUser() == null) return;
 
-        String uid = auth.getCurrentUser().getUid();
-        Map<String, Object> data = new HashMap<>();
-        data.put("fcmToken", token);
+            String uid = auth.getCurrentUser().getUid();
+            Map<String, Object> data = new HashMap<>();
+            data.put("fcmToken", token);
 
-        FirebaseFirestore.getInstance()
-                .collection("admin_tokens")
-                .document(uid)
-                .set(data);
+            FirebaseFirestore.getInstance()
+                    .collection("admin_tokens")
+                    .document(uid)
+                    .set(data)
+                    .addOnFailureListener(e ->
+                            Log.e("FCM", "Unable to save admin token", e));
+        });
     }
 
     private void createNotificationChannel() {
