@@ -16,6 +16,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -173,13 +174,17 @@ public class AlertDetailActivity extends AppCompatActivity {
         List<Map<String, Object>> patients =
             (List<Map<String, Object>>)
                 doc.get("patients");
+        if (patients == null || patients.isEmpty()) {
+            patients = getVictimProfileAsPatient(doc);
+        }
 
         boolean hasReport = victims != null
             || accidentType != null
             || nature != null
             || mode != null
             || (patients != null
-                && !patients.isEmpty());
+                && !patients.isEmpty())
+            || Boolean.TRUE.equals(doc.getBoolean("reportSubmitted"));
 
         TextView tvNoReport =
             findViewById(R.id.tvNoReport);
@@ -205,16 +210,42 @@ public class AlertDetailActivity extends AppCompatActivity {
         // Patient cards
         LinearLayout patientsContainer =
             findViewById(R.id.patientsContainer);
-        if (patientsContainer == null
-                || patients == null
-                || patients.isEmpty()) return;
+        if (patientsContainer == null) return;
 
         patientsContainer.removeAllViews();
+        if (patients == null || patients.isEmpty()) return;
         for (int i = 0; i < patients.size(); i++) {
             View card = buildPatientCard(
                 i + 1, patients.get(i));
             patientsContainer.addView(card);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> getVictimProfileAsPatient(
+            DocumentSnapshot doc) {
+        if (!"victim".equalsIgnoreCase(
+                doc.getString("reporterRole"))) return null;
+
+        Map<String, Object> profile =
+            (Map<String, Object>) doc.get("reporterProfile");
+        if (profile == null || profile.isEmpty()) return null;
+
+        Map<String, Object> patient =
+            UserProfile.fromMap(profile).toPatientMap();
+        if (!patient.containsKey("name")
+                && doc.getString("reporterName") != null) {
+            patient.put("name", doc.getString("reporterName"));
+        }
+        if (!patient.containsKey("phone")
+                && doc.getString("reporterPhone") != null) {
+            patient.put("phone", doc.getString("reporterPhone"));
+        }
+        if (patient.isEmpty()) return null;
+
+        List<Map<String, Object>> patients = new ArrayList<>();
+        patients.add(patient);
+        return patients;
     }
 
     private View buildPatientCard(
@@ -247,6 +278,8 @@ public class AlertDetailActivity extends AppCompatActivity {
             str(p.get("age")), false);
         addCardRow(card, "Birthdate",
             str(p.get("birthdate")), false);
+        addCardRow(card, "Phone",
+            str(p.get("phone")), false);
         addCardRow(card, "Address",
             str(p.get("address")), false);
         addCardRow(card, "Allergies",

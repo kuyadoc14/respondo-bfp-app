@@ -118,9 +118,40 @@ public class UserProfile implements Serializable {
 
     public boolean isEmpty() {
         return getFullName().trim().isEmpty() &&
+               getAge().trim().isEmpty() &&
+               getBirthdate().trim().isEmpty() &&
                getPhone().trim().isEmpty() &&
                getAddress().trim().isEmpty() &&
-               getEmergencyContact().trim().isEmpty();
+               getEmergencyContact().trim().isEmpty() &&
+               getEmergencyContactName().trim().isEmpty() &&
+               getAllergies().trim().isEmpty() &&
+               getBloodType().trim().isEmpty() &&
+               getMedicalConditions().trim().isEmpty();
+    }
+
+    public Map<String, Object> toPatientMap() {
+        Map<String, Object> patient = new HashMap<>();
+        if (!getFullName().isEmpty()) patient.put("name", getFullName());
+        if (!getAge().isEmpty()) patient.put("age", getAge());
+        if (!getBirthdate().isEmpty()) patient.put("birthdate", getBirthdate());
+        if (!getAddress().isEmpty()) patient.put("address", getAddress());
+        if (!getPhone().isEmpty()) patient.put("phone", getPhone());
+        if (!getAllergies().isEmpty()) patient.put("allergies", getAllergies());
+
+        String emergencyContact = getEmergencyContact();
+        if (!getEmergencyContactName().isEmpty()) {
+            emergencyContact = getEmergencyContactName()
+                    + (emergencyContact.isEmpty() ? "" : " (" + emergencyContact + ")");
+        }
+        if (!emergencyContact.isEmpty()) patient.put("emergencyContact", emergencyContact);
+
+        String condition = getMedicalConditions();
+        if (!getBloodType().isEmpty()) {
+            condition = (condition.isEmpty() ? "" : condition + "\n")
+                    + "Blood Type: " + getBloodType();
+        }
+        if (!condition.isEmpty()) patient.put("condition", condition);
+        return patient;
     }
 
     public Map<String, Object> toMap() {
