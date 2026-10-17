@@ -39,6 +39,9 @@ public class VoiceAssistantDialog extends Dialog {
     private SpeechRecognizer     recognizer;
     private final ActionListener actionListener;
     private final Handler        handler;
+    private final boolean        handsFreeMode;
+    private final Runnable       finalizeSpeechRunnable =
+            this::finalizeSpeechAfterSilence;
 
     // Views
     private TextView tvResponse;
@@ -53,13 +56,22 @@ public class VoiceAssistantDialog extends Dialog {
     // State
     private boolean    isListening  = false;
     private boolean    isProcessing = false;
+    private boolean    manuallyStopped = false;
+    private boolean    speechFinalizationRequested = false;
     private AnimatorSet pulseAnimation;
 
     // ── Constructor ───────────────────────────────────────────────
     public VoiceAssistantDialog(Context ctx,
                                 ActionListener listener) {
+        this(ctx, listener, false);
+    }
+
+    public VoiceAssistantDialog(Context ctx,
+                                ActionListener listener,
+                                boolean handsFreeMode) {
         super(ctx);
         this.actionListener = listener;
+        this.handsFreeMode = handsFreeMode;
         this.handler =
                 new Handler(Looper.getMainLooper());
     }
@@ -111,8 +123,10 @@ public class VoiceAssistantDialog extends Dialog {
         // Mic button tap
         btnMic.setOnClickListener(v -> {
             if (isListening) {
+                manuallyStopped = true;
                 stopListening();
             } else if (!isProcessing) {
+                manuallyStopped = false;
                 startListening();
             }
         });
@@ -141,26 +155,11 @@ public class VoiceAssistantDialog extends Dialog {
                         sendToAssistant(
                                 "Call the fire station"));
 
-        // Greet user on open
-        handler.postDelayed(() ->
-                        assistant.speak(
-                                "Hello! I am your BFP AI assistant. "
-                                        + "Tap the microphone and tell me "
-                                        + "how I can help you.",
-                                new ClaudeVoiceAssistant
-                                        .AssistantCallback() {
-                                    @Override
-                                    public void onResponse(
-                                            String t, String a,
-                                            String d) {}
-                                    @Override
-                                    public void onError(String e) {}
-                                    @Override
-                                    public void onSpeakingStarted() {}
-                                    @Override
-                                    public void onSpeakingFinished() {}
-                                }),
-                400);
+        setStatus(handsFreeMode
+                        ? "Listening hands-free... say a command."
+                        : "Listening... tell me how I can help.",
+                0xFFFC4D4D);
+        handler.postDelayed(this::startListening, 400);
     }
 
     // ════════════════════════════════════════════════════════════
@@ -192,10 +191,15 @@ public class VoiceAssistantDialog extends Dialog {
                     public void onBeginningOfSpeech() {
                         setStatus("I hear you...",
                                 0xFFFC4D4D);
+                        scheduleSpeechFinalization(1800);
                     }
 
                     @Override
-                    public void onRmsChanged(float v) {}
+                    public void onRmsChanged(float rmsdB) {
+                        if (isListening && rmsdB > 2f) {
+                            scheduleSpeechFinalization(1800);
+                        }
+                    }
 
                     @Override
                     public void onBufferReceived(
@@ -203,47 +207,63 @@ public class VoiceAssistantDialog extends Dialog {
 
                     @Override
                     public void onEndOfSpeech() {
-                        stopListeningUI();
-                        setStatus("Processing...",
+                        setStatus("Finishing your command...",
                                 0xFF6B7280);
+                        scheduleSpeechFinalization(700);
                     }
 
                     @Override
                     public void onError(int error) {
+                        if (!isShowing()) return;
+                        handler.removeCallbacks(finalizeSpeechRunnable);
+                        speechFinalizationRequested = false;
                         stopListeningUI();
                         isListening  = false;
                         isProcessing = false;
 
-                        if (error ==
-                                SpeechRecognizer
-                                        .ERROR_NO_MATCH
+                        boolean canRetry = error ==
+                                SpeechRecognizer.ERROR_NO_MATCH
                                 || error ==
-                                SpeechRecognizer
-                                        .ERROR_SPEECH_TIMEOUT) {
+                                SpeechRecognizer.ERROR_SPEECH_TIMEOUT;
+                        if (canRetry) {
                             setStatus(
-                                    "Tap mic to try again.",
+                                    handsFreeMode
+                                            ? "Listening will resume shortly."
+                                            : "Tap mic to try again.",
                                     0xFF6B7280);
                         } else if (error ==
                                 SpeechRecognizer
                                         .ERROR_AUDIO) {
                             setStatus(
-                                    "Audio error. Try again.",
+                                    handsFreeMode
+                                            ? "Audio error. Check microphone access."
+                                            : "Audio error. Try again.",
                                     0xFFFC4D4D);
                         } else {
                             setStatus(
-                                    "Tap mic to speak.",
+                                    handsFreeMode
+                                            ? "Voice recognition stopped. Tap mic to retry."
+                                            : "Tap mic to speak.",
                                     0xFF6B7280);
+                        }
+
+                        if (handsFreeMode && canRetry && !manuallyStopped) {
+                            scheduleListeningRestart(700);
                         }
                     }
 
                     @Override
                     public void onResults(Bundle results) {
+                        if (!isShowing()) return;
+                        handler.removeCallbacks(finalizeSpeechRunnable);
+                        speechFinalizationRequested = false;
                         ArrayList<String> matches =
                                 results.getStringArrayList(
                                         SpeechRecognizer
                                                 .RESULTS_RECOGNITION);
                         if (matches != null
                                 && !matches.isEmpty()) {
+                            manuallyStopped = false;
                             String text = matches.get(0);
                             showUserTranscript(text);
                             sendToAssistant(text);
@@ -253,12 +273,16 @@ public class VoiceAssistantDialog extends Dialog {
                                     "Could not hear you. "
                                             + "Try again.",
                                     0xFF6B7280);
+                            if (handsFreeMode && !manuallyStopped) {
+                                scheduleListeningRestart(700);
+                            }
                         }
                     }
 
                     @Override
                     public void onPartialResults(
                             Bundle partialResults) {
+                        if (!isShowing()) return;
                         ArrayList<String> partial =
                                 partialResults
                                         .getStringArrayList(
@@ -268,6 +292,7 @@ public class VoiceAssistantDialog extends Dialog {
                                 && !partial.isEmpty()) {
                             showUserTranscript(
                                     partial.get(0) + "...");
+                            scheduleSpeechFinalization(1800);
                         }
                     }
 
@@ -275,6 +300,38 @@ public class VoiceAssistantDialog extends Dialog {
                     public void onEvent(int eventType,
                                         Bundle params) {}
                 });
+    }
+
+    private void scheduleListeningRestart(long delayMillis) {
+        handler.postDelayed(() -> {
+            if (handsFreeMode && !manuallyStopped && !isProcessing
+                    && isShowing()) {
+                startListening();
+            }
+        }, delayMillis);
+    }
+
+    private void scheduleSpeechFinalization(long delayMillis) {
+        handler.removeCallbacks(finalizeSpeechRunnable);
+        handler.postDelayed(finalizeSpeechRunnable, delayMillis);
+    }
+
+    private void finalizeSpeechAfterSilence() {
+        if (!isListening || isProcessing || speechFinalizationRequested
+                || recognizer == null || !isShowing()) {
+            return;
+        }
+
+        speechFinalizationRequested = true;
+        setStatus("Sending your command...",
+                0xFF6B7280);
+        try {
+            recognizer.stopListening();
+        } catch (IllegalStateException e) {
+            speechFinalizationRequested = false;
+            setStatus("Could not finish listening. Tap mic to try again.",
+                    0xFFFC4D4D);
+        }
     }
 
     private void startListening() {
@@ -289,6 +346,9 @@ public class VoiceAssistantDialog extends Dialog {
         }
 
         isListening = true;
+        manuallyStopped = false;
+        speechFinalizationRequested = false;
+        handler.removeCallbacks(finalizeSpeechRunnable);
         assistant.stopSpeaking();
 
         // Show rings
@@ -297,7 +357,9 @@ public class VoiceAssistantDialog extends Dialog {
         startPulseAnimation();
 
         tvMicIcon.setText("⏹");
-        setStatus("Listening... tap to stop",
+        setStatus(handsFreeMode
+                        ? "Listening hands-free... tap mic to pause."
+                        : "Listening... tap to stop.",
                 0xFFFC4D4D);
         tvUserTranscript.setVisibility(View.GONE);
 
@@ -315,6 +377,14 @@ public class VoiceAssistantDialog extends Dialog {
                 true);
         intent.putExtra(
                 RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        intent.putExtra(
+                RecognizerIntent
+                        .EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
+                1500L);
+        intent.putExtra(
+                RecognizerIntent
+                        .EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
+                1000L);
 
         try {
             recognizer.startListening(intent);
@@ -327,6 +397,7 @@ public class VoiceAssistantDialog extends Dialog {
     }
 
     private void stopListening() {
+        handler.removeCallbacks(finalizeSpeechRunnable);
         if (recognizer != null) {
             recognizer.stopListening();
         }
@@ -365,6 +436,7 @@ public class VoiceAssistantDialog extends Dialog {
                             String action,
                             String data) {
                         handler.post(() -> {
+                            if (!isShowing()) return;
                             showThinking(false);
                             isProcessing = false;
                             btnMic.setEnabled(true);
@@ -372,7 +444,9 @@ public class VoiceAssistantDialog extends Dialog {
                             // Show response text
                             tvResponse.setText(text);
                             setStatus(
-                                    "Tap mic to speak",
+                                    handsFreeMode
+                                            ? "I am listening for your next command."
+                                            : "Tap mic to speak",
                                     0xFF6B7280);
 
                             // Speak response then
@@ -391,11 +465,15 @@ public class VoiceAssistantDialog extends Dialog {
                                         public void onSpeakingStarted() {}
                                         @Override
                                         public void onSpeakingFinished() {
-                                            handler.postDelayed(
-                                                    () -> executeAction(
-                                                            action,
-                                                            data),
-                                                    300);
+                                            handler.post(() -> {
+                                                executeAction(action, data);
+                                                if (handsFreeMode
+                                                        && (action == null
+                                                        || ClaudeVoiceAssistant
+                                                        .ACTION_NONE.equals(action))) {
+                                                    scheduleListeningRestart(500);
+                                                }
+                                            });
                                         }
                                     });
                         });
@@ -404,14 +482,32 @@ public class VoiceAssistantDialog extends Dialog {
                     @Override
                     public void onError(String error) {
                         handler.post(() -> {
+                            if (!isShowing()) return;
                             showThinking(false);
                             isProcessing = false;
                             btnMic.setEnabled(true);
                             tvResponse.setText(error);
                             setStatus(
-                                    "Tap mic to try again.",
+                                    handsFreeMode
+                                            ? "I am listening. Please try again."
+                                            : "Tap mic to try again.",
                                     0xFF6B7280);
-                            assistant.speak(error, null);
+                            assistant.speak(error,
+                                    new ClaudeVoiceAssistant.AssistantCallback() {
+                                        @Override
+                                        public void onResponse(
+                                                String t, String a, String d) {}
+                                        @Override
+                                        public void onError(String e) {}
+                                        @Override
+                                        public void onSpeakingStarted() {}
+                                        @Override
+                                        public void onSpeakingFinished() {
+                                            if (handsFreeMode) {
+                                                scheduleListeningRestart(500);
+                                            }
+                                        }
+                                    });
                         });
                     }
 
@@ -597,6 +693,7 @@ public class VoiceAssistantDialog extends Dialog {
     // ════════════════════════════════════════════════════════════
     private void showUserTranscript(String text) {
         handler.post(() -> {
+            if (!isShowing()) return;
             tvUserTranscript.setText(
                     "You: \"" + text + "\"");
             tvUserTranscript.setVisibility(
@@ -605,13 +702,17 @@ public class VoiceAssistantDialog extends Dialog {
     }
 
     private void showThinking(boolean show) {
-        handler.post(() ->
+        handler.post(() -> {
+            if (isShowing()) {
                 thinkingIndicator.setVisibility(
-                        show ? View.VISIBLE : View.GONE));
+                        show ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
     private void setStatus(String status, int color) {
         handler.post(() -> {
+            if (!isShowing()) return;
             tvMicStatus.setText(status);
             tvMicStatus.setTextColor(color);
         });
@@ -622,6 +723,7 @@ public class VoiceAssistantDialog extends Dialog {
     // ════════════════════════════════════════════════════════════
     @Override
     public void dismiss() {
+        handler.removeCallbacks(finalizeSpeechRunnable);
         stopPulseAnimation();
         if (assistant != null) {
             assistant.stopSpeaking();

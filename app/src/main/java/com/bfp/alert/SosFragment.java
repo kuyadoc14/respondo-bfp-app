@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FieldValue;
@@ -37,6 +38,9 @@ public class SosFragment extends Fragment {
     private static final String PREFS     = "bfp_prefs";
     private static final String KEY_ALERT = "activeAlertId";
     private static final String KEY_USER  = "userId";
+    private static final String KEY_HANDS_FREE = "handsFreeVoiceEnabled";
+    private static final int REQUEST_MIC_MANUAL = 200;
+    private static final int REQUEST_MIC_HANDS_FREE = 201;
 
     // Static so they survive tab switches (fragment .replace() destroys views)
     private static ListenerRegistration sListener = null;
@@ -51,6 +55,9 @@ public class SosFragment extends Fragment {
     private TextView     tvStatus;
     private LinearLayout statusCard;
     private View         btnOpenReport;
+    private SwitchMaterial switchHandsFree;
+    private VoiceAssistantDialog voiceAssistantDialog;
+    private boolean suppressHandsFreeListener;
 
     // BLE
     private BLEManager bleManager;
@@ -101,6 +108,22 @@ public class SosFragment extends Fragment {
                     v -> showVoiceAssistant());
         }
 
+        switchHandsFree = view.findViewById(R.id.switchHandsFree);
+        switchHandsFree.setChecked(isHandsFreeEnabled());
+        switchHandsFree.setOnCheckedChangeListener((button, checked) -> {
+            if (suppressHandsFreeListener) return;
+
+            if (checked) {
+                enableHandsFreeMode();
+            } else {
+                setHandsFreeEnabled(false);
+                if (voiceAssistantDialog != null
+                        && voiceAssistantDialog.isShowing()) {
+                    voiceAssistantDialog.dismiss();
+                }
+            }
+        });
+
         btnOpenReport = view.findViewById(R.id.btnOpenReport);
         if (btnOpenReport != null) {
             btnOpenReport.setOnClickListener(v -> {
@@ -138,6 +161,20 @@ public class SosFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncWithFirestore();
+        if (isHandsFreeEnabled()) {
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                showVoiceAssistant(true);
+            } else {
+                setHandsFreeEnabled(false);
+                setHandsFreeSwitchChecked(false);
+                Toast.makeText(requireContext(),
+                        "Microphone permission is required for Hands-free mode.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────
@@ -387,18 +424,24 @@ public class SosFragment extends Fragment {
                 requireContext(),
                 Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    new String[]{
-                            Manifest.permission.RECORD_AUDIO},
-                    200);
+            requestPermissions(
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    REQUEST_MIC_MANUAL);
             return;
         }
 
-        VoiceAssistantDialog dialog =
-                new VoiceAssistantDialog(
-                        requireContext(),
-                        new VoiceAssistantDialog.ActionListener() {
+        showVoiceAssistant(isHandsFreeEnabled());
+    }
+
+    private void showVoiceAssistant(boolean handsFreeMode) {
+        if (voiceAssistantDialog != null
+                && voiceAssistantDialog.isShowing()) {
+            return;
+        }
+
+        voiceAssistantDialog = new VoiceAssistantDialog(
+                requireContext(),
+                new VoiceAssistantDialog.ActionListener() {
                             @Override
                             public void onSendSOS() {
                                 sendSOSAlert();
@@ -422,8 +465,85 @@ public class SosFragment extends Fragment {
                                             .switchToFirstAid(query);
                                 }
                             }
-                        });
-        dialog.show();
+                        },
+                handsFreeMode);
+        VoiceAssistantDialog shownDialog = voiceAssistantDialog;
+        shownDialog.setOnDismissListener(dialog -> {
+            if (voiceAssistantDialog == shownDialog) {
+                voiceAssistantDialog = null;
+            }
+        });
+        shownDialog.show();
+    }
+
+    private void enableHandsFreeMode() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    REQUEST_MIC_HANDS_FREE);
+            return;
+        }
+
+        setHandsFreeEnabled(true);
+        showVoiceAssistant(true);
+    }
+
+    private boolean isHandsFreeEnabled() {
+        return requireContext()
+                .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_HANDS_FREE, false);
+    }
+
+    private void setHandsFreeEnabled(boolean enabled) {
+        requireContext()
+                .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_HANDS_FREE, enabled)
+                .apply();
+    }
+
+    private void setHandsFreeSwitchChecked(boolean checked) {
+        if (switchHandsFree == null) return;
+        suppressHandsFreeListener = true;
+        switchHandsFree.setChecked(checked);
+        suppressHandsFreeListener = false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(
+                requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_MIC_MANUAL
+                && requestCode != REQUEST_MIC_HANDS_FREE) {
+            return;
+        }
+
+        boolean granted = grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (requestCode == REQUEST_MIC_HANDS_FREE) {
+            if (granted) {
+                setHandsFreeEnabled(true);
+                setHandsFreeSwitchChecked(true);
+                showVoiceAssistant(true);
+            } else {
+                setHandsFreeSwitchChecked(false);
+                Toast.makeText(requireContext(),
+                        "Microphone permission is required for Hands-free mode.",
+                        Toast.LENGTH_LONG).show();
+            }
+        } else if (granted) {
+            showVoiceAssistant(isHandsFreeEnabled());
+        } else {
+            Toast.makeText(requireContext(),
+                    "Microphone permission is required to use voice commands.",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     // ─────────────────────────────────────────────────────────
@@ -624,6 +744,10 @@ public class SosFragment extends Fragment {
     // ─────────────────────────────────────────────────────────
     @Override
     public void onDestroyView() {
+        if (voiceAssistantDialog != null) {
+            voiceAssistantDialog.dismiss();
+            voiceAssistantDialog = null;
+        }
         super.onDestroyView();
         stopPulsingAnimation();
         // Do NOT remove sListener here —
