@@ -8,6 +8,7 @@
     android:orientation="vertical"
     android:padding="28dp"
     android:background="@drawable/bg_card_elevated"
+    android:clickable="true"
     android:elevation="12dp"
     android:layout_margin="8dp">
 
