@@ -3,6 +3,7 @@ package com.bfp.alert;
 import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -590,85 +591,48 @@ public class VoiceAssistantDialog extends Dialog {
     // ════════════════════════════════════════════════════════════
     private void startPulseAnimation() {
         isListening = true;
+        if (ringOuter != null) {
+            ringOuter.setVisibility(View.VISIBLE);
+        }
+        if (ringInner != null) {
+            ringInner.setVisibility(View.VISIBLE);
+        }
         runPulse();
     }
 
     private void runPulse() {
         if (!isListening) return;
 
-        ObjectAnimator sx1 = ObjectAnimator.ofFloat(
-                ringOuter, "scaleX", 1f, 1.3f);
-        ObjectAnimator sy1 = ObjectAnimator.ofFloat(
-                ringOuter, "scaleY", 1f, 1.3f);
-        ObjectAnimator a1  = ObjectAnimator.ofFloat(
-                ringOuter, "alpha", 0.2f, 0.5f);
-        ObjectAnimator sx2 = ObjectAnimator.ofFloat(
-                ringInner, "scaleX", 1f, 1.15f);
-        ObjectAnimator sy2 = ObjectAnimator.ofFloat(
-                ringInner, "scaleY", 1f, 1.15f);
+        if (pulseAnimation != null) {
+            pulseAnimation.cancel();
+            pulseAnimation = null;
+        }
 
-        AnimatorSet forward = new AnimatorSet();
-        forward.playTogether(sx1, sy1, a1, sx2, sy2);
-        forward.setDuration(600);
-        forward.setInterpolator(
-                new AccelerateDecelerateInterpolator());
+        // Outer ring expansion & fade
+        ObjectAnimator sx1 = ObjectAnimator.ofFloat(ringOuter, "scaleX", 1.0f, 1.45f);
+        ObjectAnimator sy1 = ObjectAnimator.ofFloat(ringOuter, "scaleY", 1.0f, 1.45f);
+        ObjectAnimator a1  = ObjectAnimator.ofFloat(ringOuter, "alpha", 0.45f, 0.05f);
 
-        forward.addListener(
-                new android.animation
-                        .AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(
-                            android.animation
-                                    .Animator anim) {
-                        if (!isListening) return;
+        // Inner ring expansion & fade
+        ObjectAnimator sx2 = ObjectAnimator.ofFloat(ringInner, "scaleX", 1.0f, 1.25f);
+        ObjectAnimator sy2 = ObjectAnimator.ofFloat(ringInner, "scaleY", 1.0f, 1.25f);
+        ObjectAnimator a2  = ObjectAnimator.ofFloat(ringInner, "alpha", 0.60f, 0.15f);
 
-                        // Reverse
-                        ObjectAnimator rx1 =
-                                ObjectAnimator.ofFloat(
-                                        ringOuter, "scaleX",
-                                        1.3f, 1f);
-                        ObjectAnimator ry1 =
-                                ObjectAnimator.ofFloat(
-                                        ringOuter, "scaleY",
-                                        1.3f, 1f);
-                        ObjectAnimator ra1 =
-                                ObjectAnimator.ofFloat(
-                                        ringOuter, "alpha",
-                                        0.5f, 0.2f);
-                        ObjectAnimator rx2 =
-                                ObjectAnimator.ofFloat(
-                                        ringInner, "scaleX",
-                                        1.15f, 1f);
-                        ObjectAnimator ry2 =
-                                ObjectAnimator.ofFloat(
-                                        ringInner, "scaleY",
-                                        1.15f, 1f);
+        // Subtle organic breathing on mic button
+        ObjectAnimator sxMic = ObjectAnimator.ofFloat(btnMic, "scaleX", 1.0f, 1.06f);
+        ObjectAnimator syMic = ObjectAnimator.ofFloat(btnMic, "scaleY", 1.0f, 1.06f);
 
-                        AnimatorSet reverse =
-                                new AnimatorSet();
-                        reverse.playTogether(
-                                rx1, ry1, ra1, rx2, ry2);
-                        reverse.setDuration(600);
-                        reverse.setInterpolator(
-                                new AccelerateDecelerateInterpolator());
-                        reverse.addListener(
-                                new android.animation
-                                        .AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(
-                                            android.animation
-                                                    .Animator a2) {
-                                        runPulse();
-                                    }
-                                });
+        ObjectAnimator[] anims = new ObjectAnimator[]{sx1, sy1, a1, sx2, sy2, a2, sxMic, syMic};
+        for (ObjectAnimator anim : anims) {
+            anim.setDuration(900);
+            anim.setRepeatCount(ValueAnimator.INFINITE);
+            anim.setRepeatMode(ValueAnimator.REVERSE);
+            anim.setInterpolator(new AccelerateDecelerateInterpolator());
+        }
 
-                        pulseAnimation = reverse;
-                        reverse.start();
-                    }
-                });
-
-        pulseAnimation = forward;
-        forward.start();
+        pulseAnimation = new AnimatorSet();
+        pulseAnimation.playTogether(sx1, sy1, a1, sx2, sy2, a2, sxMic, syMic);
+        pulseAnimation.start();
     }
 
     private void stopPulseAnimation() {
@@ -680,11 +644,18 @@ public class VoiceAssistantDialog extends Dialog {
         if (ringOuter != null) {
             ringOuter.setScaleX(1f);
             ringOuter.setScaleY(1f);
-            ringOuter.setAlpha(0.2f);
+            ringOuter.setAlpha(0.3f);
+            ringOuter.setVisibility(View.GONE);
         }
         if (ringInner != null) {
             ringInner.setScaleX(1f);
             ringInner.setScaleY(1f);
+            ringInner.setAlpha(0.45f);
+            ringInner.setVisibility(View.GONE);
+        }
+        if (btnMic != null) {
+            btnMic.setScaleX(1f);
+            btnMic.setScaleY(1f);
         }
     }
 

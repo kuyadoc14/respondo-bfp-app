@@ -9,7 +9,9 @@
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
     android:paddingTop="16dp"
-    android:paddingBottom="32dp">
+    android:paddingBottom="32dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <!-- Handle bar -->
     <View
@@ -171,18 +173,21 @@
 
     <!-- Mic button with pulse rings -->
     <FrameLayout
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
         android:layout_gravity="center"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="20dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <!-- Outer pulse ring -->
         <View
             android:id="@+id/ringOuter"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:layout_gravity="center"
             android:background="@drawable/bg_mic_ring"
-            android:alpha="0.2"
+            android:alpha="0.3"
             android:visibility="gone"/>
 
         <!-- Inner pulse ring -->
@@ -190,9 +195,9 @@
             android:id="@+id/ringInner"
             android:layout_width="82dp"
             android:layout_height="82dp"
-            android:background="@drawable/bg_mic_ring"
-            android:alpha="0.35"
             android:layout_gravity="center"
+            android:background="@drawable/bg_mic_ring"
+            android:alpha="0.45"
             android:visibility="gone"/>
 
         <!-- Main mic button -->
