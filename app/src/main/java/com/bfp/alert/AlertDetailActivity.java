@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -70,15 +71,22 @@ public class AlertDetailActivity extends AppCompatActivity {
 
         // ── Status ────────────────────────────────
         String status = doc.getString("status");
-        boolean isActive = "active".equals(status);
+        boolean isResolved = "resolved".equalsIgnoreCase(status);
+        boolean isDeployed = "deployed".equalsIgnoreCase(status);
+        boolean isActive = "active".equalsIgnoreCase(status) || (!isResolved && !isDeployed);
 
-        TextView tvStatus =
-            findViewById(R.id.tvDetailStatus);
+        TextView tvStatus = findViewById(R.id.tvDetailStatus);
         if (tvStatus != null) {
-            tvStatus.setText(
-                isActive ? "ACTIVE" : "RESOLVED");
-            tvStatus.setTextColor(
-                isActive ? 0xFFFF3B30 : 0xFF34C759);
+            if (isDeployed) {
+                tvStatus.setText("RESPONDERS DEPLOYED (EN ROUTE)");
+                tvStatus.setTextColor(0xFFEA580C);
+            } else if (isActive) {
+                tvStatus.setText("ACTIVE (PENDING)");
+                tvStatus.setTextColor(0xFFFF3B30);
+            } else {
+                tvStatus.setText("RESOLVED");
+                tvStatus.setTextColor(0xFF34C759);
+            }
         }
 
         // ── Time ──────────────────────────────────
@@ -447,6 +455,23 @@ public class AlertDetailActivity extends AppCompatActivity {
                 "Failed: " + e.getMessage(),
                 Toast.LENGTH_SHORT).show());
 }
+
+    private void deployAlert() {
+        db.collection("sos_alerts")
+            .document(alertId)
+            .update("status", "deployed",
+                    "deployedAt", FieldValue.serverTimestamp())
+            .addOnSuccessListener(u -> {
+                Toast.makeText(this,
+                    "🚒 Responders Deployed! User has been notified.",
+                    Toast.LENGTH_SHORT).show();
+                loadAlertData();
+            })
+            .addOnFailureListener(e ->
+                Toast.makeText(this,
+                    "Deploy failed: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show());
+    }
 
     private void resolveAlert() {
         db.collection("sos_alerts")

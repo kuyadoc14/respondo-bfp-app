@@ -377,6 +377,27 @@
                 android:layout_marginBottom="20dp"/>
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeploy"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Deploy Responders"
+                android:textAllCaps="false"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:backgroundTint="#EA580C"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                android:elevation="0dp"
+                android:stateListAnimator="@null"
+                android:layout_marginBottom="10dp"
+                app:icon="@drawable/ic_navigate"
+                app:iconGravity="textStart"
+                app:iconSize="18dp"
+                app:iconPadding="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnResolve"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"

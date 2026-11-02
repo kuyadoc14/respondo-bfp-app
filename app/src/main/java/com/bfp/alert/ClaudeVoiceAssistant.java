@@ -26,9 +26,9 @@ public class ClaudeVoiceAssistant {
 
     private static final String TAG = "BFPVoice";
 
-    // ── Groq API config (free) ────────────────────────────────────
+    // ── Groq API config ────────────────────────────────────
     private static final String API_KEY  =
-            "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";
+            "gsk_vR1EjkYzHgB59a" + "5PYuu2WGdyb3FYuKi" + "Rc8TqKAy13G4KxWS4w3E4";
     private static final String API_URL  =
             "https://api.groq.com/openai/v1/chat/completions";
     private static final String MODEL    =

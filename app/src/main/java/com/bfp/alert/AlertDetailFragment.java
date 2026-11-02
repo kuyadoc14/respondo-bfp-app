@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -108,12 +109,22 @@ public class AlertDetailFragment extends Fragment {
     @SuppressWarnings("unchecked")
     private void bindData(DocumentSnapshot doc) {
         String status = doc.getString("status");
-        boolean isActive = "active".equals(status);
+        boolean isResolved = "resolved".equalsIgnoreCase(status);
+        boolean isDeployed = "deployed".equalsIgnoreCase(status);
+        boolean isActive = "active".equalsIgnoreCase(status) || (!isResolved && !isDeployed);
 
         TextView tvStatus = requireView().findViewById(R.id.tvDetailStatus);
         if (tvStatus != null) {
-            tvStatus.setText(isActive ? "ACTIVE" : "RESOLVED");
-            tvStatus.setTextColor(isActive ? 0xFFFF3B30 : 0xFF34C759);
+            if (isDeployed) {
+                tvStatus.setText("RESPONDERS DEPLOYED (EN ROUTE)");
+                tvStatus.setTextColor(0xFFEA580C);
+            } else if (isActive) {
+                tvStatus.setText("ACTIVE (PENDING)");
+                tvStatus.setTextColor(0xFFFF3B30);
+            } else {
+                tvStatus.setText("RESOLVED");
+                tvStatus.setTextColor(0xFF34C759);
+            }
         }
 
         TextView tvTime = requireView().findViewById(R.id.tvDetailTime);
@@ -154,9 +165,19 @@ public class AlertDetailFragment extends Fragment {
             btnStation.setOnClickListener(v -> loadStationAndNavigate(finalLat, finalLng));
         }
 
+        View btnDeploy = requireView().findViewById(R.id.btnDeploy);
+        if (btnDeploy != null) {
+            if (isActive) {
+                btnDeploy.setVisibility(View.VISIBLE);
+                btnDeploy.setOnClickListener(v -> deployAlert());
+            } else {
+                btnDeploy.setVisibility(View.GONE);
+            }
+        }
+
         View btnResolve = requireView().findViewById(R.id.btnResolve);
         if (btnResolve != null) {
-            if (isActive) {
+            if (isActive || isDeployed) {
                 btnResolve.setVisibility(View.VISIBLE);
                 btnResolve.setOnClickListener(v -> resolveAlert());
             } else {
@@ -356,6 +377,19 @@ public class AlertDetailFragment extends Fragment {
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void deployAlert() {
+        db.collection("sos_alerts")
+                .document(alertId)
+                .update("status", "deployed",
+                        "deployedAt", FieldValue.serverTimestamp())
+                .addOnSuccessListener(u -> {
+                    Toast.makeText(requireContext(), "🚒 Responders Deployed! User has been notified.", Toast.LENGTH_SHORT).show();
+                    loadAlertData();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(), "Deploy failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private void resolveAlert() {

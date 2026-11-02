@@ -1,6 +1,13 @@
 package com.bfp.alert;
 
 import android.Manifest;
+import android.graphics.Typeface;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.StyleSpan;
+import android.util.TypedValue;
+
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -57,6 +64,7 @@ public class SosFragment extends Fragment {
     private View         ringOuter;
     private View         ringMid;
     private TextView     tvStatus;
+    private TextView     tvLiveLabel;
     private LinearLayout statusCard;
     private View         btnOpenReport;
     private SwitchMaterial switchHandsFree;
@@ -110,6 +118,7 @@ public class SosFragment extends Fragment {
         ringOuter  = view.findViewById(R.id.ringOuter);
         ringMid    = view.findViewById(R.id.ringMid);
         tvStatus   = view.findViewById(R.id.tvStatus);
+        tvLiveLabel = view.findViewById(R.id.tvLiveLabel);
         statusCard = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
 
@@ -260,9 +269,13 @@ public class SosFragment extends Fragment {
 
                     String status = doc.getString("status");
 
-                    if ("active".equals(status)) {
+                    if ("active".equals(status) || "deployed".equals(status)) {
                         sAlertId = alertId;
-                        setSOSSentState();
+                        if ("deployed".equals(status)) {
+                            setDeployedState();
+                        } else {
+                            setSOSSentState();
+                        }
                         attachLiveListener(alertId);
 
                         Boolean reportSubmitted = doc.getBoolean("reportSubmitted");
@@ -304,11 +317,16 @@ public class SosFragment extends Fragment {
                     String status = snap.getString("status");
                     Log.d(TAG, "Live update: " + status);
 
-                    if ("resolved".equals(status)) {
-                        // Immediately update UI without
-                        // waiting for tab switch
+                    if ("deployed".equals(status)) {
+                        setDeployedState();
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "🚒 BFP Responders are on their way!", Toast.LENGTH_SHORT).show();
+                        }
+                    } else if ("resolved".equals(status)) {
                         clearAlertState();
                         setResolvedState();
+                    } else if ("active".equals(status)) {
+                        setSOSSentState();
                     }
                 });
     }
@@ -599,6 +617,7 @@ public class SosFragment extends Fragment {
 
         btnSOS.setEnabled(true);
         btnSOS.setText("SOS");
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFFFF3B30));
@@ -613,12 +632,29 @@ public class SosFragment extends Fragment {
         }
     }
 
+    private CharSequence formatSOSButtonText(String title, String subtitle) {
+        if (subtitle == null || subtitle.isEmpty()) {
+            return title;
+        }
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
+        ssb.append(title);
+        ssb.setSpan(new AbsoluteSizeSpan(26, true), 0, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new StyleSpan(Typeface.BOLD), 0, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        ssb.append("\n");
+        int subStart = ssb.length();
+        ssb.append(subtitle);
+        ssb.setSpan(new AbsoluteSizeSpan(13, true), subStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new StyleSpan(Typeface.BOLD), subStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return ssb;
+    }
+
     private void setSOSSentState() {
         if (getView() == null) return;
 
         stopPulsingAnimation();
         btnSOS.setEnabled(false);
-        btnSOS.setText("SOS\nSENT");
+        btnSOS.setText(formatSOSButtonText("SOS", "SENT"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFF883333));
@@ -626,8 +662,12 @@ public class SosFragment extends Fragment {
         if (statusCard != null) {
             statusCard.setVisibility(View.VISIBLE);
         }
+        if (tvLiveLabel != null) {
+            tvLiveLabel.setText("ALERT ACTIVE");
+            tvLiveLabel.setTextColor(0xFFFF6B00);
+        }
         if (tvStatus != null) {
-            tvStatus.setText("Alert sent. Responders have been notified.");
+            tvStatus.setText("Alert sent. Responders have been notified and dispatch is pending.");
         }
 
         String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
@@ -670,6 +710,47 @@ public class SosFragment extends Fragment {
         }
     }
 
+    private void setDeployedState() {
+        if (getView() == null) return;
+
+        stopPulsingAnimation();
+        btnSOS.setEnabled(false);
+        btnSOS.setText(formatSOSButtonText("SOS", "EN ROUTE"));
+        btnSOS.setBackgroundTintList(
+                android.content.res.ColorStateList
+                        .valueOf(0xFFEA580C));
+
+        if (statusCard != null) {
+            statusCard.setVisibility(View.VISIBLE);
+        }
+        if (tvLiveLabel != null) {
+            tvLiveLabel.setText("RESPONDERS DEPLOYED");
+            tvLiveLabel.setTextColor(0xFFFF6B00);
+        }
+        if (tvStatus != null) {
+            tvStatus.setText("🚒 Help is on the way!\nBFP units are deployed and heading to your location.");
+        }
+
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if (btnOpenReport != null) {
+            if (alertId != null && isReportSubmitted(alertId)) {
+                btnOpenReport.setVisibility(View.GONE);
+            } else {
+                btnOpenReport.setVisibility(View.VISIBLE);
+            }
+        }
+
+        View pulseDot = getView().findViewById(R.id.pulseDot);
+        if (pulseDot != null) {
+            pulseDot.clearAnimation();
+            pulseDot.setBackgroundResource(R.drawable.circle_dot_orange);
+            android.view.animation.Animation dotAnim =
+                    android.view.animation.AnimationUtils.loadAnimation(
+                            requireContext(), R.anim.pulse_dot);
+            pulseDot.startAnimation(dotAnim);
+        }
+    }
+
     private void setResolvedState() {
         if (getView() == null) return;
 
@@ -684,9 +765,14 @@ public class SosFragment extends Fragment {
 
         btnSOS.setEnabled(true);
         btnSOS.setText("SOS");
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFFFF3B30));
+        if (tvLiveLabel != null) {
+            tvLiveLabel.setText("RESOLVED");
+            tvLiveLabel.setTextColor(0xFF10B981);
+        }
 
         startPulsingAnimation();
 

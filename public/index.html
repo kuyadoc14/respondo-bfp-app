@@ -890,6 +890,27 @@
       50% { opacity: 0.4; }
     }
 
+    .badge-deployed {
+      background: rgba(2, 132, 199, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(2, 132, 199, 0.35);
+    }
+
+    .badge-deployed::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0284c7;
+      box-shadow: 0 0 6px #38bdf8;
+      animation: pulseBlue 1.6s infinite;
+    }
+
+    @keyframes pulseBlue {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
     .badge-resolved {
       background: var(--green-dim);
       color: #34d399;
@@ -981,6 +1002,35 @@
     }
 
     .btn-view-report:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-deploy {
+      padding: 6px 13px;
+      background: rgba(2, 132, 199, 0.16);
+      color: #38bdf8;
+      border: 1px solid rgba(2, 132, 199, 0.35);
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-deploy:hover {
+      background: rgba(2, 132, 199, 0.28);
+      border-color: rgba(56, 189, 248, 0.55);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3);
+    }
+
+    .btn-deploy:active {
       transform: translateY(0);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
@@ -2339,8 +2389,9 @@
 
         <select id="filterStatus" onchange="applyFilter()">
           <option value="all">All Statuses</option>
-          <option value="active">Active Only</option>
-          <option value="resolved">Resolved Only</option>
+          <option value="active">Active (Pending)</option>
+          <option value="deployed">Deployed (En Route)</option>
+          <option value="resolved">Resolved</option>
         </select>
 
         <input type="date" id="filterDate" onchange="applyFilter()" title="Filter by date" />
@@ -2938,23 +2989,39 @@
               <span>Report</span>
             </button>`;
 
-          const actionBtn = isActive
-            ? `<button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`
-            : `<button class="btn-delete" onclick="askDelete('${escapeHtml(alert.id)}')">Delete</button>`;
+          const isDeployed = alert.status === "deployed";
+          let actionBtn = "";
+          if (isActive) {
+            actionBtn = `
+              <button class="btn-deploy" onclick="deployAlert('${escapeHtml(alert.id)}')" title="Deploy Responders">Deploy</button>
+              <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
+          } else if (isDeployed) {
+            actionBtn = `
+              <span style="font-size:11px;font-weight:600;color:#38bdf8;margin-right:2px;display:inline-flex;align-items:center;gap:3px;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>En Route</span>
+              <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
+          } else {
+            actionBtn = `<button class="btn-delete" onclick="askDelete('${escapeHtml(alert.id)}')">Delete</button>`;
+          }
+
+          let badgeHtml = "";
+          if (isDeployed) {
+            badgeHtml = `<span class="badge badge-deployed">DEPLOYED</span>`;
+          } else if (isActive) {
+            badgeHtml = `<span class="badge badge-active">ACTIVE</span>`;
+          } else {
+            badgeHtml = `<span class="badge badge-resolved">RESOLVED</span>`;
+          }
 
           const row = document.createElement("tr");
           if (isActive) row.className = "tr-active-alert";
+          else if (isDeployed) row.className = "tr-deployed-alert";
           row.innerHTML = `
             <td>${indexHtml}</td>
             <td>${dateTimeHtml}</td>
             <td>${incidentHtml}</td>
             <td>${coordsHtml}</td>
             <td>${userHtml}</td>
-            <td>
-              <span class="badge ${isActive ? "badge-active" : "badge-resolved"}">
-                ${isActive ? "ACTIVE" : "RESOLVED"}
-              </span>
-            </td>
+            <td>${badgeHtml}</td>
             <td>
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
                 ${viewReportBtn}
@@ -2983,9 +3050,18 @@
       document.getElementById("rmTitle").textContent = "Accident & Patient Report";
       document.getElementById("rmSubtitle").textContent = `SOS Alert #${alert.id.substring(0, 8)} • Reported on ${time}`;
 
+      const isDeployed = alert.status === "deployed";
       const statusBadge = document.getElementById("rmStatusBadge");
-      statusBadge.className = "badge " + (isActive ? "badge-active" : "badge-resolved");
-      statusBadge.textContent = isActive ? "ACTIVE" : "RESOLVED";
+      if (isDeployed) {
+        statusBadge.className = "badge badge-deployed";
+        statusBadge.textContent = "RESPONDERS DEPLOYED (EN ROUTE)";
+      } else if (isActive) {
+        statusBadge.className = "badge badge-active";
+        statusBadge.textContent = "ACTIVE (PENDING DISPATCH)";
+      } else {
+        statusBadge.className = "badge badge-resolved";
+        statusBadge.textContent = "RESOLVED";
+      }
 
       const body = document.getElementById("rmBody");
       const type = alert.accidentType;
@@ -3170,6 +3246,23 @@
       const footerActions = document.getElementById("rmFooterActions");
       footerActions.innerHTML = "";
       if (isActive) {
+        const btnDeployModal = document.createElement("button");
+        btnDeployModal.className = "btn-deploy";
+        btnDeployModal.innerHTML = `<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg> <span>Deploy Responders</span>`;
+        btnDeployModal.onclick = () => {
+          deployAlert(alert.id);
+        };
+        footerActions.appendChild(btnDeployModal);
+
+        const btnResolveModal = document.createElement("button");
+        btnResolveModal.className = "btn-resolve";
+        btnResolveModal.textContent = "Mark as Resolved";
+        btnResolveModal.onclick = () => {
+          resolveAlert(alert.id);
+          closeReportModal();
+        };
+        footerActions.appendChild(btnResolveModal);
+      } else if (isDeployed) {
         const btnResolveModal = document.createElement("button");
         btnResolveModal.className = "btn-resolve";
         btnResolveModal.textContent = "Mark as Resolved";
@@ -3203,10 +3296,33 @@
       }
     }
 
-    // ── Alert Resolve / Delete ──
+    // ── Alert Deploy / Resolve / Delete ──
+    function deployAlert(id) {
+      if (!confirm("Deploy BFP Responders to this emergency? Citizen user will receive immediate assurance notification.")) return;
+      db.collection("sos_alerts").doc(id)
+        .update({
+          status: "deployed",
+          deployedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          if (currentModalAlertId === id) {
+            openReportModal(id);
+          }
+        })
+        .catch(err => alert("Deploy error: " + err.message));
+    }
+
     function resolveAlert(id) {
       db.collection("sos_alerts").doc(id)
-        .update({ status: "resolved" })
+        .update({
+          status: "resolved",
+          resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          if (currentModalAlertId === id) {
+            closeReportModal();
+          }
+        })
         .catch(err => console.error("Resolve error:", err.message));
     }
 
@@ -3432,11 +3548,13 @@
       });
     }
 
-    function markerIcon(isActive) {
+    function markerIcon(status) {
+      const isDeployed = status === "deployed";
+      const isActive = status === "active" || (!isDeployed && status !== "resolved");
       return {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 9,
-        fillColor: isActive ? "#e63946" : "#10b981",
+        fillColor: isDeployed ? "#0284c7" : (isActive ? "#e63946" : "#10b981"),
         fillOpacity: 0.95,
         strokeColor: "#ffffff",
         strokeWeight: 2
@@ -3596,9 +3714,23 @@
       });
     }
 
+    function deployAlertFromMap(id) {
+      if (!confirm("Deploy BFP Responders to this incident?")) return;
+      db.collection("sos_alerts").doc(id)
+        .update({
+          status: "deployed",
+          deployedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => infoWindow.close())
+        .catch(err => alert("Deploy failed: " + err.message));
+    }
+
     function resolveAlertFromMap(id) {
       db.collection("sos_alerts").doc(id)
-        .update({ status: "resolved" })
+        .update({
+          status: "resolved",
+          resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
         .then(() => infoWindow.close())
         .catch(err => alert("Failed: " + err.message));
     }

@@ -308,15 +308,22 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #f59e0b;
-      box-shadow: 0 0 8px #f59e0b;
-      animation: blinkDot 0.9s infinite alternate;
+      background: #FF6B00;
+      box-shadow: 0 0 10px rgba(255, 107, 0, 0.7);
+      animation: blinkDot 0.8s infinite alternate;
     }
 
     .dot.green {
       background: #10b981;
       box-shadow: 0 0 8px #10b981;
       animation: none;
+    }
+
+    .dot.orange,
+    .dot.blue {
+      background: #EA580C;
+      box-shadow: 0 0 12px rgba(234, 88, 12, 0.85);
+      animation: blinkDot 0.8s infinite alternate;
     }
 
     @keyframes blinkDot {
@@ -327,13 +334,18 @@
     .live-label {
       font-size: 11px;
       font-weight: 700;
-      color: #f59e0b;
+      color: #FF6B00;
       letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
     .live-label.green {
       color: #10b981;
+    }
+
+    .live-label.orange,
+    .live-label.blue {
+      color: #FF6B00;
     }
 
     #statusText {
@@ -914,18 +926,24 @@
       );
     }
 
-    // ── Check for existing active alert on load ──
+    // ── Check for existing active or deployed alert on load ──
     function checkExistingAlert() {
       const userId = getUserId();
       db.collection("sos_alerts")
         .where("userId", "==", userId)
-        .where("status", "==", "active")
+        .where("status", "in", ["active", "deployed"])
         .limit(1)
         .get()
         .then(snap => {
           if (!snap.empty) {
-            activeAlertId = snap.docs[0].id;
-            setSOSSentState();
+            const doc = snap.docs[0];
+            activeAlertId = doc.id;
+            const status = doc.data().status;
+            if (status === "deployed") {
+              setDeployedState();
+            } else {
+              setSOSSentState();
+            }
             listenForResolution(activeAlertId);
           }
         });
@@ -1061,19 +1079,49 @@
         });
     }
 
-    // ── Listen for admin resolving the alert ──
+    // ── Listen for admin deploying / resolving the alert ──
     function listenForResolution(alertId) {
       if (alertListener) alertListener();
       alertListener = db.collection("sos_alerts")
         .doc(alertId)
         .onSnapshot(snap => {
           if (!snap.exists) return;
-          if (snap.data().status === "resolved") {
+          const status = snap.data().status;
+          if (status === "resolved") {
             setResolvedState();
             activeAlertId = null;
             if (alertListener) { alertListener(); alertListener = null; }
+          } else if (status === "deployed") {
+            setDeployedState();
+          } else if (status === "active") {
+            setSOSSentState();
           }
         });
+    }
+
+    function setDeployedState() {
+      const btn = document.getElementById("btnSOS");
+      const card = document.getElementById("statusCard");
+      const text = document.getElementById("statusText");
+      const dot = document.getElementById("liveDot");
+      const lbl = document.getElementById("liveLabel");
+      const reportLink = document.getElementById("btnOpenReportLink");
+      const ringOuter = document.getElementById("ringOuter");
+      const ringMid = document.getElementById("ringMid");
+
+      btn.disabled = true;
+      btn.innerHTML = "SOS<br/><span style='font-size:15px;font-weight:700;letter-spacing:1px;color:#38bdf8;'>EN ROUTE</span>";
+
+      if (ringOuter) ringOuter.style.animationPlayState = "paused";
+      if (ringMid) ringMid.style.animationPlayState = "paused";
+
+      card.style.display = "block";
+      dot.className = "dot blue";
+      lbl.className = "live-label blue";
+      lbl.textContent = "RESPONDERS DEPLOYED";
+
+      text.textContent = "🚒 Help is on the way!\nBFP units are deployed and heading to your location.";
+      if (reportLink) reportLink.style.display = "inline-flex";
     }
 
     // ── UI States (Transparent / Unboxed) ──
@@ -1098,7 +1146,7 @@
       lbl.className = "live-label";
       lbl.textContent = "ALERT ACTIVE";
 
-      text.textContent = "Alert sent. Responders have been notified.";
+      text.textContent = "Alert sent. Responders have been notified and dispatch is pending.";
       if (reportLink) reportLink.style.display = "inline-flex";
     }
 

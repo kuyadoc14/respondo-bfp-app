@@ -296,14 +296,30 @@ public class AdminDashboardActivity extends AppCompatActivity
 
             String status = alert.get("status") != null ? String.valueOf(alert.get("status")).trim() : "";
             boolean isResolved = "resolved".equalsIgnoreCase(status);
-            boolean isActive = "active".equalsIgnoreCase(status) || !isResolved;
+            boolean isDeployed = "deployed".equalsIgnoreCase(status);
+            boolean isActive = "active".equalsIgnoreCase(status) || (!isResolved && !isDeployed);
             LatLng  position = new LatLng(lat, lng);
 
-            BitmapDescriptor icon = isActive
-                    ? AlertMarkerHelper.getActiveMarkerIcon(this)
-                    : AlertMarkerHelper.getResolvedMarkerIcon(this);
-            float zIndex = isActive ? AlertMarkerHelper.ACTIVE_Z_INDEX : AlertMarkerHelper.RESOLVED_Z_INDEX;
-            float alpha = isActive ? AlertMarkerHelper.ACTIVE_ALPHA : AlertMarkerHelper.RESOLVED_ALPHA;
+            BitmapDescriptor icon;
+            float zIndex;
+            float alpha;
+            String markerTitle;
+            if (isActive) {
+                icon = AlertMarkerHelper.getActiveMarkerIcon(this);
+                zIndex = AlertMarkerHelper.ACTIVE_Z_INDEX;
+                alpha = AlertMarkerHelper.ACTIVE_ALPHA;
+                markerTitle = "🔴 ACTIVE ALERT";
+            } else if (isDeployed) {
+                icon = AlertMarkerHelper.getDeployedMarkerIcon(this);
+                zIndex = AlertMarkerHelper.DEPLOYED_Z_INDEX;
+                alpha = AlertMarkerHelper.DEPLOYED_ALPHA;
+                markerTitle = "🔵 DEPLOYED";
+            } else {
+                icon = AlertMarkerHelper.getResolvedMarkerIcon(this);
+                zIndex = AlertMarkerHelper.RESOLVED_Z_INDEX;
+                alpha = AlertMarkerHelper.RESOLVED_ALPHA;
+                markerTitle = "🟢 Resolved";
+            }
 
             if (markerMap.containsKey(alertId)) {
                 Marker existing = markerMap.get(alertId);
@@ -313,17 +329,13 @@ public class AdminDashboardActivity extends AppCompatActivity
                     existing.setAnchor(AlertMarkerHelper.ANCHOR_U, AlertMarkerHelper.ANCHOR_V);
                     existing.setZIndex(zIndex);
                     existing.setAlpha(alpha);
-                    existing.setTitle(isActive
-                            ? "🔴 ACTIVE ALERT"
-                            : "🟢 Resolved");
+                    existing.setTitle(markerTitle);
                 }
             } else {
                 Marker marker = googleMap.addMarker(
                         new MarkerOptions()
                                 .position(position)
-                                .title(isActive
-                                        ? "🔴 ACTIVE ALERT"
-                                        : "🟢 Resolved")
+                                .title(markerTitle)
                                 .snippet("Tap for options")
                                 .icon(icon)
                                 .anchor(AlertMarkerHelper.ANCHOR_U, AlertMarkerHelper.ANCHOR_V)

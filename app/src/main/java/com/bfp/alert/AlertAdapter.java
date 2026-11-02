@@ -53,20 +53,25 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.VH> {
             @NonNull VH h, int pos) {
         Map<String, Object> data = items.get(pos);
         String alertId = ids.get(pos);
-        boolean isActive = "active".equals(
-            data.get("status"));
+        String status = data.get("status") != null ? data.get("status").toString().trim() : "";
+        boolean isResolved = "resolved".equalsIgnoreCase(status);
+        boolean isDeployed = "deployed".equalsIgnoreCase(status);
+        boolean isActive = "active".equalsIgnoreCase(status) || (!isResolved && !isDeployed);
 
-        // ── Status dot color ──────────────────────
-        h.statusDot.setBackgroundResource(
-            isActive
-                ? R.drawable.circle_dot
-                : R.drawable.circle_dot_green);
-
-        // ── Status label ──────────────────────────
-        h.tvStatus.setText(
-            isActive ? "ACTIVE" : "RESOLVED");
-        h.tvStatus.setTextColor(
-            isActive ? 0xFFFF3B30 : 0xFF34C759);
+        // ── Status dot color and label ──────────────────────
+        if (isActive) {
+            h.statusDot.setBackgroundResource(R.drawable.circle_dot);
+            h.tvStatus.setText("ACTIVE");
+            h.tvStatus.setTextColor(0xFFFF3B30);
+        } else if (isDeployed) {
+            h.statusDot.setBackgroundResource(R.drawable.circle_dot_orange);
+            h.tvStatus.setText("DEPLOYED");
+            h.tvStatus.setTextColor(0xFFEA580C);
+        } else {
+            h.statusDot.setBackgroundResource(R.drawable.circle_dot_green);
+            h.tvStatus.setText("RESOLVED");
+            h.tvStatus.setTextColor(0xFF34C759);
+        }
 
         // ── Accident type ─────────────────────────
         Object type = data.get("accidentType");

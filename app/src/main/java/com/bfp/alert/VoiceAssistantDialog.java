@@ -582,7 +582,7 @@ public class VoiceAssistantDialog extends Dialog {
         try {
             Intent intent = new Intent(
                     Intent.ACTION_DIAL,
-                    Uri.parse("tel:911"));
+                    Uri.parse("tel:09399337795"));
             getContext().startActivity(intent);
         } catch (Exception e) {
             tvResponse.setText(

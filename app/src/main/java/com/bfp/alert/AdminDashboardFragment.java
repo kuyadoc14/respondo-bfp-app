@@ -272,16 +272,34 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
 
             String status = alert.get("status") != null ? String.valueOf(alert.get("status")).trim() : "";
             boolean isResolved = "resolved".equalsIgnoreCase(status);
-            boolean isActive = "active".equalsIgnoreCase(status) || !isResolved;
+            boolean isDeployed = "deployed".equalsIgnoreCase(status);
+            boolean isActive = "active".equalsIgnoreCase(status) || (!isResolved && !isDeployed);
 
-            BitmapDescriptor icon = isActive
-                    ? AlertMarkerHelper.getActiveMarkerIcon(context)
-                    : AlertMarkerHelper.getResolvedMarkerIcon(context);
-            float zIndex = isActive ? AlertMarkerHelper.ACTIVE_Z_INDEX : AlertMarkerHelper.RESOLVED_Z_INDEX;
-            float alpha = isActive ? AlertMarkerHelper.ACTIVE_ALPHA : AlertMarkerHelper.RESOLVED_ALPHA;
+            BitmapDescriptor icon;
+            float zIndex;
+            float alpha;
+            String title;
+            String snippet;
 
-            String title = isActive ? "🔴 ACTIVE ALERT" : "🟢 Resolved";
-            String snippet = isActive ? "Status: Active (Emergency)" : "Status: Resolved";
+            if (isActive) {
+                icon = AlertMarkerHelper.getActiveMarkerIcon(context);
+                zIndex = AlertMarkerHelper.ACTIVE_Z_INDEX;
+                alpha = AlertMarkerHelper.ACTIVE_ALPHA;
+                title = "🔴 ACTIVE ALERT";
+                snippet = "Status: Active (Pending Dispatch)";
+            } else if (isDeployed) {
+                icon = AlertMarkerHelper.getDeployedMarkerIcon(context);
+                zIndex = AlertMarkerHelper.DEPLOYED_Z_INDEX;
+                alpha = AlertMarkerHelper.DEPLOYED_ALPHA;
+                title = "🔵 DEPLOYED";
+                snippet = "Status: Responders En Route";
+            } else {
+                icon = AlertMarkerHelper.getResolvedMarkerIcon(context);
+                zIndex = AlertMarkerHelper.RESOLVED_Z_INDEX;
+                alpha = AlertMarkerHelper.RESOLVED_ALPHA;
+                title = "🟢 Resolved";
+                snippet = "Status: Resolved";
+            }
 
             LatLng pos = new LatLng(lat, lng);
             if (isActive && firstActivePos == null) {
