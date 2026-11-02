@@ -1,6 +1,10 @@
 package com.bfp.alert;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -62,6 +66,29 @@ public class SosFragment extends Fragment {
     // BLE
     private BLEManager bleManager;
     private View       bleBadge;
+
+    private final BroadcastReceiver bleReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent == null || intent.getAction() == null) return;
+            String action = intent.getAction();
+            if (BLESOSService.ACTION_BLE_STATE_CHANGED.equals(action)) {
+                boolean connected = intent.getBooleanExtra(BLESOSService.EXTRA_CONNECTED, false);
+                if (bleBadge != null) {
+                    bleBadge.setVisibility(connected ? View.VISIBLE : View.GONE);
+                }
+            } else if (BLESOSService.ACTION_SOS_SENT.equals(action)) {
+                String alertId = intent.getStringExtra(BLESOSService.EXTRA_ALERT_ID);
+                if (alertId != null) {
+                    sAlertId = alertId;
+                    saveAlertId(alertId);
+                    setSOSSentState();
+                    attachLiveListener(alertId);
+                    promptRoleSelection(alertId);
+                }
+            }
+        }
+    };
 
     // ─────────────────────────────────────────────────────────
     @Nullable
@@ -161,8 +188,36 @@ public class SosFragment extends Fragment {
     // Called every onResume so the SOS button
     // resets instantly after admin resolves
     @Override
+    public void onStart() {
+        super.onStart();
+        if (getContext() != null) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(BLESOSService.ACTION_BLE_STATE_CHANGED);
+            filter.addAction(BLESOSService.ACTION_SOS_SENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                getContext().registerReceiver(bleReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                getContext().registerReceiver(bleReceiver, filter);
+            }
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (getContext() != null) {
+            try {
+                getContext().unregisterReceiver(bleReceiver);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+        if (bleBadge != null) {
+            bleBadge.setVisibility(BLESOSService.isDeviceConnected() ? View.VISIBLE : View.GONE);
+        }
         syncWithFirestore();
         if (isHandsFreeEnabled()) {
             if (ContextCompat.checkSelfPermission(
@@ -361,63 +416,12 @@ public class SosFragment extends Fragment {
     // ─────────────────────────────────────────────────────────
     // BLE init — listens for ESP32 trigger
     private void initBLE() {
-        bleManager = new BLEManager(
-                requireContext(),
-                new BLEManager.BLEListener() {
-
-                    @Override
-                    public void onSOSReceived(
-                            String deviceInfo) {
-                        requireActivity().runOnUiThread(() -> {
-
-                            // Clear any existing alert state
-                            // before new BLE SOS so it
-                            // doesn't block sending
-                            if (sAlertId != null) {
-                                Log.d(TAG,
-                                        "BLE SOS: clearing "
-                                                + "old alert state");
-                                clearAlertState();
-                            }
-
-                            Toast.makeText(
-                                    requireContext(),
-                                    "🚨 SOS from ESP32!",
-                                    Toast.LENGTH_SHORT).show();
-
-                            sendSOSAlert();
-                        });
-                    }
-
-                    @Override
-                    public void onConnected() {
-                        requireActivity().runOnUiThread(() -> {
-                            if (bleBadge != null)
-                                bleBadge.setVisibility(
-                                        View.VISIBLE);
-                            Toast.makeText(
-                                    requireContext(),
-                                    "🔵 ESP32 connected",
-                                    Toast.LENGTH_SHORT).show();
-                        });
-                    }
-
-                    @Override
-                    public void onDisconnected() {
-                        requireActivity().runOnUiThread(() -> {
-                            if (bleBadge != null)
-                                bleBadge.setVisibility(
-                                        View.GONE);
-                        });
-                    }
-
-                    @Override
-                    public void onScanStarted() {
-                        Log.d(TAG, "BLE scanning...");
-                    }
-                });
-
-        bleManager.startScan();
+        if (getContext() != null) {
+            BLESOSService.start(getContext());
+        }
+        if (bleBadge != null) {
+            bleBadge.setVisibility(BLESOSService.isDeviceConnected() ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showVoiceAssistant() {
@@ -759,8 +763,6 @@ public class SosFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (bleManager != null)
-            bleManager.disconnect();
         // Only remove listener when fragment
         // is truly destroyed
         if (sListener != null) {

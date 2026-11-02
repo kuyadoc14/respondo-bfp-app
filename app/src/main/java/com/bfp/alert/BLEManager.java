@@ -16,6 +16,7 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -74,8 +75,7 @@ public class BLEManager {
 
     // ── Start scanning for ESP32 ─────────────────────────────────
     public void startScan() {
-        if (adapter == null
-                || !adapter.isEnabled()) {
+        if (adapter == null || !adapter.isEnabled()) {
             Log.e(TAG, "Bluetooth not enabled");
             return;
         }
@@ -87,10 +87,15 @@ public class BLEManager {
             return;
         }
 
-        if (scanning) return;
+        if (scanning || connected) return;
         scanning = true;
 
         scanner = adapter.getBluetoothLeScanner();
+        if (scanner == null) {
+            Log.e(TAG, "BluetoothLeScanner is null");
+            scanning = false;
+            return;
+        }
 
         // Filter by device name
         List<ScanFilter> filters = new ArrayList<>();
@@ -106,19 +111,26 @@ public class BLEManager {
                                 ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
 
-        scanner.startScan(
-                filters, settings, scanCallback);
+        try {
+            scanner.startScan(filters, settings, scanCallback);
+            if (listener != null)
+                listener.onScanStarted();
+            Log.d(TAG, "Scanning for " + DEVICE_NAME + "...");
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting scan: " + e.getMessage());
+            scanning = false;
+            return;
+        }
 
-        if (listener != null)
-            listener.onScanStarted();
-
-        Log.d(TAG, "Scanning for "
-                + DEVICE_NAME + "...");
-
-        // Stop scan after 30 seconds
+        // Cycle scan after 25s: pause 5s, then resume scan to preserve battery while continually seeking
         handler.postDelayed(() -> {
-            if (scanning) stopScan();
-        }, 30000);
+            if (scanning && !connected) {
+                stopScan();
+                handler.postDelayed(() -> {
+                    if (!connected) startScan();
+                }, 4000);
+            }
+        }, 25000);
     }
 
     public void stopScan() {
@@ -127,8 +139,11 @@ public class BLEManager {
         if (ActivityCompat.checkSelfPermission(ctx,
                 Manifest.permission.BLUETOOTH_SCAN)
                 == PackageManager.PERMISSION_GRANTED) {
-            if (scanner != null)
-                scanner.stopScan(scanCallback);
+            if (scanner != null) {
+                try {
+                    scanner.stopScan(scanCallback);
+                } catch (Exception ignored) {}
+            }
         }
         Log.d(TAG, "Scan stopped");
     }
@@ -161,6 +176,10 @@ public class BLEManager {
                 public void onScanFailed(int errorCode) {
                     Log.e(TAG, "Scan failed: " + errorCode);
                     scanning = false;
+                    // Retry scan in 5 seconds
+                    handler.postDelayed(() -> {
+                        if (!connected) startScan();
+                    }, 5000);
                 }
             };
 
@@ -171,8 +190,11 @@ public class BLEManager {
                 != PackageManager.PERMISSION_GRANTED)
             return;
 
-        gatt = device.connectGatt(
-                ctx, false, gattCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            gatt = device.connectGatt(ctx, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {
+            gatt = device.connectGatt(ctx, false, gattCallback);
+        }
     }
 
     // ── GATT callback ────────────────────────────────────────────
@@ -189,30 +211,35 @@ public class BLEManager {
                             != PackageManager.PERMISSION_GRANTED)
                         return;
 
-                    if (newState == BluetoothGatt
-                            .STATE_CONNECTED) {
+                    if (newState == BluetoothGatt.STATE_CONNECTED) {
                         Log.d(TAG, "Connected to ESP32");
                         connected = true;
-                        gatt.discoverServices();
+                        if (gatt != null) {
+                            gatt.discoverServices();
+                        }
 
                         handler.post(() -> {
                             if (listener != null)
                                 listener.onConnected();
                         });
 
-                    } else if (newState == BluetoothGatt
-                            .STATE_DISCONNECTED) {
+                    } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                         Log.d(TAG, "Disconnected from ESP32");
                         connected = false;
+                        if (gatt != null) {
+                            try {
+                                gatt.close();
+                            } catch (Exception ignored) {}
+                            gatt = null;
+                        }
 
                         handler.post(() -> {
                             if (listener != null)
                                 listener.onDisconnected();
                         });
 
-                        // Auto-reconnect after 5 seconds
-                        handler.postDelayed(
-                                () -> startScan(), 5000);
+                        // Auto-reconnect scan after 3 seconds
+                        handler.postDelayed(() -> startScan(), 3000);
                     }
                 }
 
@@ -232,13 +259,11 @@ public class BLEManager {
                     Log.d(TAG, "BLE received: " + value);
 
                     handler.post(() -> {
-                        if ("SOS_TRIGGER".equals(value)) {
-                            Log.d(TAG,
-                                    "SOS trigger received!");
+                        if (value != null && (value.startsWith("SOS_TRIGGER") || "SOS_TRIGGER".equals(value))) {
+                            Log.d(TAG, "SOS trigger received!");
                             if (listener != null)
                                 listener.onSOSReceived("");
-                        } else if (value != null
-                                && value.startsWith("LAT:")) {
+                        } else if (value != null && value.startsWith("LAT:")) {
                             if (listener != null)
                                 listener.onSOSReceived(value);
                         }
@@ -255,10 +280,11 @@ public class BLEManager {
                     Log.d(TAG, "BLE received (new): " + str);
 
                     handler.post(() -> {
-                        if ("SOS_TRIGGER".equals(str)) {
+                        if (str != null && (str.startsWith("SOS_TRIGGER") || "SOS_TRIGGER".equals(str))) {
+                            Log.d(TAG, "SOS trigger received (byte array)!");
                             if (listener != null)
                                 listener.onSOSReceived("");
-                        } else if (str.startsWith("LAT:")) {
+                        } else if (str != null && str.startsWith("LAT:")) {
                             if (listener != null)
                                 listener.onSOSReceived(str);
                         }
@@ -272,6 +298,8 @@ public class BLEManager {
                 Manifest.permission.BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED)
             return;
+
+        if (gatt == null) return;
 
         BluetoothGattService service =
                 gatt.getService(
@@ -295,8 +323,7 @@ public class BLEManager {
         gatt.setCharacteristicNotification(
                 characteristic, true);
 
-        // Write to CCCD descriptor to enable
-        // server-side notifications
+        // Write to CCCD descriptor to enable server-side notifications
         BluetoothGattDescriptor descriptor =
                 characteristic.getDescriptor(
                         UUID.fromString(CCCD_UUID));
@@ -306,8 +333,7 @@ public class BLEManager {
                     BluetoothGattDescriptor
                             .ENABLE_NOTIFICATION_VALUE);
             gatt.writeDescriptor(descriptor);
-            Log.d(TAG,
-                    "Notifications enabled on ESP32");
+            Log.d(TAG, "Notifications enabled on ESP32");
         }
     }
 
@@ -318,11 +344,14 @@ public class BLEManager {
                 Manifest.permission.BLUETOOTH_CONNECT)
                 == PackageManager.PERMISSION_GRANTED) {
             if (gatt != null) {
-                gatt.disconnect();
-                gatt.close();
+                try {
+                    gatt.disconnect();
+                    gatt.close();
+                } catch (Exception ignored) {}
                 gatt = null;
             }
         }
         connected = false;
+        stopScan();
     }
 }

@@ -1,9 +1,11 @@
 package com.bfp.alert;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import java.util.HashMap;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
@@ -22,12 +24,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Request BLE permissions on Android 12+
-        if (android.os.Build.VERSION.SDK_INT >= 31) {
+        // Request BLE and Notification permissions on Android 12+ / 13+
+        if (Build.VERSION.SDK_INT >= 33) {
             requestPermissions(new String[]{
                     android.Manifest.permission.BLUETOOTH_SCAN,
-                    android.Manifest.permission.BLUETOOTH_CONNECT
+                    android.Manifest.permission.BLUETOOTH_CONNECT,
+                    android.Manifest.permission.POST_NOTIFICATIONS,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
             }, 300);
+        } else if (Build.VERSION.SDK_INT >= 31) {
+            requestPermissions(new String[]{
+                    android.Manifest.permission.BLUETOOTH_SCAN,
+                    android.Manifest.permission.BLUETOOTH_CONNECT,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+            }, 300);
+        } else {
+            BLESOSService.start(this);
         }
 
         // Load SOS as default tab
@@ -52,6 +64,20 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 300) {
+            BLESOSService.start(this);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        BLESOSService.start(this);
     }
 
     private void setBottomNavVisibility(boolean visible) {
