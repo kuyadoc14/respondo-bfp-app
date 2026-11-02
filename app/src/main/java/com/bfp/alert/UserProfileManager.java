@@ -139,6 +139,11 @@ public class UserProfileManager {
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    if (!isCurrentUser(user.getUid())) {
+                        if (callback != null) callback.onSuccess(getLocalProfile(context));
+                        return;
+                    }
+
                     if (snapshot != null && snapshot.exists() && snapshot.getData() != null) {
                         UserProfile cloudProfile = UserProfile.fromMap(snapshot.getData());
                         // If cloud profile has privacy consent, retain it
@@ -151,12 +156,21 @@ public class UserProfileManager {
                         if (callback != null) callback.onSuccess(cloudProfile);
                     } else {
                         // Document doesn't exist yet on cloud, return local
-                        if (callback != null) callback.onSuccess(local);
+                        if (callback != null) callback.onSuccess(getLocalProfile(context));
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (!isCurrentUser(user.getUid())) {
+                        if (callback != null) callback.onSuccess(getLocalProfile(context));
+                        return;
+                    }
                     Log.w(TAG, "Failed to fetch cloud profile, using local: " + e.getMessage());
-                    if (callback != null) callback.onSuccess(local);
+                    if (callback != null) callback.onSuccess(getLocalProfile(context));
                 });
+    }
+
+    private static boolean isCurrentUser(@NonNull String userId) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        return currentUser != null && userId.equals(currentUser.getUid());
     }
 }

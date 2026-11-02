@@ -143,6 +143,9 @@ public class ProfileFragment extends Fragment {
             if (user != null) {
                 // Sign out
                 FirebaseAuth.getInstance().signOut();
+                UserProfileManager.clearLocalProfile(requireContext());
+                clearProfileFields();
+                applyPrivacyConsentState(null);
                 Toast.makeText(requireContext(), "Signed out", Toast.LENGTH_SHORT).show();
                 updateAccountUI();
             } else {
@@ -199,6 +202,8 @@ public class ProfileFragment extends Fragment {
         Context context = getContext();
         if (context == null) return;
 
+        FirebaseUser loadingUser = FirebaseAuth.getInstance().getCurrentUser();
+        String loadingUserId = loadingUser != null ? loadingUser.getUid() : null;
         UserProfile local = UserProfileManager.getLocalProfile(context);
         populateFields(local);
         applyPrivacyConsentState(local);
@@ -206,7 +211,7 @@ public class ProfileFragment extends Fragment {
         UserProfileManager.loadProfile(context, new UserProfileManager.ProfileCallback() {
             @Override
             public void onSuccess(UserProfile profile) {
-                if (isAdded()) {
+                if (isAdded() && isCurrentProfileAccount(loadingUserId)) {
                     populateFields(profile);
                     applyPrivacyConsentState(profile);
                 }
@@ -217,6 +222,27 @@ public class ProfileFragment extends Fragment {
                 // Keep local
             }
         });
+    }
+
+    private boolean isCurrentProfileAccount(@Nullable String userId) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (userId == null) {
+            return currentUser == null;
+        }
+        return currentUser != null && userId.equals(currentUser.getUid());
+    }
+
+    private void clearProfileFields() {
+        etProfileName.setText("");
+        etProfilePhone.setText("");
+        etProfileAge.setText("");
+        etProfileBirthdate.setText("");
+        etProfileAddress.setText("");
+        etProfileBloodType.setText("");
+        etProfileAllergies.setText("");
+        etProfileConditions.setText("");
+        etProfileEmergencyName.setText("");
+        etProfileEmergencyPhone.setText("");
     }
 
     private void applyPrivacyConsentState(@Nullable UserProfile profile) {
@@ -316,6 +342,14 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showPrivacyConsentDialog() {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(requireContext(),
+                    "Please sign in or register before reviewing the data privacy consent.",
+                    Toast.LENGTH_LONG).show();
+            showCivilianAuthDialog();
+            return;
+        }
+
         PrivacyActDialog dialog = PrivacyActDialog.newInstance();
         dialog.setOnPrivacyConsentListener(new PrivacyActDialog.OnPrivacyConsentListener() {
             @Override

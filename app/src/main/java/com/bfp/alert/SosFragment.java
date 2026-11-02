@@ -171,11 +171,9 @@ public class SosFragment extends Fragment {
                     == PackageManager.PERMISSION_GRANTED) {
                 showVoiceAssistant(true);
             } else {
-                setHandsFreeEnabled(false);
-                setHandsFreeSwitchChecked(false);
-                Toast.makeText(requireContext(),
-                        "Microphone permission is required for Hands-free mode.",
-                        Toast.LENGTH_LONG).show();
+                requestPermissions(
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        REQUEST_MIC_HANDS_FREE);
             }
         }
     }
@@ -497,7 +495,7 @@ public class SosFragment extends Fragment {
     private boolean isHandsFreeEnabled() {
         return requireContext()
                 .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_HANDS_FREE, false);
+                .getBoolean(KEY_HANDS_FREE, true);
     }
 
     private void setHandsFreeEnabled(boolean enabled) {
@@ -535,6 +533,7 @@ public class SosFragment extends Fragment {
                 setHandsFreeSwitchChecked(true);
                 showVoiceAssistant(true);
             } else {
+                setHandsFreeEnabled(false);
                 setHandsFreeSwitchChecked(false);
                 Toast.makeText(requireContext(),
                         "Microphone permission is required for Hands-free mode.",
