@@ -85,10 +85,10 @@
       --purple-dim: rgba(139, 92, 246, 0.12);
 
       /* Geometry & Elevation */
-      --radius-xs: 4px;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
+      --radius-xs: 6px;
+      --radius-sm: 10px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
       --radius-xl: 22px;
 
       --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
@@ -98,6 +98,11 @@
 
       --transition: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
       --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
     }
 
     body {
@@ -247,12 +252,13 @@
       align-items: center;
       justify-content: center;
       padding: 6px;
-      border-radius: var(--radius-xs);
-      transition: color var(--transition);
+      border-radius: 8px;
+      transition: all var(--transition);
     }
 
     .btn-pwd-eye:hover {
       color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .btn-pwd-eye svg {
@@ -263,16 +269,20 @@
 
     .login-box button#loginBtn {
       width: 100%;
-      padding: 12px;
+      height: 44px;
+      padding: 0 16px;
       margin-top: 10px;
       background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       font-size: 13.5px;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: all var(--transition);
       box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
     }
@@ -322,8 +332,11 @@
        ══════════════════════════════════════════════════════════════ */
     #mainApp {
       width: 100%;
-      max-width: 1600px;
-      margin: 0 auto;
+      max-width: 100%;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
@@ -331,7 +344,7 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 12px 32px;
+      padding: 12px clamp(20px, 2.5vw, 40px);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -339,6 +352,8 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .header-left {
@@ -416,29 +431,45 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .header-right #alertSoundButton,
+    .header-right #adminEmail,
+    .header-right .btn-logout {
+      height: 38px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      margin: 0 !important;
+      transition: all var(--transition);
     }
 
     #alertSoundButton {
       background: var(--accent-dim);
       color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: var(--radius-sm);
-      padding: 7px 13px;
-      font-size: 12px;
-      font-weight: 500;
+      padding: 0 14px;
       font-family: inherit;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: all var(--transition);
     }
 
     #alertSoundButton:hover {
       background: rgba(239, 68, 68, 0.2);
       border-color: rgba(239, 68, 68, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
+    }
+
+    #alertSoundButton:active {
+      transform: translateY(0);
     }
 
     #alertSoundButton.is-playing {
@@ -457,13 +488,10 @@
       font-size: 12px;
       color: var(--text-secondary);
       background: rgba(255, 255, 255, 0.03);
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
+      padding: 0 14px;
       border: 1px solid var(--border);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
       font-family: inherit;
+      white-space: nowrap;
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -472,12 +500,14 @@
     .tabs {
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
+      padding: 0 clamp(20px, 2.5vw, 40px);
       display: flex;
       gap: 8px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .tabs::-webkit-scrollbar {
@@ -555,7 +585,9 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 18px;
-      padding: 24px 32px 18px;
+      padding: 24px clamp(20px, 2.5vw, 40px) 18px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .stat-card {
@@ -612,8 +644,10 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 0 32px 18px;
+      padding: 0 clamp(20px, 2.5vw, 40px) 18px;
       flex-wrap: wrap;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .toolbar-search-wrap {
@@ -636,10 +670,12 @@
 
     .toolbar input[type="text"].search-box {
       width: 100%;
-      padding: 9px 12px 9px 36px;
+      height: 38px;
+      box-sizing: border-box;
+      padding: 0 12px 0 36px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       color: var(--text-primary);
       font-size: 13px;
       font-family: inherit;
@@ -655,10 +691,12 @@
 
     .toolbar select,
     .toolbar input[type="date"] {
-      padding: 9px 14px;
+      height: 38px;
+      box-sizing: border-box;
+      padding: 0 14px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       color: var(--text-primary);
       font-size: 13px;
       font-family: inherit;
@@ -679,9 +717,11 @@
     }
 
     .toolbar button {
-      padding: 9px 15px;
+      height: 38px;
+      box-sizing: border-box;
+      padding: 0 15px;
       border: 1px solid transparent;
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
@@ -689,6 +729,7 @@
       transition: all var(--transition);
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
     }
 
@@ -706,6 +747,12 @@
       border-color: rgba(255, 255, 255, 0.18) !important;
       color: var(--text-primary);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-export:active,
+    .btn-pdf:active {
+      transform: translateY(0);
     }
 
     .btn-export svg,
@@ -722,23 +769,42 @@
     .btn-logout {
       background: rgba(255, 255, 255, 0.03);
       color: var(--text-secondary);
-      border-color: var(--border) !important;
-      margin-left: auto;
+      border: 1px solid var(--border) !important;
+      border-radius: 10px;
+      height: 38px;
+      padding: 0 14px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
     }
 
     .btn-logout:hover {
       background: rgba(255, 255, 255, 0.08);
       color: var(--text-primary);
-      border-color: rgba(255, 255, 255, 0.16) !important;
+      border-color: rgba(255, 255, 255, 0.18) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-logout:active {
+      transform: translateY(0);
     }
 
     /* ══════════════════════════════════════════════════════════════
        6. MINIMAL DATA TABLE
        ══════════════════════════════════════════════════════════════ */
     .table-wrap {
-      padding: 0 32px 48px;
+      padding: 0 clamp(20px, 2.5vw, 40px) 48px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     table {
@@ -892,11 +958,11 @@
     }
 
     .btn-view-report {
-      padding: 6px 12px;
+      padding: 6px 13px;
       background: var(--blue-dim);
       color: #60a5fa;
       border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: var(--radius-sm);
+      border-radius: 9px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
@@ -905,50 +971,77 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .btn-view-report:hover {
       background: rgba(59, 130, 246, 0.22);
       border-color: rgba(59, 130, 246, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-view-report:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .btn-resolve {
-      padding: 6px 12px;
+      padding: 6px 13px;
       background: var(--green-dim);
       color: #34d399;
       border: 1px solid rgba(16, 185, 129, 0.25);
-      border-radius: var(--radius-sm);
+      border-radius: 9px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
       font-family: inherit;
       transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .btn-resolve:hover {
       background: rgba(16, 185, 129, 0.22);
       border-color: rgba(16, 185, 129, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-resolve:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .btn-delete {
-      padding: 6px 12px;
+      padding: 6px 13px;
       background: var(--accent-dim);
       color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: var(--radius-sm);
+      border-radius: 9px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
       font-family: inherit;
       transition: all var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .btn-delete:hover {
       background: rgba(239, 68, 68, 0.22);
       border-color: rgba(239, 68, 68, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-delete:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     #emptyMsg {
@@ -962,19 +1055,21 @@
        7. MINIMAL LIVE MAP PANEL
        ══════════════════════════════════════════════════════════════ */
     #mapPanel {
-      padding: 24px 32px 36px;
+      padding: 24px clamp(20px, 2.5vw, 40px) 36px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .map-layout {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: 1fr clamp(320px, 22vw, 420px);
       gap: 20px;
       align-items: start;
     }
 
     #map {
       width: 100%;
-      height: 580px;
+      height: clamp(580px, calc(100vh - 220px), 880px);
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       box-shadow: var(--shadow-md);
@@ -1014,7 +1109,8 @@
       background: var(--bg-card);
       border-radius: var(--radius-md);
       padding: 18px;
-      max-height: 580px;
+      height: clamp(580px, calc(100vh - 220px), 880px);
+      max-height: clamp(580px, calc(100vh - 220px), 880px);
       overflow-y: auto;
       border: 1px solid var(--border);
       box-shadow: var(--shadow-sm);
@@ -1092,7 +1188,9 @@
        8. MINIMAL HEATMAP PANEL
        ══════════════════════════════════════════════════════════════ */
     #heatmapPanel {
-      padding: 24px 32px 36px;
+      padding: 24px clamp(20px, 2.5vw, 40px) 36px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .heatmap-controls {
@@ -1108,10 +1206,11 @@
     }
 
     .heatmap-controls select {
-      padding: 8px 14px;
+      height: 36px;
+      padding: 0 14px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       color: var(--text-primary);
       font-size: 13px;
       font-family: inherit;
@@ -1125,6 +1224,8 @@
     }
 
     .slider-group {
+      height: 36px;
+      box-sizing: border-box;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -1132,8 +1233,8 @@
       color: var(--text-secondary);
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 6px 14px;
+      border-radius: 10px;
+      padding: 0 14px;
     }
 
     .slider-group input[type="range"] {
@@ -1144,7 +1245,7 @@
 
     #heatmap {
       width: 100%;
-      height: 580px;
+      height: clamp(580px, calc(100vh - 220px), 880px);
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       box-shadow: var(--shadow-md);
@@ -1260,9 +1361,9 @@
       background: transparent;
       border: none;
       color: var(--text-secondary);
-      width: 32px;
-      height: 32px;
-      border-radius: var(--radius-sm);
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -1329,11 +1430,13 @@
     }
 
     .btn-nav-external {
-      padding: 6px 14px;
+      padding: 0 14px;
+      height: 34px;
+      box-sizing: border-box;
       background: var(--blue-dim);
       color: #60a5fa;
       border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       text-decoration: none;
       font-size: 12px;
       font-weight: 500;
@@ -1347,6 +1450,11 @@
       background: rgba(59, 130, 246, 0.22);
       border-color: rgba(59, 130, 246, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-nav-external:active {
+      transform: translateY(0);
     }
 
     .report-meta-grid {
@@ -1514,24 +1622,34 @@
     }
 
     .confirm-actions button {
-      padding: 9px 22px;
-      border-radius: var(--radius-sm);
+      padding: 0 22px;
+      height: 38px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       font-family: inherit;
       border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: all var(--transition);
     }
 
     #confirmYes {
       background: var(--accent);
       color: #fff;
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
     }
 
     #confirmYes:hover {
       background: var(--accent-hover);
       transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(239, 68, 68, 0.45);
+    }
+
+    #confirmYes:active {
+      transform: translateY(0);
     }
 
     #confirmNo {
@@ -1543,6 +1661,11 @@
     #confirmNo:hover {
       background: rgba(255, 255, 255, 0.12);
       color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    #confirmNo:active {
+      transform: translateY(0);
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -2134,7 +2257,7 @@
           <span class="btn-text">Silence Siren</span>
         </button>
         <span id="adminEmail">officer@bfp.gov.ph</span>
-        <button class="btn-logout" onclick="doLogout()" title="Sign out of console" style="margin-left:0;padding:7px 12px;">
+        <button class="btn-logout" onclick="doLogout()" title="Sign out of console">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;">
             <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
           </svg>
@@ -3361,16 +3484,16 @@
               ${time}
             </div>
             <button onclick="openReportModal('${alert.id}')"
-              style="padding:6px 12px;background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);border-radius:6px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;margin-bottom:6px;">
+              style="padding:7px 12px;background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;margin-bottom:6px;">
               View Accident Report
             </button>
             ${isActive
               ? `<button onclick="resolveAlertFromMap('${alert.id}')"
-                   style="padding:6px 12px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+                   style="padding:7px 12px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
                    Mark Resolved
                  </button>`
               : `<button onclick="deleteAlertFromMap('${alert.id}')"
-                   style="padding:6px 12px;background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3);border-radius:6px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+                   style="padding:7px 12px;background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
                    Delete
                  </button>`
             }
