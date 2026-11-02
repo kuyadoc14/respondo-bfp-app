@@ -3,15 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#e63946" />
+  <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="BFP SOS" />
-  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96-noBackground.png" />
+  <meta name="apple-mobile-web-app-title" content="BFP Respondo" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <title>BFP SOS</title>
+  <title>BFP Respondo • Emergency SOS</title>
   <style>
     * {
       margin: 0;
@@ -20,259 +20,406 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #12131C;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0A0A0A;
       color: #ffffff;
       min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 24px;
+      position: relative;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Top Header Bar ── */
+    .top-bar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      z-index: 10;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #9CA3AF;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 6px #10B981;
+    }
+
+    .btn-profile-top {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #E5E7EB;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-profile-top:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    /* ── Main SOS Container ── */
+    .sos-main {
+      width: 100%;
+      max-width: 440px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      position: relative;
+      flex: 1;
+      margin: 10px 0 20px;
     }
 
-    /* Top navigation bar */
-    .top-bar {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+    /* ── Header Title & Official Logo (Android Match) ── */
+    .sos-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand-tag {
-      font-size: 11px;
-      letter-spacing: 1px;
-      font-weight: 700;
-      color: #e63946;
-      text-transform: uppercase;
-      background: rgba(230, 57, 70, 0.12);
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid rgba(230, 57, 70, 0.25);
-    }
-
-    .btn-profile-top {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-profile-top:hover {
-      background: rgba(255, 255, 255, 0.16);
-    }
-
-    .logo {
-      font-size: 44px;
-      margin-bottom: 8px;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin-bottom: 4px;
       text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header-logo-wrap {
+      width: 58px;
+      height: 58px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .header-title {
+      font-size: 18px;
       font-weight: 800;
-      letter-spacing: -0.3px;
+      letter-spacing: 0.18em;
+      color: #FFFFFF;
+      text-transform: uppercase;
+      line-height: 1.2;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: #8E92A8;
-      margin-bottom: 36px;
-      text-align: center;
+    .header-subtitle {
+      font-size: 11.5px;
+      color: #6B7280;
+      margin-top: 3px;
+      letter-spacing: 0.02em;
     }
 
-    /* Upgraded Emergency SOS Button with Multi-Tier Radar Pulse */
-    #btnSOS {
-      width: 210px;
-      height: 210px;
+    /* ── Center SOS Area with Radar Wave Ripples ── */
+    .sos-center-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-container {
+      position: relative;
+      width: 270px;
+      height: 270px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .radar-ring {
+      position: absolute;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #ff4d4d, #e63946 65%, #ba181b 100%);
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    .outer-ring {
+      width: 270px;
+      height: 270px;
+      border: 1.5px solid rgba(239, 68, 68, 0.16);
+      background: radial-gradient(circle, transparent 55%, rgba(239, 68, 68, 0.04) 100%);
+      animation: pulseOuterRing 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    .mid-ring {
+      width: 226px;
+      height: 226px;
+      border: 1.5px solid rgba(239, 68, 68, 0.25);
+      background: radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0.06) 100%);
+      animation: pulseMidRing 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      animation-delay: 0.35s;
+    }
+
+    @keyframes pulseOuterRing {
+      0% {
+        transform: scale(0.88);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.06);
+        opacity: 0.25;
+      }
+      100% {
+        transform: scale(0.88);
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes pulseMidRing {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.85;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 0.35;
+      }
+      100% {
+        transform: scale(0.9);
+        opacity: 0.85;
+      }
+    }
+
+    /* ── SOS Button ── */
+    #btnSOS {
+      position: relative;
+      z-index: 2;
+      width: 184px;
+      height: 184px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ff4d4d 0%, #e63946 60%, #b91c1c 100%);
       border: 3px solid rgba(255, 255, 255, 0.35);
       color: #ffffff;
-      font-size: 54px;
+      font-size: 46px;
       font-weight: 900;
-      letter-spacing: 2px;
+      letter-spacing: -0.02em;
       cursor: pointer;
       outline: none;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       box-shadow:
-        0 8px 32px rgba(230, 57, 70, 0.45),
+        0 8px 30px rgba(230, 57, 70, 0.5),
         inset 0 2px 4px rgba(255, 255, 255, 0.5),
-        inset 0 -6px 12px rgba(0, 0, 0, 0.3);
-      animation: sosPulse 2.2s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
-      transition: background 0.3s, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      margin-bottom: 24px;
+        inset 0 -6px 12px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, background 0.3s;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
 
     #btnSOS:hover:not(:disabled) {
       transform: scale(1.03);
       box-shadow:
-        0 12px 40px rgba(230, 57, 70, 0.6),
+        0 12px 38px rgba(230, 57, 70, 0.65),
         inset 0 2px 6px rgba(255, 255, 255, 0.6),
-        inset 0 -6px 12px rgba(0, 0, 0, 0.3);
+        inset 0 -6px 12px rgba(0, 0, 0, 0.35);
     }
 
     #btnSOS:active:not(:disabled) {
-      transform: scale(0.93) !important;
+      transform: scale(0.94);
       filter: brightness(0.92);
       box-shadow:
-        0 4px 16px rgba(230, 57, 70, 0.4),
+        0 4px 14px rgba(230, 57, 70, 0.4),
         inset 0 4px 8px rgba(0, 0, 0, 0.5);
     }
 
     #btnSOS:disabled {
-      background: radial-gradient(circle at 35% 30%, #522729, #381517 70%, #200b0c 100%);
-      border: 2px solid rgba(255, 255, 255, 0.12);
-      color: #8e686b;
-      animation: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      background: radial-gradient(circle at 35% 30%, #4a2123 0%, #301416 65%, #1c0a0b 100%);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #8f6568;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
       cursor: not-allowed;
       transform: none !important;
     }
 
-    @keyframes sosPulse {
-      0% {
-        transform: scale(1);
-        box-shadow:
-          0 0 0 0 rgba(230, 57, 70, 0.75),
-          0 0 0 0 rgba(230, 57, 70, 0.45),
-          0 8px 32px rgba(230, 57, 70, 0.4),
-          inset 0 2px 4px rgba(255, 255, 255, 0.5);
-      }
-
-      35% {
-        transform: scale(1.035);
-      }
-
-      70% {
-        box-shadow:
-          0 0 0 32px rgba(230, 57, 70, 0.15),
-          0 0 0 64px rgba(230, 57, 70, 0),
-          0 14px 44px rgba(230, 57, 70, 0.3),
-          inset 0 2px 4px rgba(255, 255, 255, 0.5);
-      }
-
-      100% {
-        transform: scale(1);
-        box-shadow:
-          0 0 0 42px rgba(230, 57, 70, 0),
-          0 0 0 78px rgba(230, 57, 70, 0),
-          0 8px 32px rgba(230, 57, 70, 0.4),
-          inset 0 2px 4px rgba(255, 255, 255, 0.5);
-      }
-    }
-
     .instruction {
       font-size: 13px;
-      color: #8E92A8;
-      margin-bottom: 24px;
+      color: #6B7280;
+      margin-top: 22px;
       text-align: center;
+      letter-spacing: 0.01em;
     }
 
-    /* Status card */
+    /* ── UNBOXED TRANSPARENT STATUS CARD (No Yellow Box!) ── */
     #statusCard {
       display: none;
       width: 100%;
-      max-width: 360px;
-      border-radius: 14px;
-      padding: 16px 20px;
+      max-width: 340px;
+      margin-top: 14px;
       text-align: center;
-      margin-top: 8px;
-    }
-
-    #statusCard.warning {
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-    }
-
-    #statusCard.resolved {
-      background: rgba(16, 185, 129, 0.08);
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 10px;
     }
 
     .live-indicator {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 7px;
+      margin-bottom: 6px;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #F59E0B;
-      animation: blink 0.8s infinite alternate;
+      background: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: blinkDot 0.9s infinite alternate;
     }
 
     .dot.green {
-      background: #10B981;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
       animation: none;
     }
 
-    @keyframes blink {
-      from { opacity: 1; }
-      to { opacity: 0.2; }
+    @keyframes blinkDot {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0.3; transform: scale(0.85); }
     }
 
     .live-label {
       font-size: 11px;
-      font-weight: bold;
-      color: #F59E0B;
-      letter-spacing: 1px;
+      font-weight: 700;
+      color: #f59e0b;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
     }
 
     .live-label.green {
-      color: #10B981;
+      color: #10b981;
     }
 
     #statusText {
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13.5px;
+      color: #D1D5DB;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      white-space: pre-line;
     }
 
-    #statusText.warning {
-      color: #FBBF24;
+    /* Clickable accident report link matching Android app */
+    .btn-open-report-link {
+      background: transparent;
+      border: none;
+      color: #ff6b7a;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      margin: 0 auto;
+      transition: all 0.2s;
+      font-family: inherit;
     }
 
-    #statusText.resolved {
-      color: #34D399;
+    .btn-open-report-link:hover {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ff8591;
     }
 
-    /* Location status */
-    #locationStatus {
+    .warn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #ff4d4d;
       font-size: 11px;
-      color: #646882;
-      margin-top: 14px;
+      font-weight: 800;
+    }
+
+    /* ── Bottom Section: Location & Portal Link ── */
+    .sos-footer {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .location-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #6B7280;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
       text-align: center;
     }
 
-    /* Admin link */
     .admin-link {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
       font-size: 11px;
-      color: #4A4D68;
+      color: #4B5563;
       text-decoration: none;
+      transition: color 0.2s;
     }
 
-    /* Modal Overlay & Card System */
+    .admin-link:hover {
+      color: #9CA3AF;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       MODAL OVERLAY SYSTEM (Role Selection & Profile)
+       ══════════════════════════════════════════════════════════════ */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -280,12 +427,13 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       z-index: 999;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 18px;
     }
 
     .modal-overlay.active {
@@ -293,20 +441,20 @@
     }
 
     .modal-card {
-      background: #1A1C29;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #141722;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 18px;
       width: 100%;
-      max-width: 420px;
-      max-height: 90vh;
+      max-width: 410px;
+      max-height: 88vh;
       overflow-y: auto;
       padding: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.75);
       animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     @keyframes modalSlideUp {
-      from { transform: translateY(20px); opacity: 0; }
+      from { transform: translateY(16px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
 
@@ -314,18 +462,19 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .modal-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       color: #ffffff;
+      letter-spacing: -0.01em;
     }
 
     .modal-subtitle {
       font-size: 12px;
-      color: #8E92A8;
+      color: #9CA3AF;
       margin-top: 4px;
       line-height: 1.4;
     }
@@ -333,52 +482,55 @@
     .btn-close {
       background: rgba(255, 255, 255, 0.08);
       border: none;
-      color: #8E92A8;
+      color: #9CA3AF;
       font-size: 16px;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
     }
 
     .btn-close:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.16);
       color: #ffffff;
     }
 
     /* Form Styles */
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .form-group label {
       display: block;
       font-size: 11px;
       font-weight: 600;
-      color: #A0A5BA;
-      margin-bottom: 4px;
+      color: #9CA3AF;
+      margin-bottom: 5px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.05em;
     }
 
     .form-group input {
       width: 100%;
       height: 42px;
-      background: #11121C;
+      background: #0D0F18;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 10px;
       padding: 0 12px;
       font-size: 13px;
       color: #ffffff;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
     }
 
     .form-group input:focus {
-      border-color: #e63946;
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
     }
 
     .form-row {
@@ -388,20 +540,23 @@
 
     .btn-primary {
       width: 100%;
-      height: 46px;
-      background: #e63946;
-      border: none;
-      border-radius: 12px;
+      height: 44px;
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
       color: #ffffff;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 13.5px;
+      font-weight: 600;
       cursor: pointer;
       margin-top: 14px;
-      transition: opacity 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+      font-family: inherit;
     }
 
     .btn-primary:hover {
-      opacity: 0.92;
+      background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+      transform: translateY(-1px);
     }
 
     .btn-secondary {
@@ -409,19 +564,26 @@
       height: 40px;
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      color: #A0A5BA;
+      border-radius: 10px;
+      color: #9CA3AF;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       margin-top: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
     }
 
     /* Role selection cards */
     .role-option-card {
-      background: #131522;
+      background: #0D0F18;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 12px;
       cursor: pointer;
@@ -433,26 +595,27 @@
     }
 
     .role-option-card:hover {
-      border-color: rgba(230, 57, 70, 0.5);
+      border-color: rgba(239, 68, 68, 0.5);
       transform: translateY(-1px);
-      background: #17192A;
+      background: #141724;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     }
 
     .role-icon {
-      font-size: 28px;
+      font-size: 26px;
       flex-shrink: 0;
     }
 
     .role-text-title {
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 700;
       color: #ffffff;
     }
 
     .role-text-desc {
       font-size: 12px;
-      color: #8E92A8;
-      margin-top: 2px;
+      color: #9CA3AF;
+      margin-top: 3px;
       line-height: 1.35;
     }
 
@@ -461,7 +624,7 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 10px;
-      padding: 12px;
+      padding: 14px;
     }
   </style>
 </head>
@@ -469,33 +632,63 @@
 <body>
 
   <!-- Top Bar -->
-  <div class="top-bar">
-    <span class="brand-tag">BFP Respondo</span>
-    <button class="btn-profile-top" onclick="openProfileModal()">
-      <span>👤</span>
+  <header class="top-bar">
+    <div class="brand-badge">
+      <span class="brand-dot"></span>
+      <span class="brand-text">BFP Respondo</span>
+    </div>
+    <button class="btn-profile-top" onclick="openProfileModal()" title="View and edit emergency profile">
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
       <span id="topProfileLabel">My Profile</span>
     </button>
-  </div>
+  </header>
 
-  <div class="logo">🔥</div>
-  <h1>Bureau of Fire Protection</h1>
-  <p class="subtitle">Emergency Alert System</p>
+  <!-- Main Content Wrap -->
+  <main class="sos-main">
 
-  <button id="btnSOS" onclick="sendSOS()">SOS</button>
-  <p class="instruction">Press to alert BFP immediately</p>
-
-  <!-- Status card -->
-  <div id="statusCard">
-    <div class="live-indicator">
-      <div class="dot" id="liveDot"></div>
-      <span class="live-label" id="liveLabel">LIVE</span>
+    <!-- Header: Official Logo + Title (Android App Match) -->
+    <div class="sos-header">
+      <div class="header-logo-wrap">
+        <img src="icons/icon-96.png" alt="BFP Logo" class="header-logo-img" />
+      </div>
+      <h1 class="header-title">RESPONDO</h1>
+      <p class="header-subtitle">Bureau of Fire Protection</p>
     </div>
-    <p id="statusText"></p>
-  </div>
 
-  <p id="locationStatus">📍 Waiting for location...</p>
+    <!-- Center: Radar Ripple Waves + SOS Button -->
+    <div class="sos-center-wrap">
+      <div class="radar-container">
+        <div class="radar-ring outer-ring" id="ringOuter"></div>
+        <div class="radar-ring mid-ring" id="ringMid"></div>
+        <button id="btnSOS" onclick="sendSOS()" aria-label="Send Emergency SOS">SOS</button>
+      </div>
 
-  <a class="admin-link" href="/index.html">Admin</a>
+      <p class="instruction" id="instructionText">Press to alert BFP immediately</p>
+
+      <!-- UNBOXED TRANSPARENT STATUS (No Yellow Box!) -->
+      <div id="statusCard">
+        <div class="live-indicator">
+          <div class="dot" id="liveDot"></div>
+          <span class="live-label" id="liveLabel">ALERT ACTIVE</span>
+        </div>
+        <p id="statusText">Alert sent. Responders have been notified.</p>
+        <button id="btnOpenReportLink" class="btn-open-report-link" onclick="promptRoleSelection()">
+          <span class="warn-icon">!</span>
+          <span>Fill In Accident Report (Optional)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom: Location Pill & Portal Link -->
+    <div class="sos-footer">
+      <div class="location-pill" id="locationStatus">
+        <span>📍</span>
+        <span id="locationStatusText">Acquiring GPS location...</span>
+      </div>
+      <a class="admin-link" href="/index.html">Operations Portal</a>
+    </div>
+
+  </main>
 
   <!-- ══════════════════════════════════════════════════════════════
        ROLE SELECTION MODAL (Prompted after SOS is sent)
@@ -527,10 +720,10 @@
         </div>
       </div>
 
-      <!-- Bystander follow-up form (Hidden by default, shown if Bystander is picked) -->
+      <!-- Bystander follow-up form -->
       <div id="bystanderOptBox" class="bystander-opt-box" style="display:none;">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#ffffff;cursor:pointer;margin-bottom:10px;">
-          <input type="checkbox" id="chkShareBystander" checked style="accent-color:#e63946;width:16px;height:16px;" onchange="toggleBystanderInputs()" />
+          <input type="checkbox" id="chkShareBystander" checked style="accent-color:#ef4444;width:16px;height:16px;" onchange="toggleBystanderInputs()" />
           <span>Share my contact info with BFP for follow-up</span>
         </label>
         <div id="bystanderInputs">
@@ -550,14 +743,14 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
-       EMERGENCY PROFILE & ACCOUNT MODAL (Optional)
+       EMERGENCY PROFILE & ACCOUNT MODAL
        ══════════════════════════════════════════════════════════════ -->
   <div id="profileModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
         <div>
           <div class="modal-title">Emergency Medical Profile</div>
-          <div class="modal-subtitle">Auto-filled when you trigger SOS alone or as a victim.</div>
+          <div class="modal-subtitle">Auto-filled when you trigger SOS as a victim.</div>
         </div>
         <button class="btn-close" onclick="closeProfileModal()">&times;</button>
       </div>
@@ -572,7 +765,7 @@
           <label>Mobile Phone</label>
           <input type="tel" id="pPhone" placeholder="+63 9XX XXX XXXX" />
         </div>
-        <div class="form-group" style="width:90px;">
+        <div class="form-group" style="width:95px;">
           <label>Blood Type</label>
           <input type="text" id="pBlood" placeholder="e.g. O+" />
         </div>
@@ -628,7 +821,7 @@
     let alertListener = null;
     let userCoords = null;
 
-    // ── Profile Management (Local Cache & Optional Cloud Sync) ──
+    // ── Profile Management ──
     function getStoredProfile() {
       try {
         const raw = localStorage.getItem("pwa_user_profile");
@@ -692,16 +885,19 @@
       return uid;
     }
 
-    // ── Get location immediately on load ──
+    // ── Location ──
+    function setLocationStatus(text) {
+      const el = document.getElementById("locationStatusText");
+      if (el) el.textContent = text;
+    }
+
     function initLocation() {
       if (!navigator.geolocation) {
-        document.getElementById("locationStatus").textContent =
-          "⚠️ Location not supported on this browser";
+        setLocationStatus("Location not supported on this browser");
         return;
       }
 
-      document.getElementById("locationStatus").textContent =
-        "📍 Getting your location...";
+      setLocationStatus("Getting GPS location...");
 
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -709,14 +905,10 @@
             lat: pos.coords.latitude,
             lng: pos.coords.longitude
           };
-          document.getElementById("locationStatus").textContent =
-            "📍 Location ready (" +
-            pos.coords.latitude.toFixed(4) + ", " +
-            pos.coords.longitude.toFixed(4) + ")";
+          setLocationStatus("GPS Location ready (" + pos.coords.latitude.toFixed(4) + ", " + pos.coords.longitude.toFixed(4) + ")");
         },
         err => {
-          document.getElementById("locationStatus").textContent =
-            "⚠️ Location denied — alert will be sent without coordinates";
+          setLocationStatus("Location unavailable — alert will be sent without coordinates");
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -818,7 +1010,7 @@
           closeRoleModal();
           const text = document.getElementById("statusText");
           if (text) {
-            text.textContent = "🚒 Help is on the way!\nYour medical profile was attached to the alert.";
+            text.textContent = "Help is on the way! Your medical profile was attached to the alert.";
           }
         })
         .catch(e => {
@@ -884,27 +1076,30 @@
         });
     }
 
-    // ── UI states ──
+    // ── UI States (Transparent / Unboxed) ──
     function setSOSSentState() {
       const btn = document.getElementById("btnSOS");
       const card = document.getElementById("statusCard");
       const text = document.getElementById("statusText");
       const dot = document.getElementById("liveDot");
       const lbl = document.getElementById("liveLabel");
+      const reportLink = document.getElementById("btnOpenReportLink");
+      const ringOuter = document.getElementById("ringOuter");
+      const ringMid = document.getElementById("ringMid");
 
       btn.disabled = true;
-      btn.textContent = "SENT";
+      btn.innerHTML = "SOS<br/><span style='font-size:16px;font-weight:700;letter-spacing:1px;opacity:0.85;'>SENT</span>";
+
+      if (ringOuter) ringOuter.style.animationPlayState = "paused";
+      if (ringMid) ringMid.style.animationPlayState = "paused";
 
       card.style.display = "block";
-      card.className = "warning";
-
       dot.className = "dot";
       lbl.className = "live-label";
-      lbl.textContent = "LIVE";
+      lbl.textContent = "ALERT ACTIVE";
 
-      text.className = "warning";
-      text.textContent = "🚒 Help is on the way!\nBFP has received your alert.";
-      text.style.whiteSpace = "pre-line";
+      text.textContent = "Alert sent. Responders have been notified.";
+      if (reportLink) reportLink.style.display = "inline-flex";
     }
 
     function setResolvedState() {
@@ -913,25 +1108,27 @@
       const text = document.getElementById("statusText");
       const dot = document.getElementById("liveDot");
       const lbl = document.getElementById("liveLabel");
+      const reportLink = document.getElementById("btnOpenReportLink");
+      const ringOuter = document.getElementById("ringOuter");
+      const ringMid = document.getElementById("ringMid");
 
       btn.disabled = false;
       btn.textContent = "SOS";
 
-      card.style.display = "block";
-      card.className = "resolved";
+      if (ringOuter) ringOuter.style.animationPlayState = "running";
+      if (ringMid) ringMid.style.animationPlayState = "running";
 
+      card.style.display = "block";
       dot.className = "dot green";
       lbl.className = "live-label green";
       lbl.textContent = "RESOLVED";
 
-      text.className = "resolved";
-      text.textContent = "✅ Help has arrived!\nYour alert has been resolved.";
-      text.style.whiteSpace = "pre-line";
+      text.textContent = "Help has arrived! Your alert has been resolved.";
+      if (reportLink) reportLink.style.display = "none";
 
-      // Hide after 6 seconds
       setTimeout(() => {
         card.style.display = "none";
-      }, 6000);
+      }, 7000);
     }
 
     // ── Init ──
