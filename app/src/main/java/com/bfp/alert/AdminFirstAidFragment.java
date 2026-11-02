@@ -40,7 +40,9 @@ public class AdminFirstAidFragment extends Fragment {
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
 
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
         RecyclerView recycler = view.findViewById(R.id.recyclerAdminFirstAid);
+        SystemBarUtils.applyBottomInsetPadding(recycler);
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         adapter = new AdminFirstAidAdapter(items,

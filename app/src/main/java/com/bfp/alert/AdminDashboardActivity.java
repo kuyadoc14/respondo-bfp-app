@@ -111,6 +111,10 @@ public class AdminDashboardActivity extends AppCompatActivity
         tvAlertCount = findViewById(R.id.tvAlertCount);
         recyclerView = findViewById(R.id.recyclerView);
         mapContainer = findViewById(R.id.mapContainer);
+
+        SystemBarUtils.applyTopInsetPadding(findViewById(R.id.headerLayout));
+        SystemBarUtils.applyBottomInsetPadding(recyclerView);
+        SystemBarUtils.applyBottomInsetPadding(mapContainer);
         btnTabList = findViewById(R.id.btnTabList);
         btnTabMap  = findViewById(R.id.btnTabMap);
 

@@ -31,6 +31,7 @@ public class FirstAidDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_aid_detail);
+        SystemBarUtils.applyTopInsetPadding(findViewById(R.id.headerLayout));
 
         String            title       = getIntent().getStringExtra("title");
         String            category    = getIntent().getStringExtra("category");

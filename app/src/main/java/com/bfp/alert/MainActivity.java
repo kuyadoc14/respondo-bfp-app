@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        SystemBarUtils.applyBottomInsetPadding(bottomNav);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 

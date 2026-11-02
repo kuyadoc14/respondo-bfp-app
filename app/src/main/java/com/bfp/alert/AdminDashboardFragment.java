@@ -109,6 +109,10 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
         tvAlertCount = view.findViewById(R.id.tvAlertCount);
         recyclerView = view.findViewById(R.id.recyclerView);
         mapContainer = view.findViewById(R.id.mapContainer);
+
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
+        SystemBarUtils.applyBottomInsetPadding(recyclerView);
+        SystemBarUtils.applyBottomInsetPadding(mapContainer);
         btnTabList = view.findViewById(R.id.btnTabList);
         btnTabMap = view.findViewById(R.id.btnTabMap);
 

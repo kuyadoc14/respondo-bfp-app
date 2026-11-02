@@ -41,6 +41,8 @@ public class FirstAidFragment extends Fragment {
         View view = inflater.inflate(
                 R.layout.fragment_first_aid, container, false);
 
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
+
         db = FirebaseFirestore.getInstance();
 
         // Setup RecyclerView

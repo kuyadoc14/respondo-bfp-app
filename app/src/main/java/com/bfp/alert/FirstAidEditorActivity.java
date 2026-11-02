@@ -95,6 +95,7 @@ public class FirstAidEditorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_aid_editor);
+        SystemBarUtils.applyTopInsetPadding(findViewById(R.id.headerLayout));
 
         db    = FirebaseFirestore.getInstance();
         mode  = getIntent().getStringExtra("mode");

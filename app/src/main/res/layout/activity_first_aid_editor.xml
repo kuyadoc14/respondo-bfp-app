@@ -8,6 +8,7 @@
 
     <!-- Header -->
     <LinearLayout
+        android:id="@+id/headerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -418,10 +419,13 @@
                 android:layout_height="50dp"
                 android:text="Cancel"
                 android:textAllCaps="false"
+                android:textStyle="bold"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                app:backgroundTint="@android:color/transparent"
-                android:textColor="@color/text_secondary"
+                app:backgroundTint="@color/white"
+                app:strokeColor="@color/border"
+                app:strokeWidth="1.5dp"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 app:cornerRadius="16dp"
                 android:elevation="0dp"

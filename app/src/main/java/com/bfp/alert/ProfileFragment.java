@@ -68,6 +68,8 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(
                 R.layout.fragment_profile, container, false);
 
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
+
         adminLoginOverlay = view.findViewById(R.id.adminLoginOverlay);
         adminLoginCardContainer = view.findViewById(R.id.adminLoginCardContainer);
 
@@ -88,6 +90,34 @@ public class ProfileFragment extends Fragment {
         etProfileEmergencyName = view.findViewById(R.id.etProfileEmergencyName);
         etProfileEmergencyPhone = view.findViewById(R.id.etProfileEmergencyPhone);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
+
+        // Apply input formatters
+        DateInputUtils.setupBirthdateInput(etProfileBirthdate);
+        InputFormatUtils.setupAgeInput(etProfileAge);
+        InputFormatUtils.setupBloodTypeInput(etProfileBloodType);
+        InputFormatUtils.setupPhoneInput(etProfilePhone);
+        InputFormatUtils.setupPhoneInput(etProfileEmergencyPhone);
+
+        // Auto-calculate age when birthdate changes
+        etProfileBirthdate.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (s != null && s.length() == 10) {
+                    int age = DateInputUtils.calculateAge(s.toString());
+                    if (age >= 0 && (etProfileAge.getText().toString().trim().isEmpty() || etProfileAge.isFocused() == false)) {
+                        etProfileAge.setText(String.valueOf(age));
+                    }
+                }
+            }
+        });
+
+        // Double click on birthdate opens date picker dialog
+        etProfileBirthdate.setOnClickListener(v -> {
+            if (getContext() != null) {
+                DateInputUtils.showDatePickerDialog(getContext(), etProfileBirthdate);
+            }
+        });
 
         cardPrivacyPrompt = view.findViewById(R.id.cardPrivacyPrompt);
         cardPrivacyAccepted = view.findViewById(R.id.cardPrivacyAccepted);
@@ -236,6 +266,14 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
+        String birthdateInput = etProfileBirthdate.getText().toString().trim();
+        if (!birthdateInput.isEmpty() && !DateInputUtils.isValidDate(birthdateInput)) {
+            etProfileBirthdate.setError("Invalid format. Use YYYY-MM-DD (e.g. 2006-03-16)");
+            etProfileBirthdate.requestFocus();
+            Toast.makeText(requireContext(), "Birthdate must be YYYY-MM-DD (e.g. 2006-03-16)", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         UserProfile existing = UserProfileManager.getLocalProfile(context);
         UserProfile p = new UserProfile();
         p.setFullName(etProfileName.getText().toString().trim());
@@ -344,6 +382,11 @@ public class ProfileFragment extends Fragment {
             tabSignIn.setBackground(null);
             btnSubmit.setText("Create Account");
             tvError.setVisibility(View.GONE);
+        });
+
+        etPassword.setOnEditorActionListener((v, actionId, event) -> {
+            btnSubmit.performClick();
+            return true;
         });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());

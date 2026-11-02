@@ -58,6 +58,7 @@ public class FirstAidDetailFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(
                 R.layout.fragment_first_aid_detail, container, false);
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
 
         Bundle args = getArguments();
         if (args == null) return view;

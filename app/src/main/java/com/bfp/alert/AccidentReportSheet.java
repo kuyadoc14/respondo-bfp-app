@@ -143,6 +143,13 @@ public class AccidentReportSheet
         switchIncludeBystanderInfo = view.findViewById(R.id.switchIncludeBystanderInfo);
         etBystanderName = view.findViewById(R.id.etBystanderName);
         etBystanderPhone = view.findViewById(R.id.etBystanderPhone);
+        if (etBystanderPhone != null) {
+            InputFormatUtils.setupPhoneInput(etBystanderPhone);
+        }
+        EditText etVictims = view.findViewById(R.id.etVictimCount);
+        if (etVictims != null) {
+            InputFormatUtils.setupAgeInput(etVictims); // Max 3 digits
+        }
 
         if ("bystander".equalsIgnoreCase(role)) {
             if (sectionBystanderContact != null) {
@@ -217,6 +224,34 @@ public class AccidentReportSheet
         pv.etCondition = card.findViewById(R.id.etPatientCondition);
         pv.chipGroupConsciousness = card.findViewById(R.id.chipGroupConsciousness);
         pv.switchSeizure = card.findViewById(R.id.switchSeizure);
+
+        // Format inputs for patient card
+        DateInputUtils.setupBirthdateInput(pv.etBirthdate);
+        InputFormatUtils.setupAgeInput(pv.etAge);
+        InputFormatUtils.setupPhoneInput(pv.etEmergencyContact);
+
+        // Auto-calculate age from birthdate
+        final EditText cardEtAge = pv.etAge;
+        final EditText cardEtBirthdate = pv.etBirthdate;
+        cardEtBirthdate.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                if (s != null && s.length() == 10) {
+                    int calcAge = DateInputUtils.calculateAge(s.toString());
+                    if (calcAge >= 0 && (cardEtAge.getText().toString().trim().isEmpty() || !cardEtAge.isFocused())) {
+                        cardEtAge.setText(String.valueOf(calcAge));
+                    }
+                }
+            }
+        });
+
+        // Click to open date picker dialog
+        cardEtBirthdate.setOnClickListener(v -> {
+            if (getContext() != null) {
+                DateInputUtils.showDatePickerDialog(getContext(), cardEtBirthdate);
+            }
+        });
 
         // Patient number label
         TextView tvNum = card.findViewById(R.id.tvPatientNumber);
@@ -313,6 +348,18 @@ public class AccidentReportSheet
         int victimCount = victimCountStr.isEmpty()
             ? patientViews.size()
             : Integer.parseInt(victimCountStr);
+
+        // Validate birthdate formats in patient cards
+        for (int i = 0; i < patientViews.size(); i++) {
+            PatientView pv = patientViews.get(i);
+            String bdate = pv.etBirthdate.getText().toString().trim();
+            if (!bdate.isEmpty() && !DateInputUtils.isValidDate(bdate)) {
+                pv.etBirthdate.setError("Invalid format. Use YYYY-MM-DD (e.g. 2006-03-16)");
+                pv.etBirthdate.requestFocus();
+                Toast.makeText(requireContext(), "Patient " + (i + 1) + " birthdate must be YYYY-MM-DD (e.g. 2006-03-16)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
         // ── Patient fields ────────────────────────
         List<Map<String, Object>> patients = new ArrayList<>();

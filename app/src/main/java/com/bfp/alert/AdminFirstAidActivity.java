@@ -41,8 +41,10 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                     overridePendingTransition(0, 0);
                 });
 
+        SystemBarUtils.applyTopInsetPadding(findViewById(R.id.headerLayout));
         RecyclerView recycler =
                 findViewById(R.id.recyclerAdminFirstAid);
+        SystemBarUtils.applyBottomInsetPadding(recycler);
         recycler.setLayoutManager(
                 new LinearLayoutManager(this));
 

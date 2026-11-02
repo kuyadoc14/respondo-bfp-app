@@ -119,7 +119,7 @@
                 android:id="@+id/etPatientBirthdate"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
-                android:hint="MM/DD/YYYY"
+                android:hint="YYYY-MM-DD"
                 android:textColorHint="@color/text_hint"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp"

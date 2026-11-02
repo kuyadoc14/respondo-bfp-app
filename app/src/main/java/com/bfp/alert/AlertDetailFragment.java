@@ -70,6 +70,9 @@ public class AlertDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
+        SystemBarUtils.applyBottomInsetPadding(view.findViewById(R.id.scrollDetail));
+
         db = FirebaseFirestore.getInstance();
         alertId = requireArguments().getString("alertId");
 

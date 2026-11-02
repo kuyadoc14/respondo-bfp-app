@@ -30,6 +30,8 @@ public class AlertDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alert_detail);
+        SystemBarUtils.applyTopInsetPadding(findViewById(R.id.headerLayout));
+        SystemBarUtils.applyBottomInsetPadding(findViewById(R.id.scrollDetail));
 
         db      = FirebaseFirestore.getInstance();
         alertId = getIntent().getStringExtra(

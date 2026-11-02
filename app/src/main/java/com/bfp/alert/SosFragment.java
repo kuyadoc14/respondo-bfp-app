@@ -86,6 +86,9 @@ public class SosFragment extends Fragment {
         statusCard = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
 
+        SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.topBar));
+        SystemBarUtils.applyTopInsetMargin(bleBadge);
+
         // Tactile press & release spring effect
         btnSOS.setOnTouchListener((v, event) -> {
             if (!btnSOS.isEnabled()) return false;
