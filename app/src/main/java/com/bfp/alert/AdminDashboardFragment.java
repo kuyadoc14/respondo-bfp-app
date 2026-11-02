@@ -1,5 +1,6 @@
 package com.bfp.alert;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -245,11 +247,16 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
 
     private void updateMapMarkers() {
         if (googleMap == null) return;
+        Context context = getContext();
+        if (context == null) return;
 
         for (Marker marker : markerMap.values()) {
             marker.remove();
         }
         markerMap.clear();
+
+        LatLng firstActivePos = null;
+        LatLng firstAlertPos = null;
 
         for (int i = 0; i < alertList.size(); i++) {
             Map<String, Object> alert = alertList.get(i);
@@ -259,22 +266,48 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
             Number lngNum = (Number) alert.get("longitude");
             if (latNum == null || lngNum == null) continue;
 
-            LatLng pos = new LatLng(latNum.doubleValue(), lngNum.doubleValue());
+            double lat = latNum.doubleValue();
+            double lng = lngNum.doubleValue();
+            if (lat == 0 && lng == 0) continue;
+
+            String status = alert.get("status") != null ? String.valueOf(alert.get("status")).trim() : "";
+            boolean isResolved = "resolved".equalsIgnoreCase(status);
+            boolean isActive = "active".equalsIgnoreCase(status) || !isResolved;
+
+            BitmapDescriptor icon = isActive
+                    ? AlertMarkerHelper.getActiveMarkerIcon(context)
+                    : AlertMarkerHelper.getResolvedMarkerIcon(context);
+            float zIndex = isActive ? AlertMarkerHelper.ACTIVE_Z_INDEX : AlertMarkerHelper.RESOLVED_Z_INDEX;
+            float alpha = isActive ? AlertMarkerHelper.ACTIVE_ALPHA : AlertMarkerHelper.RESOLVED_ALPHA;
+
+            String title = isActive ? "🔴 ACTIVE ALERT" : "🟢 Resolved";
+            String snippet = isActive ? "Status: Active (Emergency)" : "Status: Resolved";
+
+            LatLng pos = new LatLng(lat, lng);
+            if (isActive && firstActivePos == null) {
+                firstActivePos = pos;
+            }
+            if (firstAlertPos == null) {
+                firstAlertPos = pos;
+            }
+
             Marker marker = googleMap.addMarker(new MarkerOptions()
                     .position(pos)
-                    .title("Emergency Alert")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    .title(title)
+                    .snippet(snippet)
+                    .icon(icon)
+                    .anchor(AlertMarkerHelper.ANCHOR_U, AlertMarkerHelper.ANCHOR_V)
+                    .zIndex(zIndex)
+                    .alpha(alpha));
             if (marker != null) {
                 marker.setTag(alertIds.get(i));
                 markerMap.put(alertIds.get(i), marker);
             }
         }
 
-        if (!alertList.isEmpty()) {
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                    new LatLng(
-                            ((Number) alertList.get(0).get("latitude")).doubleValue(),
-                            ((Number) alertList.get(0).get("longitude")).doubleValue()), 10f));
+        LatLng zoomTarget = firstActivePos != null ? firstActivePos : firstAlertPos;
+        if (zoomTarget != null) {
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(zoomTarget, 11f));
         }
     }
 

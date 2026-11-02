@@ -17,6 +17,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -293,20 +294,25 @@ public class AdminDashboardActivity extends AppCompatActivity
             double  lng      = ((Number) lngObj).doubleValue();
             if (lat == 0 && lng == 0) continue;
 
-            boolean isActive =
-                    "active".equals(alert.get("status"));
+            String status = alert.get("status") != null ? String.valueOf(alert.get("status")).trim() : "";
+            boolean isResolved = "resolved".equalsIgnoreCase(status);
+            boolean isActive = "active".equalsIgnoreCase(status) || !isResolved;
             LatLng  position = new LatLng(lat, lng);
+
+            BitmapDescriptor icon = isActive
+                    ? AlertMarkerHelper.getActiveMarkerIcon(this)
+                    : AlertMarkerHelper.getResolvedMarkerIcon(this);
+            float zIndex = isActive ? AlertMarkerHelper.ACTIVE_Z_INDEX : AlertMarkerHelper.RESOLVED_Z_INDEX;
+            float alpha = isActive ? AlertMarkerHelper.ACTIVE_ALPHA : AlertMarkerHelper.RESOLVED_ALPHA;
 
             if (markerMap.containsKey(alertId)) {
                 Marker existing = markerMap.get(alertId);
                 if (existing != null) {
                     existing.setPosition(position);
-                    existing.setIcon(
-                            BitmapDescriptorFactory.defaultMarker(
-                                    isActive
-                                            ? BitmapDescriptorFactory.HUE_RED
-                                            : BitmapDescriptorFactory
-                                            .HUE_GREEN));
+                    existing.setIcon(icon);
+                    existing.setAnchor(AlertMarkerHelper.ANCHOR_U, AlertMarkerHelper.ANCHOR_V);
+                    existing.setZIndex(zIndex);
+                    existing.setAlpha(alpha);
                     existing.setTitle(isActive
                             ? "🔴 ACTIVE ALERT"
                             : "🟢 Resolved");
@@ -319,11 +325,10 @@ public class AdminDashboardActivity extends AppCompatActivity
                                         ? "🔴 ACTIVE ALERT"
                                         : "🟢 Resolved")
                                 .snippet("Tap for options")
-                                .icon(BitmapDescriptorFactory
-                                        .defaultMarker(isActive
-                                                ? BitmapDescriptorFactory.HUE_RED
-                                                : BitmapDescriptorFactory
-                                                .HUE_GREEN)));
+                                .icon(icon)
+                                .anchor(AlertMarkerHelper.ANCHOR_U, AlertMarkerHelper.ANCHOR_V)
+                                .zIndex(zIndex)
+                                .alpha(alpha));
                 if (marker != null) {
                     marker.setTag(alertId);
                     markerMap.put(alertId, marker);
@@ -556,7 +561,8 @@ public class AdminDashboardActivity extends AppCompatActivity
                         .title(name)
                         .snippet("BFP Station")
                         .icon(BitmapDescriptorFactory.defaultMarker(
-                                BitmapDescriptorFactory.HUE_BLUE)));
+                                BitmapDescriptorFactory.HUE_BLUE))
+                        .zIndex(50f));
 
         if (stationMarker != null) {
             stationMarker.setTag("station");
