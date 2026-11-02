@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.media.MediaPlayer;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -60,6 +61,7 @@ public class VoiceAssistantDialog extends Dialog {
     private boolean    manuallyStopped = false;
     private boolean    speechFinalizationRequested = false;
     private AnimatorSet pulseAnimation;
+    private MediaPlayer listeningPlayer;
 
     // ── Constructor ───────────────────────────────────────────────
     public VoiceAssistantDialog(Context ctx,
@@ -356,6 +358,7 @@ public class VoiceAssistantDialog extends Dialog {
         ringOuter.setVisibility(View.VISIBLE);
         ringInner.setVisibility(View.VISIBLE);
         startPulseAnimation();
+        playListeningSound();
 
         tvMicIcon.setText("⏹");
         setStatus(handsFreeMode
@@ -408,6 +411,7 @@ public class VoiceAssistantDialog extends Dialog {
     private void stopListeningUI() {
         handler.post(() -> {
             isListening = false;
+            stopListeningSound();
             ringOuter.setVisibility(View.GONE);
             ringInner.setVisibility(View.GONE);
             stopPulseAnimation();
@@ -692,8 +696,41 @@ public class VoiceAssistantDialog extends Dialog {
     // ════════════════════════════════════════════════════════════
     //  Cleanup
     // ════════════════════════════════════════════════════════════
+    private void playListeningSound() {
+        try {
+            stopListeningSound();
+            listeningPlayer = MediaPlayer.create(getContext(), R.raw.ai_listening_sound);
+            if (listeningPlayer != null) {
+                listeningPlayer.setOnCompletionListener(mp -> {
+                    try {
+                        mp.release();
+                    } catch (Exception ignored) {}
+                    if (listeningPlayer == mp) {
+                        listeningPlayer = null;
+                    }
+                });
+                listeningPlayer.start();
+            }
+        } catch (Exception e) {
+            android.util.Log.e("VoiceAssistantDialog", "Error playing listening sound", e);
+        }
+    }
+
+    private void stopListeningSound() {
+        if (listeningPlayer != null) {
+            try {
+                if (listeningPlayer.isPlaying()) {
+                    listeningPlayer.stop();
+                }
+                listeningPlayer.release();
+            } catch (Exception ignored) {}
+            listeningPlayer = null;
+        }
+    }
+
     @Override
     public void dismiss() {
+        stopListeningSound();
         handler.removeCallbacks(finalizeSpeechRunnable);
         stopPulseAnimation();
         if (assistant != null) {
