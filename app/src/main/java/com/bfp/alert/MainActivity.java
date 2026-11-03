@@ -182,7 +182,16 @@ public class MainActivity extends AppCompatActivity {
 
     private VoiceAssistantDialog voiceAssistantDialog;
 
+    public boolean isHandsFreeEnabled() {
+        return getSharedPreferences("bfp_prefs", MODE_PRIVATE)
+                .getBoolean("handsFreeVoiceEnabled", false);
+    }
+
     public void showVoiceAssistant() {
+        showVoiceAssistant(isHandsFreeEnabled());
+    }
+
+    public void showVoiceAssistant(boolean handsFree) {
         if (voiceAssistantDialog != null && voiceAssistantDialog.isShowing()) {
             return;
         }
@@ -221,21 +230,37 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     @Override
+                    public void onOpenProfile() {
+                        switchToProfile();
+                    }
+
+                    @Override
+                    public void onOpenSOS() {
+                        switchToSOS();
+                    }
+
+                    @Override
                     public void onCheckStatus() {
-                        sosFragment.checkCurrentAlertStatus();
+                        if (sosFragment != null) {
+                            sosFragment.checkCurrentAlertStatus();
+                        }
                     }
 
                     @Override
                     public void onCancelSOS() {
-                        sosFragment.cancelActiveSOS();
+                        if (sosFragment != null) {
+                            sosFragment.cancelActiveSOS();
+                        }
                     }
 
                     @Override
                     public void onUpdateCondition(String conditionNotes) {
-                        sosFragment.updateAlertCondition(conditionNotes);
+                        if (sosFragment != null) {
+                            sosFragment.updateAlertCondition(conditionNotes);
+                        }
                     }
                 },
-                false);
+                handsFree);
 
         VoiceAssistantDialog shown = voiceAssistantDialog;
         shown.setOnDismissListener(d -> {
@@ -246,9 +271,28 @@ public class MainActivity extends AppCompatActivity {
         shown.show();
     }
 
+    public void dismissVoiceAssistant() {
+        if (voiceAssistantDialog != null) {
+            try {
+                voiceAssistantDialog.dismiss();
+            } catch (Exception ignored) {}
+            voiceAssistantDialog = null;
+        }
+    }
+
     public void triggerSOSFromVoice(String role, String incidentNotes) {
         switchToSOS();
-        sosFragment.sendSOSAlert(role, incidentNotes);
+        if (sosFragment != null) {
+            sosFragment.sendSOSAlert(role, incidentNotes);
+        }
+    }
+
+    public void switchToProfile() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.profile);
+        }
+        loadFragment(profileFragment);
     }
 
     public void switchToSOS() {

@@ -25,6 +25,10 @@ import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
+import java.util.List;
+import java.util.ArrayList;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -39,10 +43,12 @@ public class BLESOSService extends Service {
     private static final int NOTIFICATION_ID_FOREGROUND = 1001;
     private static final int NOTIFICATION_ID_SOS = 1002;
 
-    public static final String ACTION_BLE_STATE_CHANGED = "com.bfp.alert.BLE_STATE_CHANGED";
-    public static final String ACTION_SOS_SENT          = "com.bfp.alert.SOS_SENT";
-    public static final String EXTRA_CONNECTED          = "extra_connected";
-    public static final String EXTRA_ALERT_ID           = "extra_alert_id";
+    public static final String ACTION_BLE_STATE_CHANGED    = "com.bfp.alert.BLE_STATE_CHANGED";
+    public static final String ACTION_SOS_SENT             = "com.bfp.alert.SOS_SENT";
+    public static final String ACTION_BLE_ROLE_CONFIRMED   = "com.bfp.alert.BLE_ROLE_CONFIRMED";
+    public static final String EXTRA_CONNECTED             = "extra_connected";
+    public static final String EXTRA_ALERT_ID              = "extra_alert_id";
+    public static final String EXTRA_ROLE                  = "extra_role";
 
     private static final String PREFS     = "bfp_prefs";
     private static final String KEY_ALERT = "activeAlertId";
@@ -55,6 +61,7 @@ public class BLESOSService extends Service {
     private boolean isConnected = false;
     private String lastDeviceCoordinates = null;
     private long lastTriggerTime = 0;
+    private TextToSpeech tts = null;
 
     public static boolean isDeviceConnected() {
         return sInstance != null && sInstance.isConnected;
@@ -90,8 +97,9 @@ public class BLESOSService extends Service {
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
         createNotificationChannels();
-        startForegroundServiceNotification("Searching for ESP32 SOS button...");
+        startForegroundServiceNotification("Searching for Respondo Wearable...");
 
+        initTTS();
         initBLE();
     }
 
@@ -106,7 +114,7 @@ public class BLESOSService extends Service {
                     "ESP32 Connection Monitor",
                     NotificationManager.IMPORTANCE_LOW
             );
-            monitorChan.setDescription("Maintains background Bluetooth connection to the ESP32 panic button");
+            monitorChan.setDescription("Maintains direct Bluetooth connection to Respondo Wearable");
             nm.createNotificationChannel(monitorChan);
 
             // High priority emergency alert channel with sound & vibration
@@ -115,7 +123,7 @@ public class BLESOSService extends Service {
                     "Emergency SOS Alerts",
                     NotificationManager.IMPORTANCE_HIGH
             );
-            alertChan.setDescription("Alert notifications when ESP32 panic button is triggered");
+            alertChan.setDescription("Alert notifications when Respondo Wearable is triggered");
             alertChan.enableVibration(true);
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
@@ -155,7 +163,7 @@ public class BLESOSService extends Service {
         );
 
         return new NotificationCompat.Builder(this, CHANNEL_ID_MONITOR)
-                .setContentTitle("Respondo ESP32 Monitor")
+                .setContentTitle("Respondo Wearable Monitor")
                 .setContentText(statusText)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
@@ -170,6 +178,70 @@ public class BLESOSService extends Service {
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_FOREGROUND, notification);
         }
+    }
+
+    private void initTTS() {
+        try {
+            tts = new TextToSpeech(this, status -> {
+                if (status == TextToSpeech.SUCCESS && tts != null) {
+                    tts.setLanguage(Locale.US);
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "TTS initialization error: " + e.getMessage());
+        }
+    }
+
+    private void speakText(String textToSpeak) {
+        if (tts != null && textToSpeak != null && !textToSpeak.isEmpty()) {
+            tts.speak(textToSpeak, TextToSpeech.QUEUE_FLUSH, null, "BFP_BLE_" + System.currentTimeMillis());
+        }
+    }
+
+    private void handleRoleConfirmation(String role) {
+        String alertId = getSavedAlertId();
+        Log.i(TAG, "Wearable confirmed role: " + role + " for alertId: " + alertId);
+
+        if (alertId != null && !alertId.isEmpty()) {
+            if ("victim".equalsIgnoreCase(role)) {
+                Map<String, Object> update = new HashMap<>();
+                update.put("reporterRole", "victim");
+                update.put("countOfVictims", 1);
+                update.put("reportSubmitted", true);
+
+                try {
+                    UserProfile profile = UserProfileManager.getLocalProfile(this);
+                    if (profile != null && !profile.isEmpty()) {
+                        if (!profile.getFullName().isEmpty()) update.put("reporterName", profile.getFullName());
+                        if (!profile.getPhone().isEmpty()) update.put("reporterPhone", profile.getPhone());
+                        update.put("reporterProfile", profile.toMap());
+
+                        Map<String, Object> patientMap = profile.toPatientMap();
+                        List<Map<String, Object>> patients = new ArrayList<>();
+                        patients.add(patientMap);
+                        update.put("patients", patients);
+                    }
+                } catch (Exception err) {
+                    Log.e(TAG, "Error attaching profile to victim alert: " + err.getMessage());
+                }
+
+                db.collection("sos_alerts").document(alertId).update(update);
+                updateForegroundNotification("Respondo Wearable: Confirmed as VICTIM");
+                speakText("Victim status confirmed. Your medical profile and emergency contacts have been sent to BFP.");
+            } else if ("bystander".equalsIgnoreCase(role)) {
+                Map<String, Object> update = new HashMap<>();
+                update.put("reporterRole", "bystander");
+                db.collection("sos_alerts").document(alertId).update(update);
+                updateForegroundNotification("Respondo Wearable: Confirmed as BYSTANDER");
+                speakText("Bystander status confirmed. Responders have been alerted.");
+            }
+        }
+
+        Intent intent = new Intent(ACTION_BLE_ROLE_CONFIRMED);
+        intent.putExtra(EXTRA_ROLE, role);
+        intent.putExtra(EXTRA_ALERT_ID, alertId);
+        intent.setPackage(getPackageName());
+        sendBroadcast(intent);
     }
 
     private void initBLE() {
@@ -189,24 +261,34 @@ public class BLESOSService extends Service {
             }
 
             @Override
+            public void onRoleConfirmed(String role) {
+                Log.d(TAG, "🚨 onRoleConfirmed from wearable: " + role);
+                handleRoleConfirmation(role);
+            }
+
+            @Override
             public void onConnected() {
-                Log.d(TAG, "ESP32 Connected to BLESOSService");
+                Log.d(TAG, "Respondo Wearable Connected to BLESOSService");
                 isConnected = true;
-                updateForegroundNotification("Connected to ESP32 SOS button");
+                updateForegroundNotification("Connected to paired Respondo Wearable");
                 broadcastState(true);
             }
 
             @Override
             public void onDisconnected() {
-                Log.d(TAG, "ESP32 Disconnected from BLESOSService");
+                Log.d(TAG, "Respondo Wearable Disconnected from BLESOSService");
                 isConnected = false;
-                updateForegroundNotification("Searching for ESP32 SOS button...");
+                if (bleManager != null && bleManager.isBonded()) {
+                    updateForegroundNotification("Searching for paired Respondo Wearable...");
+                } else {
+                    updateForegroundNotification("Respondo Wearable: Pair in Phone Bluetooth Settings");
+                }
                 broadcastState(false);
             }
 
             @Override
             public void onScanStarted() {
-                Log.d(TAG, "Scanning for ESP32 device...");
+                Log.d(TAG, "Scanning for Respondo Wearable...");
             }
         });
 
@@ -280,6 +362,7 @@ public class BLESOSService extends Service {
 
                     saveAlertId(alertId);
                     showHighPriorityAlertNotification(alertId);
+                    speakText("Emergency alert sent. Long press your wearable if you are the victim, or double press if reporting for someone else.");
 
                     Intent intent = new Intent(ACTION_SOS_SENT);
                     intent.putExtra(EXTRA_ALERT_ID, alertId);
@@ -299,7 +382,7 @@ public class BLESOSService extends Service {
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_ALERTS)
                 .setContentTitle("🚨 EMERGENCY SOS SENT TO BFP!")
-                .setContentText("ESP32 panic button triggered. Help has been dispatched.")
+                .setContentText("Respondo Wearable panic button triggered. Help has been dispatched.")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -330,6 +413,11 @@ public class BLESOSService extends Service {
                 .apply();
     }
 
+    private String getSavedAlertId() {
+        return getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_ALERT, null);
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (bleManager != null && !bleManager.isConnected()) {
@@ -344,6 +432,11 @@ public class BLESOSService extends Service {
         sInstance = null;
         if (bleManager != null) {
             bleManager.disconnect();
+        }
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+            tts = null;
         }
     }
 

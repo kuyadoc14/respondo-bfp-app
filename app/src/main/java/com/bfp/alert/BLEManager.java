@@ -25,6 +25,8 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import android.content.SharedPreferences;
 import java.util.UUID;
 
 public class BLEManager {
@@ -32,17 +34,22 @@ public class BLEManager {
     private static final String TAG = "BLEManager";
 
     // Must match ESP32 sketch exactly
-    private static final String SERVICE_UUID =
+    public static final String SERVICE_UUID =
             "12345678-1234-1234-1234-123456789abc";
-    private static final String CHARACTERISTIC_UUID =
+    public static final String CHARACTERISTIC_UUID =
             "87654321-4321-4321-4321-cba987654321";
-    private static final String DEVICE_NAME =
+    public static final String DEVICE_NAME =
+            "Respondo Wearable";
+    public static final String LEGACY_DEVICE_NAME =
             "BFP-SOS-Device";
     private static final String CCCD_UUID =
             "00002902-0000-1000-8000-00805f9b34fb";
+    private static final String PREF_BLE_MAC =
+            "ble_wearable_mac";
 
     public interface BLEListener {
         void onSOSReceived(String deviceInfo);
+        default void onRoleConfirmed(String role) {}
         void onConnected();
         void onDisconnected();
         void onScanStarted();
@@ -73,6 +80,29 @@ public class BLEManager {
         }
     }
 
+    public BluetoothDevice getBondedWearable() {
+        if (adapter == null || !adapter.isEnabled()) return null;
+        if (ActivityCompat.checkSelfPermission(ctx,
+                Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+            return null;
+        }
+        Set<BluetoothDevice> bonded = adapter.getBondedDevices();
+        if (bonded != null) {
+            for (BluetoothDevice d : bonded) {
+                String bName = d.getName();
+                if (DEVICE_NAME.equals(bName) || LEGACY_DEVICE_NAME.equals(bName)) {
+                    return d;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isBonded() {
+        return getBondedWearable() != null;
+    }
+
     // ── Start scanning for ESP32 ─────────────────────────────────
     public void startScan() {
         if (adapter == null || !adapter.isEnabled()) {
@@ -88,6 +118,17 @@ public class BLEManager {
         }
 
         if (scanning || connected) return;
+
+        // Priority 1: Direct connect to already paired/bonded wearable
+        BluetoothDevice paired = getBondedWearable();
+        if (paired != null) {
+            Log.d(TAG, "Found paired wearable in phone settings: " + paired.getName() + " (" + paired.getAddress() + ") — connecting directly...");
+            connectToDevice(paired);
+            return;
+        } else {
+            Log.i(TAG, "Wearable not yet paired in Android Bluetooth settings. Scanning to pair...");
+        }
+
         scanning = true;
 
         scanner = adapter.getBluetoothLeScanner();
@@ -99,11 +140,8 @@ public class BLEManager {
 
         // Filter by device name
         List<ScanFilter> filters = new ArrayList<>();
-        ScanFilter filter =
-                new ScanFilter.Builder()
-                        .setDeviceName(DEVICE_NAME)
-                        .build();
-        filters.add(filter);
+        filters.add(new ScanFilter.Builder().setDeviceName(DEVICE_NAME).build());
+        filters.add(new ScanFilter.Builder().setDeviceName(LEGACY_DEVICE_NAME).build());
 
         ScanSettings settings =
                 new ScanSettings.Builder()
@@ -164,10 +202,13 @@ public class BLEManager {
                             result.getDevice();
                     String name = device.getName();
 
-                    if (DEVICE_NAME.equals(name)) {
-                        Log.d(TAG, "Found " + DEVICE_NAME
-                                + " — connecting...");
+                    if (DEVICE_NAME.equals(name) || LEGACY_DEVICE_NAME.equals(name)) {
+                        Log.d(TAG, "Found " + name + " (" + device.getAddress() + ") during scan");
                         stopScan();
+                        if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                            Log.i(TAG, "Initiating Bluetooth pairing with " + name);
+                            device.createBond();
+                        }
                         connectToDevice(device);
                     }
                 }
@@ -185,10 +226,18 @@ public class BLEManager {
 
     // ── Connect to ESP32 ─────────────────────────────────────────
     private void connectToDevice(BluetoothDevice device) {
+        if (device == null) return;
         if (ActivityCompat.checkSelfPermission(ctx,
                 Manifest.permission.BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED)
             return;
+
+        try {
+            ctx.getSharedPreferences("bfp_prefs", Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(PREF_BLE_MAC, device.getAddress())
+                    .apply();
+        } catch (Exception ignored) {}
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             gatt = device.connectGatt(ctx, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
@@ -257,17 +306,7 @@ public class BLEManager {
                         BluetoothGattCharacteristic c) {
                     String value = c.getStringValue(0);
                     Log.d(TAG, "BLE received: " + value);
-
-                    handler.post(() -> {
-                        if (value != null && (value.startsWith("SOS_TRIGGER") || "SOS_TRIGGER".equals(value))) {
-                            Log.d(TAG, "SOS trigger received!");
-                            if (listener != null)
-                                listener.onSOSReceived("");
-                        } else if (value != null && value.startsWith("LAT:")) {
-                            if (listener != null)
-                                listener.onSOSReceived(value);
-                        }
-                    });
+                    processReceivedMessage(value);
                 }
 
                 // For Android 13+
@@ -278,15 +317,24 @@ public class BLEManager {
                         byte[] value) {
                     String str = new String(value);
                     Log.d(TAG, "BLE received (new): " + str);
+                    processReceivedMessage(str);
+                }
 
+                private void processReceivedMessage(String raw) {
+                    if (raw == null) return;
+                    String value = raw.trim();
                     handler.post(() -> {
-                        if (str != null && (str.startsWith("SOS_TRIGGER") || "SOS_TRIGGER".equals(str))) {
-                            Log.d(TAG, "SOS trigger received (byte array)!");
-                            if (listener != null)
-                                listener.onSOSReceived("");
-                        } else if (str != null && str.startsWith("LAT:")) {
-                            if (listener != null)
-                                listener.onSOSReceived(str);
+                        if (value.startsWith("SOS_TRIGGER") || "SOS".equals(value)) {
+                            Log.d(TAG, "🚨 SOS trigger received!");
+                            if (listener != null) listener.onSOSReceived("");
+                        } else if (value.startsWith("ROLE_VICTIM") || "VICTIM".equals(value)) {
+                            Log.d(TAG, "🚨 ROLE_VICTIM received from wearable!");
+                            if (listener != null) listener.onRoleConfirmed("victim");
+                        } else if (value.startsWith("ROLE_BYSTANDER") || "BYSTANDER".equals(value)) {
+                            Log.d(TAG, "👤 ROLE_BYSTANDER received from wearable!");
+                            if (listener != null) listener.onRoleConfirmed("bystander");
+                        } else if (value.startsWith("LAT:")) {
+                            if (listener != null) listener.onSOSReceived(value);
                         }
                     });
                 }

@@ -116,13 +116,35 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="I AM the Victim"
-                    android:textColor="@color/primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="I AM the Victim"
+                        android:textColor="@color/primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔘 Hold Wearable"
+                        android:textColor="#EA580C"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold"
+                        android:layout_marginStart="8dp"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        android:background="#20EA580C"/>
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvVictimSubtext"
@@ -188,13 +210,35 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="I am a Bystander / Witness"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="I am a Bystander"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔘 2x Wearable"
+                        android:textColor="#3B82F6"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold"
+                        android:layout_marginStart="8dp"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        android:background="#203B82F6"/>
+
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"

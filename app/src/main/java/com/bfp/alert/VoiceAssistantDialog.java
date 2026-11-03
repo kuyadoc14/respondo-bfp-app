@@ -45,6 +45,8 @@ public class VoiceAssistantDialog extends Dialog {
                 onSearchFirstAid(item.title);
             }
         }
+        default void onOpenProfile() {}
+        default void onOpenSOS() {}
         default void onCheckStatus() {}
         default void onCancelSOS() {}
         default void onUpdateCondition(String conditionNotes) {}
@@ -111,6 +113,12 @@ public class VoiceAssistantDialog extends Dialog {
                     android.view.Gravity.BOTTOM);
             window.setBackgroundDrawableResource(
                     android.R.color.transparent);
+            if (handsFreeMode) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+                window.setFlags(
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            }
         }
 
         // Bind views
@@ -554,25 +562,7 @@ public class VoiceAssistantDialog extends Dialog {
         switch (action) {
 
             case ClaudeVoiceAssistant.ACTION_SEND_SOS_INCIDENT:
-                handler.postDelayed(() -> {
-                    if (actionListener != null) {
-                        String notes = (data != null && !data.isEmpty()) ? data : lastUserTranscript;
-                        actionListener.onSendSOSWithDetails(notes, "victim");
-                    }
-                    dismiss();
-                }, 600);
-                break;
-
             case ClaudeVoiceAssistant.ACTION_SEND_SOS_VICTIM:
-                handler.postDelayed(() -> {
-                    if (actionListener != null) {
-                        String notes = (data != null && !data.isEmpty()) ? data : lastUserTranscript;
-                        actionListener.onSendSOSWithDetails(notes, "victim");
-                    }
-                    dismiss();
-                }, 600);
-                break;
-
             case ClaudeVoiceAssistant.ACTION_SEND_SOS:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
@@ -580,22 +570,28 @@ public class VoiceAssistantDialog extends Dialog {
                                 ? data : lastUserTranscript;
                         actionListener.onSendSOSWithDetails(notes, "victim");
                     }
-                    dismiss();
+                    if (!handsFreeMode) {
+                        dismiss();
+                    } else {
+                        scheduleListeningRestart(1200);
+                    }
                 }, 600);
                 break;
 
-            case ClaudeVoiceAssistant
-                         .ACTION_OPEN_FIRSTAID:
+            case ClaudeVoiceAssistant.ACTION_OPEN_FIRSTAID:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
                         actionListener.onOpenFirstAid();
                     }
-                    dismiss();
-                }, 600);
+                    if (!handsFreeMode) {
+                        dismiss();
+                    } else {
+                        scheduleListeningRestart(800);
+                    }
+                }, 400);
                 break;
 
-            case ClaudeVoiceAssistant
-                         .ACTION_SEARCH_FIRSTAID:
+            case ClaudeVoiceAssistant.ACTION_SEARCH_FIRSTAID:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
                         FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(data);
@@ -606,14 +602,47 @@ public class VoiceAssistantDialog extends Dialog {
                                     data != null ? data : "");
                         }
                     }
-                    dismiss();
-                }, 600);
+                    if (!handsFreeMode) {
+                        dismiss();
+                    } else {
+                        scheduleListeningRestart(800);
+                    }
+                }, 400);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_OPEN_PROFILE:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onOpenProfile();
+                    }
+                    if (!handsFreeMode) {
+                        dismiss();
+                    } else {
+                        scheduleListeningRestart(800);
+                    }
+                }, 400);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_OPEN_SOS:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onOpenSOS();
+                    }
+                    if (!handsFreeMode) {
+                        dismiss();
+                    } else {
+                        scheduleListeningRestart(800);
+                    }
+                }, 400);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_CHECK_STATUS:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
                         actionListener.onCheckStatus();
+                    }
+                    if (handsFreeMode) {
+                        scheduleListeningRestart(800);
                     }
                 }, 400);
                 break;
@@ -623,40 +652,50 @@ public class VoiceAssistantDialog extends Dialog {
                     if (actionListener != null) {
                         actionListener.onCancelSOS();
                     }
+                    if (handsFreeMode) {
+                        scheduleListeningRestart(800);
+                    }
                 }, 400);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_FLASHLIGHT_ON:
                 setFlashlight(true);
+                if (handsFreeMode) scheduleListeningRestart(800);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_FLASHLIGHT_OFF:
                 setFlashlight(false);
+                if (handsFreeMode) scheduleListeningRestart(800);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_PLAY_SIREN:
                 playSiren();
+                if (handsFreeMode) scheduleListeningRestart(800);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_STOP_SIREN:
                 stopSiren();
+                if (handsFreeMode) scheduleListeningRestart(800);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_UPDATE_CONDITION:
                 handler.postDelayed(() -> {
-                    if (actionListener != null) {
-                        actionListener.onUpdateCondition(data != null ? data : "");
+                    if (actionListener != null && data != null && !data.isEmpty()) {
+                        actionListener.onUpdateCondition(data);
+                    }
+                    if (handsFreeMode) {
+                        scheduleListeningRestart(800);
                     }
                 }, 400);
                 break;
 
-            case ClaudeVoiceAssistant
-                         .ACTION_CALL_STATION:
-                handler.postDelayed(
-                        this::callBFP, 600);
+            case ClaudeVoiceAssistant.ACTION_CALL_STATION:
+                handler.postDelayed(this::callBFP, 600);
+                if (handsFreeMode) scheduleListeningRestart(1500);
                 break;
 
             default:
+                if (handsFreeMode) scheduleListeningRestart(800);
                 break;
         }
     }

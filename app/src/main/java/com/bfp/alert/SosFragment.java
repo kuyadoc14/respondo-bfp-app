@@ -76,6 +76,7 @@ public class SosFragment extends Fragment {
     // BLE
     private BLEManager bleManager;
     private View       bleBadge;
+    private RoleSelectionDialog roleSelectionDialog;
 
     private final BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override
@@ -96,6 +97,9 @@ public class SosFragment extends Fragment {
                     attachLiveListener(alertId);
                     promptRoleSelection(alertId);
                 }
+            } else if (BLESOSService.ACTION_BLE_ROLE_CONFIRMED.equals(action)) {
+                String role = intent.getStringExtra(BLESOSService.EXTRA_ROLE);
+                handleWearableRole(role);
             }
         }
     };
@@ -158,6 +162,9 @@ public class SosFragment extends Fragment {
                 enableHandsFreeMode();
             } else {
                 setHandsFreeEnabled(false);
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).dismissVoiceAssistant();
+                }
                 if (voiceAssistantDialog != null
                         && voiceAssistantDialog.isShowing()) {
                     voiceAssistantDialog.dismiss();
@@ -205,6 +212,7 @@ public class SosFragment extends Fragment {
             IntentFilter filter = new IntentFilter();
             filter.addAction(BLESOSService.ACTION_BLE_STATE_CHANGED);
             filter.addAction(BLESOSService.ACTION_SOS_SENT);
+            filter.addAction(BLESOSService.ACTION_BLE_ROLE_CONFIRMED);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 getContext().registerReceiver(bleReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             } else {
@@ -584,8 +592,13 @@ public class SosFragment extends Fragment {
 
     private void promptRoleSelection(String alertId) {
         if (!isAdded()) return;
-        RoleSelectionDialog dialog = RoleSelectionDialog.newInstance(alertId);
-        dialog.setOnRoleSelectedListener(new RoleSelectionDialog.OnRoleSelectedListener() {
+        if (roleSelectionDialog != null && roleSelectionDialog.isAdded()) {
+            try {
+                roleSelectionDialog.dismiss();
+            } catch (Exception ignored) {}
+        }
+        roleSelectionDialog = RoleSelectionDialog.newInstance(alertId);
+        roleSelectionDialog.setOnRoleSelectedListener(new RoleSelectionDialog.OnRoleSelectedListener() {
             @Override
             public void onRoleSelected(String role, UserProfile profile) {
                 if ("victim".equalsIgnoreCase(role)) {
@@ -604,7 +617,31 @@ public class SosFragment extends Fragment {
                 }
             }
         });
-        dialog.show(getChildFragmentManager(), "role_selection");
+        roleSelectionDialog.show(getChildFragmentManager(), "role_selection");
+    }
+
+    private void handleWearableRole(String role) {
+        if (!isAdded() || getContext() == null) return;
+
+        if (roleSelectionDialog != null && roleSelectionDialog.isAdded()) {
+            try {
+                roleSelectionDialog.dismiss();
+            } catch (Exception ignored) {}
+            roleSelectionDialog = null;
+        }
+
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if ("victim".equalsIgnoreCase(role)) {
+            if (alertId != null) {
+                autoSubmitVictimDetails(alertId, null);
+            }
+            Toast.makeText(getContext(), "🚑 Wearable: Victim details auto-transmitted to BFP.", Toast.LENGTH_LONG).show();
+        } else if ("bystander".equalsIgnoreCase(role)) {
+            if (alertId != null) {
+                openAccidentReportSheet(alertId, "bystander", null);
+            }
+            Toast.makeText(getContext(), "👤 Wearable: Bystander report mode opened.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openAccidentReportSheet(String alertId, String role, UserProfile profile) {
@@ -639,10 +676,18 @@ public class SosFragment extends Fragment {
             return;
         }
 
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showVoiceAssistant(isHandsFreeEnabled());
+            return;
+        }
         showVoiceAssistant(isHandsFreeEnabled());
     }
 
     private void showVoiceAssistant(boolean handsFreeMode) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showVoiceAssistant(handsFreeMode);
+            return;
+        }
         if (voiceAssistantDialog != null
                 && voiceAssistantDialog.isShowing()) {
             return;
@@ -1058,7 +1103,7 @@ public class SosFragment extends Fragment {
     // ─────────────────────────────────────────────────────────
     @Override
     public void onDestroyView() {
-        if (voiceAssistantDialog != null) {
+        if (voiceAssistantDialog != null && !isHandsFreeEnabled()) {
             voiceAssistantDialog.dismiss();
             voiceAssistantDialog = null;
         }

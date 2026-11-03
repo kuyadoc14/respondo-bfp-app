@@ -40,6 +40,8 @@ public class ClaudeVoiceAssistant {
     public static final String ACTION_SEND_SOS_INCIDENT = "SEND_SOS_INCIDENT";
     public static final String ACTION_OPEN_FIRSTAID     = "OPEN_FIRSTAID";
     public static final String ACTION_SEARCH_FIRSTAID   = "SEARCH_FIRSTAID";
+    public static final String ACTION_OPEN_PROFILE      = "OPEN_PROFILE";
+    public static final String ACTION_OPEN_SOS          = "OPEN_SOS";
     public static final String ACTION_CALL_STATION      = "CALL_STATION";
     public static final String ACTION_CHECK_STATUS      = "CHECK_STATUS";
     public static final String ACTION_CANCEL_SOS        = "CANCEL_SOS";
@@ -66,6 +68,7 @@ public class ClaudeVoiceAssistant {
     private       String       lastSpoken = "";
     private final OkHttpClient httpClient;
     private final Handler      mainHandler;
+    private String             lastDetectedGuideTitle = null;
 
     // Conversation history
     private final List<JSONObject> history =
@@ -350,6 +353,11 @@ public class ClaudeVoiceAssistant {
                 actionData = userText;
             }
 
+            // If action is SEARCH_FIRSTAID and actionData is empty, use lastDetectedGuideTitle
+            if (ACTION_SEARCH_FIRSTAID.equals(action) && (actionData == null || actionData.trim().isEmpty())) {
+                actionData = (lastDetectedGuideTitle != null) ? lastDetectedGuideTitle : userText;
+            }
+
             if (!isValidAction(action)) {
                 action = ACTION_NONE;
             }
@@ -378,8 +386,9 @@ public class ClaudeVoiceAssistant {
     private String detectActionFromContext(
             String userText,
             String text) {
-        String lowerUser = userText.toLowerCase();
+        String lowerUser = userText.toLowerCase().trim();
         String lowerAi   = text.toLowerCase();
+        this.lastDetectedGuideTitle = null;
 
         if (lowerUser.contains("flashlight on") || lowerUser.contains("turn on flashlight") || lowerUser.contains("open flashlight") || lowerUser.contains("buksan ang ilaw")) {
             return ACTION_FLASHLIGHT_ON;
@@ -403,15 +412,40 @@ public class ClaudeVoiceAssistant {
             return ACTION_CALL_STATION;
         }
 
-        // Comprehensive check for ANY emergency, danger, incident, or distress
+        // 1. Navigation intents
+        if (lowerUser.contains("open first aid") || lowerUser.contains("first aid panel") || lowerUser.equals("first aid") || lowerUser.contains("first aid guides")) {
+            return ACTION_OPEN_FIRSTAID;
+        }
+        if (lowerUser.contains("open profile") || lowerUser.contains("go to profile") || lowerUser.contains("my profile") || lowerUser.contains("profile panel")) {
+            return ACTION_OPEN_PROFILE;
+        }
+        if (lowerUser.contains("open sos") || lowerUser.contains("go to sos") || lowerUser.contains("back to sos") || lowerUser.contains("radar screen") || lowerUser.contains("sos panel")) {
+            return ACTION_OPEN_SOS;
+        }
+
+        // 2. Specific First Aid Guides (e.g. "open burn", "cpr", "open cpr", "choking", "snake bite")
+        String strippedGuideQuery = lowerUser
+                .replaceAll("^(open|show|display|search|find|view|read|go to)\\s+", "")
+                .replaceAll("^(first aid for|first aid|guide for|treatment for|how to do|how to treat)\\s+", "")
+                .trim();
+        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(strippedGuideQuery.isEmpty() ? lowerUser : strippedGuideQuery);
+        if (match == null && !strippedGuideQuery.equals(lowerUser)) {
+            match = FirstAidRepository.getInstance().findMatchingItem(lowerUser);
+        }
+
+        if (match != null) {
+            this.lastDetectedGuideTitle = match.title;
+            return ACTION_SEARCH_FIRSTAID;
+        }
+
+        // 3. Emergency SOS check (fires, leaks, burning house, crashes, acute danger)
         boolean hasEmergencyIndicator = lowerUser.contains("gas leak")
                 || lowerUser.contains("leak")
-                || lowerUser.contains("burning")
-                || lowerUser.contains("burn")
-                || lowerUser.contains("fire")
+                || lowerUser.contains("house is burning")
+                || lowerUser.contains("house is on fire")
+                || lowerUser.contains("building fire")
                 || lowerUser.contains("sunog")
-                || lowerUser.contains("smoke")
-                || lowerUser.contains("usok")
+                || lowerUser.contains("nasusunog")
                 || lowerUser.contains("trapped")
                 || lowerUser.contains("naipit")
                 || lowerUser.contains("crash")
@@ -421,10 +455,7 @@ public class ClaudeVoiceAssistant {
                 || lowerUser.contains("sumabog")
                 || lowerUser.contains("drowning")
                 || lowerUser.contains("nalulunod")
-                || lowerUser.contains("bleeding")
-                || lowerUser.contains("dugo")
-                || lowerUser.contains("broken")
-                || lowerUser.contains("fracture")
+                || lowerUser.contains("bleeding heavily")
                 || lowerUser.contains("heart attack")
                 || lowerUser.contains("stroke")
                 || lowerUser.contains("help")
@@ -446,10 +477,6 @@ public class ClaudeVoiceAssistant {
             return ACTION_SEND_SOS_INCIDENT;
         }
 
-        if (lowerUser.contains("first aid guide") || lowerUser.contains("open first aid") || lowerUser.contains("first aid guides")) {
-            return ACTION_OPEN_FIRSTAID;
-        }
-
         return ACTION_NONE;
     }
 
@@ -459,6 +486,8 @@ public class ClaudeVoiceAssistant {
                 || ACTION_SEND_SOS_INCIDENT.equals(action)
                 || ACTION_OPEN_FIRSTAID.equals(action)
                 || ACTION_SEARCH_FIRSTAID.equals(action)
+                || ACTION_OPEN_PROFILE.equals(action)
+                || ACTION_OPEN_SOS.equals(action)
                 || ACTION_CALL_STATION.equals(action)
                 || ACTION_CHECK_STATUS.equals(action)
                 || ACTION_CANCEL_SOS.equals(action)
