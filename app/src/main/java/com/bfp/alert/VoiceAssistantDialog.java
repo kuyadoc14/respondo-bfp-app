@@ -35,6 +35,9 @@ public class VoiceAssistantDialog extends Dialog {
         default void onSendSOSWithRole(String role) {
             onSendSOS();
         }
+        default void onSendSOSWithDetails(String incidentNotes, String role) {
+            onSendSOSWithRole(role);
+        }
         void onOpenFirstAid();
         void onSearchFirstAid(String query);
         default void onOpenFirstAidDetail(FirstAidItem item) {
@@ -69,6 +72,7 @@ public class VoiceAssistantDialog extends Dialog {
     // State
     private boolean    isListening  = false;
     private boolean    isProcessing = false;
+    private String     lastUserTranscript = "";
     private boolean    manuallyStopped = false;
     private boolean    speechFinalizationRequested = false;
     private AnimatorSet pulseAnimation;
@@ -436,6 +440,7 @@ public class VoiceAssistantDialog extends Dialog {
     private void sendToAssistant(String userText) {
         if (isProcessing) return;
         isProcessing = true;
+        lastUserTranscript = userText;
 
         stopListeningUI();
         showUserTranscript(userText);
@@ -548,10 +553,21 @@ public class VoiceAssistantDialog extends Dialog {
 
         switch (action) {
 
+            case ClaudeVoiceAssistant.ACTION_SEND_SOS_INCIDENT:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        String notes = (data != null && !data.isEmpty()) ? data : lastUserTranscript;
+                        actionListener.onSendSOSWithDetails(notes, "victim");
+                    }
+                    dismiss();
+                }, 600);
+                break;
+
             case ClaudeVoiceAssistant.ACTION_SEND_SOS_VICTIM:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        actionListener.onSendSOSWithRole("victim");
+                        String notes = (data != null && !data.isEmpty()) ? data : lastUserTranscript;
+                        actionListener.onSendSOSWithDetails(notes, "victim");
                     }
                     dismiss();
                 }, 600);
@@ -560,11 +576,9 @@ public class VoiceAssistantDialog extends Dialog {
             case ClaudeVoiceAssistant.ACTION_SEND_SOS:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        if ("victim".equalsIgnoreCase(data)) {
-                            actionListener.onSendSOSWithRole("victim");
-                        } else {
-                            actionListener.onSendSOS();
-                        }
+                        String notes = (data != null && !data.isEmpty() && !"victim".equalsIgnoreCase(data))
+                                ? data : lastUserTranscript;
+                        actionListener.onSendSOSWithDetails(notes, "victim");
                     }
                     dismiss();
                 }, 600);

@@ -246,9 +246,10 @@
 
     </LinearLayout>
 
-    <!-- Voice FAB — bottom right -->
+    <!-- Voice FAB — replaced by global floating AI button in activity_main -->
     <LinearLayout
         android:id="@+id/btnVoice"
+        android:visibility="gone"
         android:layout_width="54dp"
         android:layout_height="54dp"
         android:background="@drawable/bg_mic_button"

@@ -35,19 +35,20 @@ public class ClaudeVoiceAssistant {
             "openai/gpt-oss-120b";
 
     // ── Actions ───────────────────────────────────────────────────
-    public static final String ACTION_SEND_SOS         = "SEND_SOS";
-    public static final String ACTION_SEND_SOS_VICTIM  = "SEND_SOS_VICTIM";
-    public static final String ACTION_OPEN_FIRSTAID    = "OPEN_FIRSTAID";
-    public static final String ACTION_SEARCH_FIRSTAID  = "SEARCH_FIRSTAID";
-    public static final String ACTION_CALL_STATION     = "CALL_STATION";
-    public static final String ACTION_CHECK_STATUS     = "CHECK_STATUS";
-    public static final String ACTION_CANCEL_SOS       = "CANCEL_SOS";
-    public static final String ACTION_FLASHLIGHT_ON    = "FLASHLIGHT_ON";
-    public static final String ACTION_FLASHLIGHT_OFF   = "FLASHLIGHT_OFF";
-    public static final String ACTION_PLAY_SIREN       = "PLAY_SIREN";
-    public static final String ACTION_STOP_SIREN       = "STOP_SIREN";
-    public static final String ACTION_UPDATE_CONDITION = "UPDATE_CONDITION";
-    public static final String ACTION_NONE             = "NONE";
+    public static final String ACTION_SEND_SOS          = "SEND_SOS";
+    public static final String ACTION_SEND_SOS_VICTIM   = "SEND_SOS_VICTIM";
+    public static final String ACTION_SEND_SOS_INCIDENT = "SEND_SOS_INCIDENT";
+    public static final String ACTION_OPEN_FIRSTAID     = "OPEN_FIRSTAID";
+    public static final String ACTION_SEARCH_FIRSTAID   = "SEARCH_FIRSTAID";
+    public static final String ACTION_CALL_STATION      = "CALL_STATION";
+    public static final String ACTION_CHECK_STATUS      = "CHECK_STATUS";
+    public static final String ACTION_CANCEL_SOS        = "CANCEL_SOS";
+    public static final String ACTION_FLASHLIGHT_ON     = "FLASHLIGHT_ON";
+    public static final String ACTION_FLASHLIGHT_OFF    = "FLASHLIGHT_OFF";
+    public static final String ACTION_PLAY_SIREN        = "PLAY_SIREN";
+    public static final String ACTION_STOP_SIREN        = "STOP_SIREN";
+    public static final String ACTION_UPDATE_CONDITION  = "UPDATE_CONDITION";
+    public static final String ACTION_NONE              = "NONE";
 
     // ── Callback ──────────────────────────────────────────────────
     public interface AssistantCallback {
@@ -232,7 +233,7 @@ public class ClaudeVoiceAssistant {
                     history.add(saved);
 
                     parseAndRespond(
-                            responseStr, callback);
+                            userText, responseStr, callback);
                 }
 
             } catch (java.io.IOException e) {
@@ -253,6 +254,7 @@ public class ClaudeVoiceAssistant {
 
     // ── Parse Groq response ───────────────────────────────────────
     private void parseAndRespond(
+            String userText,
             String responseStr,
             AssistantCallback callback) {
 
@@ -334,12 +336,18 @@ public class ClaudeVoiceAssistant {
             // Normalise SEND_SOS|victim to ACTION_SEND_SOS_VICTIM
             if (ACTION_SEND_SOS.equals(action) && "victim".equalsIgnoreCase(actionData)) {
                 action = ACTION_SEND_SOS_VICTIM;
-                actionData = "victim";
+                actionData = userText;
             }
 
-            // Fallback: if AI didn't include action tag, detect from text
-            if (ACTION_NONE.equals(action)) {
-                action = detectActionFromText(fullText);
+            // Fallback: if AI didn't include action tag or returned NONE, detect from user & AI context
+            if (ACTION_NONE.equals(action) || !isValidAction(action)) {
+                action = detectActionFromContext(userText, fullText);
+            }
+
+            // If action is SOS and actionData is empty, use userText as incident detail
+            if ((ACTION_SEND_SOS.equals(action) || ACTION_SEND_SOS_INCIDENT.equals(action) || ACTION_SEND_SOS_VICTIM.equals(action))
+                    && (actionData == null || actionData.trim().isEmpty())) {
+                actionData = userText;
             }
 
             if (!isValidAction(action)) {
@@ -367,56 +375,88 @@ public class ClaudeVoiceAssistant {
     }
 
     // Fallback detection if AI forgets action tag
-    private String detectActionFromText(
+    private String detectActionFromContext(
+            String userText,
             String text) {
-        String lower = text.toLowerCase();
+        String lowerUser = userText.toLowerCase();
+        String lowerAi   = text.toLowerCase();
 
-        if (lower.contains("victim") && (lower.contains("sos") || lower.contains("alert") || lower.contains("help"))) {
-            return ACTION_SEND_SOS_VICTIM;
-        }
-        if (lower.contains("flashlight on") || lower.contains("turn on flashlight") || lower.contains("open flashlight")) {
+        if (lowerUser.contains("flashlight on") || lowerUser.contains("turn on flashlight") || lowerUser.contains("open flashlight") || lowerUser.contains("buksan ang ilaw")) {
             return ACTION_FLASHLIGHT_ON;
         }
-        if (lower.contains("flashlight off") || lower.contains("turn off flashlight")) {
+        if (lowerUser.contains("flashlight off") || lowerUser.contains("turn off flashlight") || lowerUser.contains("patayin ang ilaw")) {
             return ACTION_FLASHLIGHT_OFF;
         }
-        if (lower.contains("siren") || lower.contains("alarm")) {
-            if (lower.contains("stop") || lower.contains("off") || lower.contains("silence")) {
+        if (lowerUser.contains("siren") || lowerUser.contains("alarm")) {
+            if (lowerUser.contains("stop") || lowerUser.contains("off") || lowerUser.contains("silence")) {
                 return ACTION_STOP_SIREN;
             }
             return ACTION_PLAY_SIREN;
         }
-        if (lower.contains("sending sos")
-                || lower.contains("sos alert")
-                || lower.contains("emergency alert")) {
-            return ACTION_SEND_SOS;
-        }
-        if (lower.contains("calling")
-                || lower.contains("fire station")
-                || lower.contains("dialing")) {
-            return ACTION_CALL_STATION;
-        }
-        if (lower.contains("responder")
-                || lower.contains("status")
-                || lower.contains("en route")
-                || lower.contains("deployed")) {
-            return ACTION_CHECK_STATUS;
-        }
-        if (lower.contains("cancel")
-                || lower.contains("false alarm")) {
+        if (lowerUser.contains("cancel") || lowerUser.contains("false alarm") || lowerUser.contains("kanselahin")) {
             return ACTION_CANCEL_SOS;
         }
-        if (lower.contains("first aid guide")
-                || lower.contains("opening the guide")
-                || lower.contains("first aid guides")) {
+        if (lowerUser.contains("responder") || lowerUser.contains("status") || lowerUser.contains("en route") || lowerUser.contains("deployed")) {
+            return ACTION_CHECK_STATUS;
+        }
+        if (lowerUser.contains("call") && (lowerUser.contains("station") || lowerUser.contains("bfp") || lowerUser.contains("911") || lowerUser.contains("dial"))) {
+            return ACTION_CALL_STATION;
+        }
+
+        // Comprehensive check for ANY emergency, danger, incident, or distress
+        boolean hasEmergencyIndicator = lowerUser.contains("gas leak")
+                || lowerUser.contains("leak")
+                || lowerUser.contains("burning")
+                || lowerUser.contains("burn")
+                || lowerUser.contains("fire")
+                || lowerUser.contains("sunog")
+                || lowerUser.contains("smoke")
+                || lowerUser.contains("usok")
+                || lowerUser.contains("trapped")
+                || lowerUser.contains("naipit")
+                || lowerUser.contains("crash")
+                || lowerUser.contains("accident")
+                || lowerUser.contains("banggaan")
+                || lowerUser.contains("explosion")
+                || lowerUser.contains("sumabog")
+                || lowerUser.contains("drowning")
+                || lowerUser.contains("nalulunod")
+                || lowerUser.contains("bleeding")
+                || lowerUser.contains("dugo")
+                || lowerUser.contains("broken")
+                || lowerUser.contains("fracture")
+                || lowerUser.contains("heart attack")
+                || lowerUser.contains("stroke")
+                || lowerUser.contains("help")
+                || lowerUser.contains("saklolo")
+                || lowerUser.contains("tulong")
+                || lowerUser.contains("emergency")
+                || lowerUser.contains("sos")
+                || lowerAi.contains("help is on the way")
+                || lowerAi.contains("dispatching")
+                || lowerAi.contains("sending sos");
+
+        boolean isJustQuestion = (lowerUser.contains("what is") || lowerUser.contains("how to") || lowerUser.contains("number") || lowerUser.contains("hotline"))
+                && !lowerUser.contains("my house") && !lowerUser.contains("burning") && !lowerUser.contains("leak") && !lowerUser.contains("sunog");
+
+        if (hasEmergencyIndicator && !isJustQuestion) {
+            if (lowerUser.contains("victim") || lowerUser.contains("biktima") || lowerUser.contains("my house") || lowerUser.contains("i am") || lowerUser.contains("ako") || lowerUser.contains("tulong")) {
+                return ACTION_SEND_SOS_VICTIM;
+            }
+            return ACTION_SEND_SOS_INCIDENT;
+        }
+
+        if (lowerUser.contains("first aid guide") || lowerUser.contains("open first aid") || lowerUser.contains("first aid guides")) {
             return ACTION_OPEN_FIRSTAID;
         }
+
         return ACTION_NONE;
     }
 
     private boolean isValidAction(String action) {
         return ACTION_SEND_SOS.equals(action)
                 || ACTION_SEND_SOS_VICTIM.equals(action)
+                || ACTION_SEND_SOS_INCIDENT.equals(action)
                 || ACTION_OPEN_FIRSTAID.equals(action)
                 || ACTION_SEARCH_FIRSTAID.equals(action)
                 || ACTION_CALL_STATION.equals(action)
@@ -487,8 +527,9 @@ public class ClaudeVoiceAssistant {
                 + "1. Plain text only. Do not use asterisks, markdown, bullet points, numbers, or emoji.\n"
                 + "2. Keep responses very short: maximum 2 sentences.\n"
                 + "3. ALWAYS end with exactly ONE action tag from the allowed list:\n"
+                + "   [ACTION:SEND_SOS_INCIDENT|IncidentDetails]\n"
+                + "   [ACTION:SEND_SOS_VICTIM|IncidentDetails]\n"
                 + "   [ACTION:SEND_SOS]\n"
-                + "   [ACTION:SEND_SOS_VICTIM]\n"
                 + "   [ACTION:OPEN_FIRSTAID]\n"
                 + "   [ACTION:SEARCH_FIRSTAID|ExactGuideTitle]\n"
                 + "   [ACTION:CALL_STATION]\n"
@@ -505,21 +546,24 @@ public class ClaudeVoiceAssistant {
                 + "CURRENT AVAILABLE FIRST AID GUIDES IN BFP DATABASE:\n"
                 + availableGuides + "\n\n"
 
-                + "DECISION RULES:\n"
-                + "- If user indicates they are the victim (e.g. 'SOS now I'm the victim', 'send SOS I am the victim', 'ako ang biktima', 'tulungan nyo ako biktima ako'):\n"
-                + "  Confirm emergency alert is triggered as victim and their personal profile details are automatically transmitted. End with [ACTION:SEND_SOS_VICTIM].\n\n"
+                + "CRITICAL EMERGENCY INSTRUCTION - ANY INCIDENT OR DISTRESS:\n"
+                + "Whenever the user reports ANY fire, gas leak, burning house, smoke, accident, collision, injury, hazard, trap, disaster, or says 'help', 'saklolo', 'tulong', 'nasusunog', 'emergency', or describes ANY dangerous situation:\n"
+                + "YOU MUST ALWAYS TRIGGER SOS AND EXTRACT WHAT THE USER SAID INTO THE ACTION TAG!\n"
+                + "- If user is the affected victim (e.g. 'help gas leak my house is burning', 'I am hurt', 'house is burning I am trapped'):\n"
+                + "  Confirm emergency SOS is triggered, tell them to evacuate safely, and end with: [ACTION:SEND_SOS_VICTIM|<Extracted incident what user said>]\n"
+                + "  Example: User says 'help gas leak my house is burning' -> Reply: 'Help is on the way! Please evacuate your house immediately to a safe distance. [ACTION:SEND_SOS_VICTIM|Gas leak, house is burning]'\n"
+                + "- If user is reporting an incident or fire in general ('Gas leak on Main Street', 'Car crash 2 cars'):\n"
+                + "  Confirm SOS alert is dispatched and end with: [ACTION:SEND_SOS_INCIDENT|<Extracted incident what user said>]\n\n"
 
-                + "- General emergency or fire alert ('Send SOS', 'Fire emergency', 'May sunog', 'Kailangan ng bumbero'):\n"
-                + "  Confirm sending SOS alert. End with [ACTION:SEND_SOS].\n\n"
-
+                + "OTHER ACTIONS:\n"
                 + "- Flashlight control ('Turn on flashlight', 'Need light', 'Buksan ang ilaw', 'Turn off flashlight'):\n"
                 + "  Confirm torch state. End with [ACTION:FLASHLIGHT_ON] or [ACTION:FLASHLIGHT_OFF].\n\n"
 
                 + "- Siren or locator alarm ('Sound siren', 'Play siren', 'Help rescuers locate me', 'Patunugin ang alarm', 'Stop siren'):\n"
                 + "  Confirm locator sound. End with [ACTION:PLAY_SIREN] or [ACTION:STOP_SIREN].\n\n"
 
-                + "- Condition, hazard, or trapped report ('I am trapped on the 2nd floor', 'Cannot walk leg broken', 'Heavy smoke outside'):\n"
-                + "  Give 1 immediate life safety instruction, reassure that condition is recorded for BFP, and end with [ACTION:UPDATE_CONDITION|SituationOrNotes].\n\n"
+                + "- Trapped, room status, or hazard update ('I am trapped on the 2nd floor', 'Cannot walk leg broken', 'Heavy smoke outside'):\n"
+                + "  Give 1 immediate life safety instruction, reassure that condition is logged for BFP, and end with [ACTION:UPDATE_CONDITION|SituationOrNotes].\n\n"
 
                 + "- Medical symptom, injury, or first aid question (e.g. 'I'm choking rn', 'treat a burn', 'CPR steps', 'bleeding arm'):\n"
                 + "  * FIRST inspect the CURRENT AVAILABLE FIRST AID GUIDES list above.\n"
@@ -528,12 +572,6 @@ public class ClaudeVoiceAssistant {
 
                 + "- BFP Hotline inquiry ('What is the hotline?', 'Emergency number', 'Numero ng bumbero'):\n"
                 + "  State that BFP emergency hotline is 09399337795 and national emergency is 911. Offer to call. End with [ACTION:NONE] or [ACTION:CALL_STATION].\n\n"
-
-                + "- Fire survival tips ('Electrical fire', 'Grease fire', 'LPG leak', 'Usok'):\n"
-                + "  Give the BFP safety rule (turn off breaker, never use water on grease or electric, crawl low under smoke). End with [ACTION:SEND_SOS] or [ACTION:NONE].\n\n"
-
-                + "- View or browse first aid library ('Open first aid', 'First aid guides', 'Tingnan ang first aid'):\n"
-                + "  Say opening first aid guides. End with [ACTION:OPEN_FIRSTAID].\n\n"
 
                 + "- Check responder / alert status ('Where are the responders?', 'Is BFP coming?', 'Nasaan na ang bumbero?', 'Check status'):\n"
                 + "  State you are checking status. End with [ACTION:CHECK_STATUS].\n\n"

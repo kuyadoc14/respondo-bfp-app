@@ -64,6 +64,11 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        View btnGlobalVoice = findViewById(R.id.btnGlobalVoice);
+        if (btnGlobalVoice != null) {
+            btnGlobalVoice.setOnClickListener(v -> showVoiceAssistant());
+        }
     }
 
     @Override
@@ -84,6 +89,10 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         if (bottomNav != null) {
             bottomNav.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        View btnGlobalVoice = findViewById(R.id.btnGlobalVoice);
+        if (btnGlobalVoice != null) {
+            btnGlobalVoice.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -169,5 +178,84 @@ public class MainActivity extends AppCompatActivity {
         if (bottomNav != null) {
             bottomNav.setSelectedItemId(R.id.firstAid);
         }
+    }
+
+    private VoiceAssistantDialog voiceAssistantDialog;
+
+    public void showVoiceAssistant() {
+        if (voiceAssistantDialog != null && voiceAssistantDialog.isShowing()) {
+            return;
+        }
+
+        voiceAssistantDialog = new VoiceAssistantDialog(
+                this,
+                new VoiceAssistantDialog.ActionListener() {
+                    @Override
+                    public void onSendSOS() {
+                        triggerSOSFromVoice("victim", null);
+                    }
+
+                    @Override
+                    public void onSendSOSWithRole(String role) {
+                        triggerSOSFromVoice(role, null);
+                    }
+
+                    @Override
+                    public void onSendSOSWithDetails(String incidentNotes, String role) {
+                        triggerSOSFromVoice(role, incidentNotes);
+                    }
+
+                    @Override
+                    public void onOpenFirstAid() {
+                        switchToFirstAid();
+                    }
+
+                    @Override
+                    public void onSearchFirstAid(String query) {
+                        switchToFirstAid(query);
+                    }
+
+                    @Override
+                    public void onOpenFirstAidDetail(FirstAidItem item) {
+                        openFirstAidDetail(item);
+                    }
+
+                    @Override
+                    public void onCheckStatus() {
+                        sosFragment.checkCurrentAlertStatus();
+                    }
+
+                    @Override
+                    public void onCancelSOS() {
+                        sosFragment.cancelActiveSOS();
+                    }
+
+                    @Override
+                    public void onUpdateCondition(String conditionNotes) {
+                        sosFragment.updateAlertCondition(conditionNotes);
+                    }
+                },
+                false);
+
+        VoiceAssistantDialog shown = voiceAssistantDialog;
+        shown.setOnDismissListener(d -> {
+            if (voiceAssistantDialog == shown) {
+                voiceAssistantDialog = null;
+            }
+        });
+        shown.show();
+    }
+
+    public void triggerSOSFromVoice(String role, String incidentNotes) {
+        switchToSOS();
+        sosFragment.sendSOSAlert(role, incidentNotes);
+    }
+
+    public void switchToSOS() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.sos);
+        }
+        loadFragment(sosFragment);
     }
 }

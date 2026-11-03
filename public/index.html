@@ -2978,9 +2978,10 @@
                 </span>
                 ${victims != null ? `<span class="badge-victims">${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
                 ${patients.length > 0 ? `<span class="badge-victims" style="color:#60a5fa;border-color:rgba(59,130,246,0.3);">${patients.length} patient${patients.length === 1 ? '' : 's'}</span>` : ''}
-              </div>`;
+              </div>
+              ${alert.incidentNotes ? `<div style="font-size:11px;color:#fed7aa;margin-top:4px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(alert.incidentNotes)}">🎙 "${escapeHtml(alert.incidentNotes)}"</div>` : ''}`;
           } else {
-            incidentHtml = `<span class="badge-incident badge-pending">Pending Sheet</span>`;
+            incidentHtml = `<span class="badge-incident badge-pending">Pending Sheet</span>${alert.incidentNotes ? `<div style="font-size:11px;color:#fed7aa;margin-top:4px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(alert.incidentNotes)}">🎙 "${escapeHtml(alert.incidentNotes)}"</div>` : ""}`;
           }
 
           const viewReportBtn = `
@@ -2997,7 +2998,7 @@
               <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
           } else if (isDeployed) {
             actionBtn = `
-              <span style="font-size:11px;font-weight:600;color:#38bdf8;margin-right:2px;display:inline-flex;align-items:center;gap:3px;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>En Route</span>
+              <span style="font-size:11px;font-weight:600;color:#fb923c;margin-right:2px;display:inline-flex;align-items:center;gap:3px;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>En Route</span>
               <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
           } else {
             actionBtn = `<button class="btn-delete" onclick="askDelete('${escapeHtml(alert.id)}')">Delete</button>`;
@@ -3137,11 +3138,40 @@
       }
 
       if (!hasReport) {
+        if (alert.incidentNotes) {
+          html += `
+            <div style="margin-bottom:14px;padding:12px 14px;background:rgba(234,88,12,0.14);border:1px solid rgba(234,88,12,0.35);border-radius:var(--radius-sm);display:flex;align-items:flex-start;gap:10px;">
+              <span style="font-size:16px;line-height:1;">🎙</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">
+                  Spoken Incident / Voice Notes
+                </div>
+                <div style="font-size:13px;color:#ffedd5;line-height:1.45;">
+                  ${escapeHtml(alert.incidentNotes)}
+                </div>
+              </div>
+            </div>`;
+        }
         html += `
           <div style="text-align:center;padding:36px 20px;color:var(--text-muted);font-size:13px;">
             The caller transmitted an SOS signal from User ID: <code style="color:#60a5fa;">${escapeHtml(alert.userId || "Unknown")}</code>, but has not completed the supplementary incident sheet yet.
           </div>`;
       } else {
+        if (alert.incidentNotes) {
+          html += `
+            <div style="margin-bottom:14px;padding:12px 14px;background:rgba(234,88,12,0.14);border:1px solid rgba(234,88,12,0.35);border-radius:var(--radius-sm);display:flex;align-items:flex-start;gap:10px;">
+              <span style="font-size:16px;line-height:1;">🎙</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">
+                  Spoken Incident / Voice Notes
+                </div>
+                <div style="font-size:13px;color:#ffedd5;line-height:1.45;">
+                  ${escapeHtml(alert.incidentNotes)}
+                </div>
+              </div>
+            </div>`;
+        }
+
         // Incident Assessment
         html += `
           <div>

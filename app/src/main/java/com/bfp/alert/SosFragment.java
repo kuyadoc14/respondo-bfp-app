@@ -339,18 +339,22 @@ public class SosFragment extends Fragment {
 // with this complete version
 
     public void sendSOSAlert() {
-        sendSOSAlert(null);
+        sendSOSAlert(null, null);
     }
 
     public void sendSOSAlert(String role) {
+        sendSOSAlert(role, null);
+    }
+
+    public void sendSOSAlert(String role, String incidentNotes) {
         if (!isAdded() || getContext() == null) return;
 
-        // If alert is already active and role is specified:
+        // If alert is already active, update it with incident notes / role immediately
         if (sAlertId != null && !sAlertId.isEmpty()) {
-            if ("victim".equalsIgnoreCase(role)) {
-                autoSubmitVictimDetails(sAlertId, null);
+            if ("victim".equalsIgnoreCase(role) || (incidentNotes != null && !incidentNotes.trim().isEmpty())) {
+                autoSubmitVictimDetails(sAlertId, null, incidentNotes);
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "SOS updated: Victim details auto-transmitted.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "SOS updated with incident details.", Toast.LENGTH_SHORT).show();
                 }
             } else if (role != null && !role.isEmpty()) {
                 Map<String, Object> update = new HashMap<>();
@@ -383,21 +387,29 @@ public class SosFragment extends Fragment {
                     if (!isAdded() || getContext() == null) return;
                     String userId = getOrCreateUserId();
 
-                    Map<String, Object> alert =
-                            new HashMap<>();
+                    Map<String, Object> alert = new HashMap<>();
                     alert.put("userId",    userId);
-                    alert.put("latitude",  location != null
-                            ? location.getLatitude()  : 0.0);
-                    alert.put("longitude", location != null
-                            ? location.getLongitude() : 0.0);
-                    alert.put("timestamp",
-                            com.google.firebase.firestore
-                                    .FieldValue.serverTimestamp());
-                    alert.put("status",      "active");
+                    alert.put("latitude",  location != null ? location.getLatitude()  : 0.0);
+                    alert.put("longitude", location != null ? location.getLongitude() : 0.0);
+                    alert.put("timestamp", FieldValue.serverTimestamp());
+                    alert.put("status",    "active");
                     alert.put("deviceToken", "");
-                    if (role != null && !role.isEmpty()) {
-                        alert.put("reporterRole", role);
+
+                    String finalRole = role;
+                    if (incidentNotes != null && !incidentNotes.trim().isEmpty()) {
+                        alert.put("incidentNotes", incidentNotes.trim());
+                        alert.put("description", incidentNotes.trim());
+                        alert.put("accidentType", detectIncidentType(incidentNotes));
+                        if (finalRole == null || finalRole.isEmpty()) {
+                            finalRole = "victim";
+                        }
                     }
+
+                    if (finalRole != null && !finalRole.isEmpty()) {
+                        alert.put("reporterRole", finalRole);
+                    }
+
+                    final String effectiveRole = finalRole;
 
                     db.collection("sos_alerts")
                             .add(alert)
@@ -408,8 +420,8 @@ public class SosFragment extends Fragment {
                                 setSOSSentState();
                                 attachLiveListener(sAlertId);
 
-                                if ("victim".equalsIgnoreCase(role)) {
-                                    autoSubmitVictimDetails(sAlertId, null);
+                                if ("victim".equalsIgnoreCase(effectiveRole) || (incidentNotes != null && !incidentNotes.trim().isEmpty())) {
+                                    autoSubmitVictimDetails(sAlertId, null, incidentNotes);
                                 } else {
                                     promptRoleSelection(sAlertId);
                                 }
@@ -420,12 +432,35 @@ public class SosFragment extends Fragment {
                                 btnSOS.setText("SOS");
                                 Toast.makeText(
                                                 requireContext(),
-                                                "Failed: "
-                                                        + e.getMessage(),
+                                                "Failed: " + e.getMessage(),
                                                 Toast.LENGTH_SHORT)
                                         .show();
                             });
                 });
+    }
+
+    private String detectIncidentType(String notes) {
+        if (notes == null) return "Emergency Incident";
+        String lower = notes.toLowerCase();
+        if (lower.contains("gas") || lower.contains("lpg") || lower.contains("leak")) {
+            return "Gas Leak / Hazmat";
+        }
+        if (lower.contains("burn") || lower.contains("fire") || lower.contains("sunog") || lower.contains("smoke")) {
+            return "Structure Fire";
+        }
+        if (lower.contains("car") || lower.contains("vehic") || lower.contains("crash") || lower.contains("banggaan")) {
+            return "Vehicular Accident";
+        }
+        if (lower.contains("drown") || lower.contains("flood") || lower.contains("baha") || lower.contains("tubig")) {
+            return "Water Rescue / Flood";
+        }
+        if (lower.contains("cpr") || lower.contains("chok") || lower.contains("bleed") || lower.contains("stroke") || lower.contains("unconscious")) {
+            return "Medical Emergency";
+        }
+        if (lower.contains("trap") || lower.contains("naipit") || lower.contains("collapse")) {
+            return "Search & Rescue / Trapped";
+        }
+        return "Emergency Incident";
     }
 
     public void cancelActiveSOS() {
@@ -488,6 +523,10 @@ public class SosFragment extends Fragment {
     }
 
     private void autoSubmitVictimDetails(String alertId, @Nullable UserProfile profile) {
+        autoSubmitVictimDetails(alertId, profile, null);
+    }
+
+    private void autoSubmitVictimDetails(String alertId, @Nullable UserProfile profile, @Nullable String incidentNotes) {
         if (alertId == null || !isAdded()) return;
 
         Context ctx = getContext();
@@ -500,6 +539,12 @@ public class SosFragment extends Fragment {
         update.put("countOfVictims", 1);
         update.put("reportSubmitted", true);
 
+        if (incidentNotes != null && !incidentNotes.trim().isEmpty()) {
+            update.put("incidentNotes", incidentNotes.trim());
+            update.put("description", incidentNotes.trim());
+            update.put("accidentType", detectIncidentType(incidentNotes));
+        }
+
         if (victimProfile != null && !victimProfile.isEmpty()) {
             if (!victimProfile.getFullName().isEmpty()) {
                 update.put("reporterName", victimProfile.getFullName());
@@ -510,6 +555,10 @@ public class SosFragment extends Fragment {
             update.put("reporterProfile", victimProfile.toMap());
 
             Map<String, Object> patientMap = victimProfile.toPatientMap();
+            if (incidentNotes != null && !incidentNotes.trim().isEmpty()) {
+                String existingCond = (String) patientMap.get("condition");
+                patientMap.put("condition", (existingCond != null && !existingCond.isEmpty() ? existingCond + " | " : "") + "Incident: " + incidentNotes.trim());
+            }
             List<Map<String, Object>> patients = new ArrayList<>();
             patients.add(patientMap);
             update.put("patients", patients);
@@ -522,9 +571,10 @@ public class SosFragment extends Fragment {
                     if (!isAdded() || getContext() == null) return;
                     markReportSubmitted(alertId);
                     hideReportButton();
-                    Toast.makeText(getContext(),
-                            "🚑 SOS Sent! Your medical & personal details were automatically dispatched to BFP.",
-                            Toast.LENGTH_LONG).show();
+                    String msg = (incidentNotes != null && !incidentNotes.trim().isEmpty())
+                            ? "🚒 SOS Dispatched! Incident details ('" + incidentNotes.trim() + "') sent to BFP."
+                            : "🚑 SOS Sent! Your medical & personal details were automatically dispatched to BFP.";
+                    Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded() || getContext() == null) return;
@@ -608,7 +658,12 @@ public class SosFragment extends Fragment {
 
                             @Override
                             public void onSendSOSWithRole(String role) {
-                                sendSOSAlert(role);
+                                sendSOSAlert(role, null);
+                            }
+
+                            @Override
+                            public void onSendSOSWithDetails(String incidentNotes, String role) {
+                                sendSOSAlert(role, incidentNotes);
                             }
 
                             @Override
@@ -804,13 +859,13 @@ public class SosFragment extends Fragment {
         }
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         ssb.append(title);
-        ssb.setSpan(new AbsoluteSizeSpan(26, true), 0, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new AbsoluteSizeSpan(24, true), 0, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.setSpan(new StyleSpan(Typeface.BOLD), 0, title.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         ssb.append("\n");
         int subStart = ssb.length();
         ssb.append(subtitle);
-        ssb.setSpan(new AbsoluteSizeSpan(13, true), subStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new AbsoluteSizeSpan(12, true), subStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.setSpan(new StyleSpan(Typeface.BOLD), subStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return ssb;
     }
@@ -881,7 +936,8 @@ public class SosFragment extends Fragment {
 
         stopPulsingAnimation();
         btnSOS.setEnabled(false);
-        btnSOS.setText(formatSOSButtonText("SOS", "EN ROUTE"));
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        btnSOS.setText(formatSOSButtonText("SOS", "DEPLOYED"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFFEA580C));

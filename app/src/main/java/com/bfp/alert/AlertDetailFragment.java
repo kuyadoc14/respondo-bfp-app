@@ -197,6 +197,14 @@ public class AlertDetailFragment extends Fragment {
         String accidentType = doc.getString("accidentType");
         String nature = doc.getString("natureOfInjury");
         String mode = doc.getString("modeOfInjury");
+        String incidentNotes = doc.getString("incidentNotes");
+        if (incidentNotes != null && !incidentNotes.isEmpty()) {
+            if (nature == null || nature.isEmpty()) {
+                nature = incidentNotes;
+            } else {
+                nature = nature + " (" + incidentNotes + ")";
+            }
+        }
         List<Map<String, Object>> patients = (List<Map<String, Object>>) doc.get("patients");
         if (patients == null || patients.isEmpty()) {
             patients = getVictimProfileAsPatient(doc);
