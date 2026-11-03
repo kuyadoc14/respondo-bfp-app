@@ -1,6 +1,7 @@
 package com.bfp.alert;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import java.util.List;
 
 public class AdminFirstAidFragment extends Fragment {
 
+    private static final String TAG = "AdminFirstAidFrag";
     private FirebaseFirestore db;
     private ListenerRegistration itemsListener;
     private final List<FirstAidItem> items = new ArrayList<>();
@@ -37,8 +39,11 @@ public class AdminFirstAidFragment extends Fragment {
 
         db = FirebaseFirestore.getInstance();
 
-        view.findViewById(R.id.btnBack).setOnClickListener(v ->
-                requireActivity().getSupportFragmentManager().popBackStack());
+        view.findViewById(R.id.btnBack).setOnClickListener(v -> {
+            if (isAdded()) {
+                requireActivity().getSupportFragmentManager().popBackStack();
+            }
+        });
 
         SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
         RecyclerView recycler = view.findViewById(R.id.recyclerAdminFirstAid);
@@ -47,6 +52,7 @@ public class AdminFirstAidFragment extends Fragment {
 
         adapter = new AdminFirstAidAdapter(items,
                 item -> {
+                    if (!isAdded()) return;
                     FirstAidEditorFragment fragment = new FirstAidEditorFragment();
                     Bundle args = new Bundle();
                     args.putString("mode", "edit");
@@ -70,14 +76,21 @@ public class AdminFirstAidFragment extends Fragment {
                 item -> db.collection("first_aid")
                         .document(item.id)
                         .delete()
-                        .addOnSuccessListener(u ->
-                                Toast.makeText(requireContext(), "Deleted.", Toast.LENGTH_SHORT).show())
-                        .addOnFailureListener(e ->
-                                Toast.makeText(requireContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show())
+                        .addOnSuccessListener(u -> {
+                            if (isAdded() && getContext() != null) {
+                                Toast.makeText(getContext(), "Deleted.", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            if (isAdded() && getContext() != null) {
+                                Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        })
         );
         recycler.setAdapter(adapter);
 
         view.findViewById(R.id.btnAddFirstAid).setOnClickListener(v -> {
+            if (!isAdded()) return;
             FirstAidEditorFragment fragment = new FirstAidEditorFragment();
             Bundle args = new Bundle();
             args.putString("mode", "add");
@@ -100,22 +113,40 @@ public class AdminFirstAidFragment extends Fragment {
     }
 
     private void loadItems() {
+        if (itemsListener != null) {
+            itemsListener.remove();
+            itemsListener = null;
+        }
+
         itemsListener = db.collection("first_aid")
                 .orderBy("title")
-            .addSnapshotListener((snapshots, e) -> {
+                .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
-                    items.clear();
+                    if (!isAdded() || getContext() == null || getView() == null) return;
+
+                    List<FirstAidItem> newItems = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        FirstAidItem item = doc.toObject(FirstAidItem.class);
-                        item.id = doc.getId();
-                        items.add(item);
+                        try {
+                            FirstAidItem item = doc.toObject(FirstAidItem.class);
+                            if (item != null) {
+                                item.id = doc.getId();
+                                newItems.add(item);
+                            }
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Error deserializing doc: " + doc.getId(), ex);
+                        }
                     }
+
+                    items.clear();
+                    items.addAll(newItems);
 
                     View currentView = getView();
                     if (currentView == null || adapter == null) return;
 
                     TextView tvCount = currentView.findViewById(R.id.tvItemCount);
-                    tvCount.setText(items.size() + " guide" + (items.size() != 1 ? "s" : ""));
+                    if (tvCount != null) {
+                        tvCount.setText(items.size() + " guide" + (items.size() != 1 ? "s" : ""));
+                    }
                     adapter.notifyDataSetChanged();
                 });
     }
@@ -162,8 +193,7 @@ public class AdminFirstAidFragment extends Fragment {
             h.btnAdminDelete.setOnClickListener(v -> onDelete.onDelete(item));
         }
 
-        @Override
-        public int getItemCount() { return items.size(); }
+        @Override public int getItemCount() { return items.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
             TextView tvAdminIcon, tvAdminTitle, tvAdminCategory;

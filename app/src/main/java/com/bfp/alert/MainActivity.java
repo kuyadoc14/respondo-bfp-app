@@ -136,10 +136,38 @@ public class MainActivity extends AppCompatActivity {
     public void switchToFirstAid(String query) {
         BottomNavigationView bottomNav =
                 findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.firstAid);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.firstAid);
+        }
         loadFragment(firstAidFragment);
-        if (!query.isEmpty()) {
+        if (query != null && !query.isEmpty()) {
             firstAidFragment.setSearchQuery(query);
+        }
+    }
+
+    public void openFirstAidDetail(FirstAidItem item) {
+        if (item == null) return;
+        setBottomNavVisibility(true);
+        FirstAidDetailFragment detailFragment =
+                FirstAidDetailFragment.newInstance(
+                        item.title != null ? item.title : "",
+                        item.category != null ? item.category : "",
+                        item.description != null ? item.description : "",
+                        item.videoUrl != null ? item.videoUrl : "",
+                        item.storageVideoUrl != null ? item.storageVideoUrl : "",
+                        item.iconEmoji != null ? item.iconEmoji : "🩺",
+                        new java.util.ArrayList<>(item.steps != null ? item.steps : new java.util.ArrayList<>()),
+                        new java.util.ArrayList<>(item.photoUrls != null ? item.photoUrls : new java.util.ArrayList<>()));
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, detailFragment)
+                .addToBackStack("first_aid_detail")
+                .commit();
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.firstAid);
         }
     }
 }

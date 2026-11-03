@@ -2,6 +2,7 @@ package com.bfp.alert;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
@@ -23,7 +25,9 @@ import java.util.List;
 
 public class AdminFirstAidActivity extends AppCompatActivity {
 
+    private static final String TAG = "AdminFirstAidAct";
     private FirebaseFirestore db;
+    private ListenerRegistration itemsListener;
     private final List<FirstAidItem> items = new ArrayList<>();
     private AdminFirstAidAdapter adapter;
 
@@ -74,13 +78,16 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                 item -> db.collection("first_aid")
                         .document(item.id)
                         .delete()
-                        .addOnSuccessListener(u ->
-                                Toast.makeText(this,
-                                        "Deleted.", Toast.LENGTH_SHORT).show())
-                        .addOnFailureListener(e ->
-                                Toast.makeText(this,
-                                        "Failed: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show())
+                        .addOnSuccessListener(u -> {
+                            if (!isFinishing() && !isDestroyed()) {
+                                Toast.makeText(this, "Deleted.", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            if (!isFinishing() && !isDestroyed()) {
+                                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        })
         );
         recycler.setAdapter(adapter);
 
@@ -97,27 +104,46 @@ public class AdminFirstAidActivity extends AppCompatActivity {
     }
 
     private void loadItems() {
-        db.collection("first_aid")
+        itemsListener = db.collection("first_aid")
                 .orderBy("title")
                 .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-                    items.clear();
+                    if (e != null || snapshots == null || isFinishing() || isDestroyed()) return;
+
+                    List<FirstAidItem> newItems = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        FirstAidItem item =
-                                doc.toObject(FirstAidItem.class);
-                        item.id = doc.getId();
-                        items.add(item);
+                        try {
+                            FirstAidItem item = doc.toObject(FirstAidItem.class);
+                            if (item != null) {
+                                item.id = doc.getId();
+                                newItems.add(item);
+                            }
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Error deserializing doc: " + doc.getId(), ex);
+                        }
                     }
 
-                    // Update count label
-                    TextView tvCount =
-                            findViewById(R.id.tvItemCount);
-                    tvCount.setText(items.size()
-                            + " guide" + (items.size() != 1
-                            ? "s" : ""));
+                    items.clear();
+                    items.addAll(newItems);
 
-                    adapter.notifyDataSetChanged();
+                    // Update count label
+                    TextView tvCount = findViewById(R.id.tvItemCount);
+                    if (tvCount != null) {
+                        tvCount.setText(items.size() + " guide" + (items.size() != 1 ? "s" : ""));
+                    }
+
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
                 });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (itemsListener != null) {
+            itemsListener.remove();
+            itemsListener = null;
+        }
+        super.onDestroy();
     }
 
     // Inner adapter for admin list (with edit/delete buttons)

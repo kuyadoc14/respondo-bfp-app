@@ -154,7 +154,7 @@ public class FirstAidEditorFragment extends Fragment {
 
         btnPickPhoto.setOnClickListener(v -> {
             if (selectedPhotoUris.size() + existingPhotoUrls.size() >= 5) {
-                Toast.makeText(requireContext(), "Maximum 5 photos allowed.", Toast.LENGTH_SHORT).show();
+                if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Maximum 5 photos allowed.", Toast.LENGTH_SHORT).show();
                 return;
             }
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -179,13 +179,13 @@ public class FirstAidEditorFragment extends Fragment {
             String video = etVideo.getText().toString().trim();
 
             if (title.isEmpty() || cat.isEmpty() || desc.isEmpty()) {
-                Toast.makeText(requireContext(), "Title, category and description are required.", Toast.LENGTH_SHORT).show();
+                if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Title, category and description are required.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             List<String> stepsList = collectSteps();
             if (stepsList.isEmpty()) {
-                Toast.makeText(requireContext(), "Please add at least one step.", Toast.LENGTH_SHORT).show();
+                if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Please add at least one step.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -253,7 +253,7 @@ public class FirstAidEditorFragment extends Fragment {
 
         removeBtn.setOnClickListener(v -> {
             if (stepsInputContainer.getChildCount() <= 1) {
-                Toast.makeText(requireContext(), "At least one step is required.", Toast.LENGTH_SHORT).show();
+                if (isAdded() && getContext() != null) Toast.makeText(getContext(), "At least one step is required.", Toast.LENGTH_SHORT).show();
                 return;
             }
             stepsInputContainer.removeView(row);
@@ -337,7 +337,7 @@ public class FirstAidEditorFragment extends Fragment {
                         requireActivity().runOnUiThread(() -> {
                             showUploadProgress(false);
                             resetSaveButton();
-                            Toast.makeText(requireContext(), "Photo upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                            if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Photo upload failed: " + error.getDescription(), Toast.LENGTH_SHORT).show();
                         });
                     }
 
@@ -380,7 +380,7 @@ public class FirstAidEditorFragment extends Fragment {
                         requireActivity().runOnUiThread(() -> {
                             showUploadProgress(false);
                             resetSaveButton();
-                            Toast.makeText(requireContext(), "Video upload failed: " + error.getDescription(), Toast.LENGTH_LONG).show();
+                            if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Video upload failed: " + error.getDescription(), Toast.LENGTH_LONG).show();
                         });
                     }
 
@@ -397,24 +397,24 @@ public class FirstAidEditorFragment extends Fragment {
             data.put("createdAt", FieldValue.serverTimestamp());
             db.collection("first_aid").add(data)
                     .addOnSuccessListener(r -> {
-                        Toast.makeText(requireContext(), "Added successfully!", Toast.LENGTH_SHORT).show();
+                        if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Added successfully!", Toast.LENGTH_SHORT).show();
                         requireActivity().getSupportFragmentManager().popBackStack();
                     })
                     .addOnFailureListener(e -> {
                         showUploadProgress(false);
                         resetSaveButton();
-                        Toast.makeText(requireContext(), "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         } else {
             db.collection("first_aid").document(docId).update(data)
                     .addOnSuccessListener(u -> {
-                        Toast.makeText(requireContext(), "Updated successfully!", Toast.LENGTH_SHORT).show();
+                        if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Updated successfully!", Toast.LENGTH_SHORT).show();
                         requireActivity().getSupportFragmentManager().popBackStack();
                     })
                     .addOnFailureListener(e -> {
                         showUploadProgress(false);
                         resetSaveButton();
-                        Toast.makeText(requireContext(), "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        if (isAdded() && getContext() != null) Toast.makeText(getContext(), "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         }
     }

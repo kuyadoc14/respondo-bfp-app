@@ -1,13 +1,12 @@
 package com.bfp.alert;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -19,19 +18,34 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FirstAidFragment extends Fragment {
 
-    private FirebaseFirestore db;
     private FirstAidAdapter   adapter;
-
     private final List<FirstAidItem> allItems      = new ArrayList<>();
     private final List<FirstAidItem> filteredItems = new ArrayList<>();
+    private String pendingSearchQuery = "";
+
+    private final FirstAidRepository.DataCallback dataCallback = items -> {
+        if (!isAdded() || getContext() == null || getView() == null) return;
+        allItems.clear();
+        allItems.addAll(items);
+
+        View currentView = getView();
+        buildCategoryFilters(currentView);
+
+        EditText etSearch = currentView.findViewById(R.id.etSearch);
+        String currentQuery = pendingSearchQuery;
+        if (etSearch != null && !etSearch.getText().toString().isEmpty()) {
+            currentQuery = etSearch.getText().toString();
+        }
+        filterItems(currentQuery);
+
+        preCacheMedia(allItems);
+    };
 
     @Nullable
     @Override
@@ -42,8 +56,6 @@ public class FirstAidFragment extends Fragment {
                 R.layout.fragment_first_aid, container, false);
 
         SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.headerLayout));
-
-        db = FirebaseFirestore.getInstance();
 
         // Setup RecyclerView
         RecyclerView recycler = view.findViewById(R.id.recyclerFirstAid);
@@ -74,54 +86,39 @@ public class FirstAidFragment extends Fragment {
 
         // Search bar
         EditText etSearch = view.findViewById(R.id.etSearch);
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(
-                    CharSequence s, int st, int c, int a) {}
-            @Override
-            public void onTextChanged(
-                    CharSequence s, int st, int b, int c) {
-                filterItems(s.toString());
+        if (etSearch != null) {
+            if (!pendingSearchQuery.isEmpty()) {
+                etSearch.setText(pendingSearchQuery);
             }
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(
+                        CharSequence s, int st, int c, int a) {}
+                @Override
+                public void onTextChanged(
+                        CharSequence s, int st, int b, int c) {
+                    filterItems(s.toString());
+                }
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
 
-        loadFirstAid(view);
+        FirstAidRepository.getInstance().addListener(dataCallback);
         return view;
     }
 
-    // ── Load from Firestore with real-time updates ─────────────────
-    private void loadFirstAid(View view) {
-        db.collection("first_aid")
-                .orderBy("title")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null) return;
-
-                    allItems.clear();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        FirstAidItem item =
-                                doc.toObject(FirstAidItem.class);
-                        item.id = doc.getId();
-                        allItems.add(item);
-                    }
-
-                    // Rebuild category filter buttons
-                    buildCategoryFilters(view);
-
-                    // Refresh list while keeping current search
-                    EditText etSearch = view.findViewById(R.id.etSearch);
-                    filterItems(etSearch.getText().toString());
-
-                    // Silently pre-cache all media in background
-                    preCacheMedia(allItems);
-                });
+    @Override
+    public void onDestroyView() {
+        FirstAidRepository.getInstance().removeListener(dataCallback);
+        super.onDestroyView();
     }
 
     // ── Category filter chips ──────────────────────────────────────
     private void buildCategoryFilters(View view) {
-        LinearLayout container =
-                view.findViewById(R.id.categoryFilter);
+        if (view == null || getContext() == null) return;
+        LinearLayout container = view.findViewById(R.id.categoryFilter);
+        if (container == null) return;
         container.removeAllViews();
 
         List<String> categories = new ArrayList<>();
@@ -134,10 +131,13 @@ public class FirstAidFragment extends Fragment {
             }
         }
 
+        Context ctx = getContext();
+        if (ctx == null) return;
+
         for (String cat : categories) {
             com.google.android.material.button.MaterialButton btn =
                     new com.google.android.material.button
-                            .MaterialButton(requireContext());
+                            .MaterialButton(ctx);
 
             btn.setText(cat);
             btn.setTextSize(12);
@@ -145,14 +145,10 @@ public class FirstAidFragment extends Fragment {
             btn.setTypeface(null,
                     android.graphics.Typeface.BOLD);
 
-            // Corner radius — increase this for more rounding
-            btn.setCornerRadius(dp(50)); // full pill
-
-            // Remove default shadow/elevation
+            btn.setCornerRadius(dp(50));
             btn.setElevation(0);
             btn.setStateListAnimator(null);
 
-            // Padding inside the chip
             btn.setPadding(
                     dp(18), dp(6), dp(18), dp(6));
             btn.setMinWidth(0);
@@ -162,7 +158,6 @@ public class FirstAidFragment extends Fragment {
             btn.setInsetTop(0);
             btn.setInsetBottom(0);
 
-            // Color
             btn.setBackgroundTintList(
                     android.content.res.ColorStateList
                             .valueOf(cat.equals("All")
@@ -179,8 +174,9 @@ public class FirstAidFragment extends Fragment {
             btn.setLayoutParams(params);
 
             btn.setOnClickListener(v -> {
+                if (getView() == null) return;
                 EditText etSearch =
-                        view.findViewById(R.id.etSearch);
+                        getView().findViewById(R.id.etSearch);
                 if (etSearch != null)
                     etSearch.setText("");
 
@@ -203,8 +199,8 @@ public class FirstAidFragment extends Fragment {
             com.google.android.material.button
                     .MaterialButton selected,
             String cat) {
-        for (int i = 0;
-             i < container.getChildCount(); i++) {
+        if (container == null) return;
+        for (int i = 0; i < container.getChildCount(); i++) {
             View child = container.getChildAt(i);
             if (child instanceof
                     com.google.android.material.button
@@ -223,16 +219,15 @@ public class FirstAidFragment extends Fragment {
     }
 
     private int dp(int val) {
-        return (int)(val * requireContext()
-                .getResources()
-                .getDisplayMetrics()
-                .density);
+        Context ctx = getContext();
+        if (ctx == null) return val * 2;
+        return (int)(val * ctx.getResources().getDisplayMetrics().density);
     }
 
     // ── Filter by search query ─────────────────────────────────────
     private void filterItems(String query) {
         filteredItems.clear();
-        String lower = query.toLowerCase().trim();
+        String lower = query != null ? query.toLowerCase().trim() : "";
 
         for (FirstAidItem item : allItems) {
             if (lower.isEmpty()
@@ -245,75 +240,73 @@ public class FirstAidFragment extends Fragment {
                 filteredItems.add(item);
             }
         }
-        adapter.notifyDataSetChanged();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     public void setSearchQuery(String query) {
+        pendingSearchQuery = query != null ? query : "";
         if (getView() == null) return;
         EditText etSearch =
                 getView().findViewById(R.id.etSearch);
         if (etSearch != null) {
-            etSearch.setText(query);
-            filterItems(query);
+            etSearch.setText(pendingSearchQuery);
         }
+        filterItems(pendingSearchQuery);
     }
 
     // ── Filter by category ─────────────────────────────────────────
     private void filterByCategory(String category) {
         filteredItems.clear();
         for (FirstAidItem item : allItems) {
-            if (category.equals(item.category)) {
+            if (category != null && category.equals(item.category)) {
                 filteredItems.add(item);
             }
         }
-        adapter.notifyDataSetChanged();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     // ── Pre-cache all photos and videos silently ───────────────────
     private void preCacheMedia(List<FirstAidItem> items) {
-        if (!NetworkUtils.isOnline(requireContext())) return;
+        Context ctx = getContext();
+        if (ctx == null || !isAdded()) return;
+        if (!NetworkUtils.isOnline(ctx)) return;
 
         for (FirstAidItem item : items) {
+            if (item == null) continue;
 
             // Pre-cache all photos using Glide disk cache
             if (item.photoUrls != null) {
                 for (String url : item.photoUrls) {
                     if (url != null && !url.isEmpty()) {
-                        Glide.with(requireContext())
-                                .load(url)
-                                .diskCacheStrategy(
-                                        DiskCacheStrategy.ALL)
-                                .preload();
+                        Context currentCtx = getContext();
+                        if (currentCtx != null && isAdded()) {
+                            Glide.with(currentCtx)
+                                    .load(url)
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                    .preload();
+                        }
                     }
                 }
             }
 
             // Pre-download video to local storage
             if (item.storageVideoUrl != null
-                    && !item.storageVideoUrl.isEmpty()
-                    && !VideoCache.isCached(
-                    requireContext(),
-                    item.storageVideoUrl)) {
-
-                VideoCache.downloadVideo(
-                        requireContext(),
-                        item.storageVideoUrl,
-                        new VideoCache.DownloadCallback() {
-                            @Override
-                            public void onProgress(int percent) {
-                                // Silent — no UI update here
-                            }
-
-                            @Override
-                            public void onComplete(String localPath) {
-                                // Video is now available offline
-                            }
-
-                            @Override
-                            public void onError(String error) {
-                                // Silent fail — will retry next time
-                            }
-                        });
+                    && !item.storageVideoUrl.isEmpty()) {
+                Context currentCtx = getContext();
+                if (currentCtx != null && isAdded() && !VideoCache.isCached(currentCtx, item.storageVideoUrl)) {
+                    VideoCache.downloadVideo(
+                            currentCtx,
+                            item.storageVideoUrl,
+                            new VideoCache.DownloadCallback() {
+                                @Override public void onProgress(int percent) {}
+                                @Override public void onComplete(String localPath) {}
+                                @Override public void onError(String error) {}
+                            });
+                }
             }
         }
     }

@@ -35,11 +35,19 @@ public class ClaudeVoiceAssistant {
             "openai/gpt-oss-120b";
 
     // ── Actions ───────────────────────────────────────────────────
-    public static final String ACTION_SEND_SOS        = "SEND_SOS";
-    public static final String ACTION_OPEN_FIRSTAID   = "OPEN_FIRSTAID";
-    public static final String ACTION_SEARCH_FIRSTAID = "SEARCH_FIRSTAID";
-    public static final String ACTION_CALL_STATION    = "CALL_STATION";
-    public static final String ACTION_NONE            = "NONE";
+    public static final String ACTION_SEND_SOS         = "SEND_SOS";
+    public static final String ACTION_SEND_SOS_VICTIM  = "SEND_SOS_VICTIM";
+    public static final String ACTION_OPEN_FIRSTAID    = "OPEN_FIRSTAID";
+    public static final String ACTION_SEARCH_FIRSTAID  = "SEARCH_FIRSTAID";
+    public static final String ACTION_CALL_STATION     = "CALL_STATION";
+    public static final String ACTION_CHECK_STATUS     = "CHECK_STATUS";
+    public static final String ACTION_CANCEL_SOS       = "CANCEL_SOS";
+    public static final String ACTION_FLASHLIGHT_ON    = "FLASHLIGHT_ON";
+    public static final String ACTION_FLASHLIGHT_OFF   = "FLASHLIGHT_OFF";
+    public static final String ACTION_PLAY_SIREN       = "PLAY_SIREN";
+    public static final String ACTION_STOP_SIREN       = "STOP_SIREN";
+    public static final String ACTION_UPDATE_CONDITION = "UPDATE_CONDITION";
+    public static final String ACTION_NONE             = "NONE";
 
     // ── Callback ──────────────────────────────────────────────────
     public interface AssistantCallback {
@@ -169,12 +177,11 @@ public class ClaudeVoiceAssistant {
                 messages.put(userMsg);
 
                 // Build request body
-                // Groq uses OpenAI-compatible format
                 JSONObject requestBody =
                         new JSONObject();
                 requestBody.put("model",      MODEL);
                 requestBody.put("max_tokens", 300);
-                requestBody.put("temperature", 0.3);
+                requestBody.put("temperature", 0.2);
                 requestBody.put("messages",   messages);
 
                 String bodyStr = requestBody.toString();
@@ -245,8 +252,6 @@ public class ClaudeVoiceAssistant {
     }
 
     // ── Parse Groq response ───────────────────────────────────────
-    // Groq uses OpenAI format:
-    // choices[0].message.content
     private void parseAndRespond(
             String responseStr,
             AssistantCallback callback) {
@@ -255,8 +260,6 @@ public class ClaudeVoiceAssistant {
             JSONObject json =
                     new JSONObject(responseStr);
 
-            // Get content from
-            // choices[0].message.content
             String fullText = "";
 
             JSONArray choices =
@@ -321,19 +324,22 @@ public class ClaudeVoiceAssistant {
                                         .toUpperCase();
                     }
 
-                    // Remove action tag
-                    // from spoken text
+                    // Remove action tag from spoken text
                     spokenText = fullText
                             .substring(0, actionStart)
                             .trim();
                 }
             }
 
-            // Fallback: if AI didn't include
-            // action tag, detect from text
+            // Normalise SEND_SOS|victim to ACTION_SEND_SOS_VICTIM
+            if (ACTION_SEND_SOS.equals(action) && "victim".equalsIgnoreCase(actionData)) {
+                action = ACTION_SEND_SOS_VICTIM;
+                actionData = "victim";
+            }
+
+            // Fallback: if AI didn't include action tag, detect from text
             if (ACTION_NONE.equals(action)) {
-                action = detectActionFromText(
-                        fullText);
+                action = detectActionFromText(fullText);
             }
 
             if (!isValidAction(action)) {
@@ -365,6 +371,21 @@ public class ClaudeVoiceAssistant {
             String text) {
         String lower = text.toLowerCase();
 
+        if (lower.contains("victim") && (lower.contains("sos") || lower.contains("alert") || lower.contains("help"))) {
+            return ACTION_SEND_SOS_VICTIM;
+        }
+        if (lower.contains("flashlight on") || lower.contains("turn on flashlight") || lower.contains("open flashlight")) {
+            return ACTION_FLASHLIGHT_ON;
+        }
+        if (lower.contains("flashlight off") || lower.contains("turn off flashlight")) {
+            return ACTION_FLASHLIGHT_OFF;
+        }
+        if (lower.contains("siren") || lower.contains("alarm")) {
+            if (lower.contains("stop") || lower.contains("off") || lower.contains("silence")) {
+                return ACTION_STOP_SIREN;
+            }
+            return ACTION_PLAY_SIREN;
+        }
         if (lower.contains("sending sos")
                 || lower.contains("sos alert")
                 || lower.contains("emergency alert")) {
@@ -375,24 +396,37 @@ public class ClaudeVoiceAssistant {
                 || lower.contains("dialing")) {
             return ACTION_CALL_STATION;
         }
+        if (lower.contains("responder")
+                || lower.contains("status")
+                || lower.contains("en route")
+                || lower.contains("deployed")) {
+            return ACTION_CHECK_STATUS;
+        }
+        if (lower.contains("cancel")
+                || lower.contains("false alarm")) {
+            return ACTION_CANCEL_SOS;
+        }
         if (lower.contains("first aid guide")
                 || lower.contains("opening the guide")
                 || lower.contains("first aid guides")) {
             return ACTION_OPEN_FIRSTAID;
-        }
-        if (lower.contains("cpr guide")
-                || lower.contains("choking guide")
-                || lower.contains("burns guide")) {
-            return ACTION_SEARCH_FIRSTAID;
         }
         return ACTION_NONE;
     }
 
     private boolean isValidAction(String action) {
         return ACTION_SEND_SOS.equals(action)
+                || ACTION_SEND_SOS_VICTIM.equals(action)
                 || ACTION_OPEN_FIRSTAID.equals(action)
                 || ACTION_SEARCH_FIRSTAID.equals(action)
                 || ACTION_CALL_STATION.equals(action)
+                || ACTION_CHECK_STATUS.equals(action)
+                || ACTION_CANCEL_SOS.equals(action)
+                || ACTION_FLASHLIGHT_ON.equals(action)
+                || ACTION_FLASHLIGHT_OFF.equals(action)
+                || ACTION_PLAY_SIREN.equals(action)
+                || ACTION_STOP_SIREN.equals(action)
+                || ACTION_UPDATE_CONDITION.equals(action)
                 || ACTION_NONE.equals(action);
     }
 
@@ -443,66 +477,75 @@ public class ClaudeVoiceAssistant {
 
     // ── System prompt ─────────────────────────────────────────────
     private String getSystemPrompt() {
-        return "You are the BFP (Bureau of Fire "
-                + "Protection) Voice Assistant app. "
-                + "Help people — especially those with "
-                + "disabilities — use the BFP emergency app. "
-                + "Be calm, clear, and very brief.\n\n"
+        String availableGuides = FirstAidRepository.getInstance().getGuideListSummary();
 
-                + "RESPONSE FORMAT RULES:\n"
-                + "1. Plain text only. No markdown, no "
-                + "asterisks, no bullet points, no headers.\n"
-                + "2. Maximum 2 short sentences.\n"
-                + "3. Always end with exactly one action "
-                + "tag from this list:\n"
+        return "You are the BFP (Bureau of Fire Protection) Emergency Voice Assistant.\n"
+                + "You assist citizens and accident victims in emergencies and help them operate the app completely hands-free.\n"
+                + "Be calm, reassuring, clear, and very brief. You understand English, Filipino (Tagalog), and Taglish.\n\n"
+
+                + "RESPONSE RULES:\n"
+                + "1. Plain text only. Do not use asterisks, markdown, bullet points, numbers, or emoji.\n"
+                + "2. Keep responses very short: maximum 2 sentences.\n"
+                + "3. ALWAYS end with exactly ONE action tag from the allowed list:\n"
                 + "   [ACTION:SEND_SOS]\n"
+                + "   [ACTION:SEND_SOS_VICTIM]\n"
                 + "   [ACTION:OPEN_FIRSTAID]\n"
-                + "   [ACTION:SEARCH_FIRSTAID|topic]\n"
+                + "   [ACTION:SEARCH_FIRSTAID|ExactGuideTitle]\n"
                 + "   [ACTION:CALL_STATION]\n"
+                + "   [ACTION:CHECK_STATUS]\n"
+                + "   [ACTION:CANCEL_SOS]\n"
+                + "   [ACTION:FLASHLIGHT_ON]\n"
+                + "   [ACTION:FLASHLIGHT_OFF]\n"
+                + "   [ACTION:PLAY_SIREN]\n"
+                + "   [ACTION:STOP_SIREN]\n"
+                + "   [ACTION:UPDATE_CONDITION|BriefCondition]\n"
                 + "   [ACTION:NONE]\n"
-                + "4. For SEARCH_FIRSTAID, replace topic "
-                + "with one word like CPR, choking, burns, "
-                + "bleeding, fracture.\n"
-                + "5. Never skip the action tag.\n\n"
+                + "4. Never skip the action tag.\n\n"
 
-                + "ACTION RULES:\n"
-                + "- Fire, emergency, danger, help, "
-                + "accident = SEND_SOS\n"
-                + "- First aid, medical guide, "
-                + "open guides = OPEN_FIRSTAID\n"
-                + "- CPR, choking, burns, bleeding, "
-                + "wound, fracture, specific condition "
-                + "= SEARCH_FIRSTAID|topic\n"
-                + "- Call, phone, dial, "
-                + "fire station = CALL_STATION\n"
-                + "- Greetings, questions, "
-                + "help menu = NONE\n\n"
+                + "CURRENT AVAILABLE FIRST AID GUIDES IN BFP DATABASE:\n"
+                + availableGuides + "\n\n"
 
-                + "EXAMPLES:\n"
-                + "User: Send SOS\n"
-                + "You: Sending SOS alert to BFP now. "
-                + "Stay safe. [ACTION:SEND_SOS]\n\n"
+                + "DECISION RULES:\n"
+                + "- If user indicates they are the victim (e.g. 'SOS now I'm the victim', 'send SOS I am the victim', 'ako ang biktima', 'tulungan nyo ako biktima ako'):\n"
+                + "  Confirm emergency alert is triggered as victim and their personal profile details are automatically transmitted. End with [ACTION:SEND_SOS_VICTIM].\n\n"
 
-                + "User: CPR steps\n"
-                + "You: Opening CPR guide for you now. "
-                + "[ACTION:SEARCH_FIRSTAID|CPR]\n\n"
+                + "- General emergency or fire alert ('Send SOS', 'Fire emergency', 'May sunog', 'Kailangan ng bumbero'):\n"
+                + "  Confirm sending SOS alert. End with [ACTION:SEND_SOS].\n\n"
 
-                + "User: Someone is choking\n"
-                + "You: Opening choking first aid guide "
-                + "immediately. [ACTION:SEARCH_FIRSTAID|choking]\n\n"
+                + "- Flashlight control ('Turn on flashlight', 'Need light', 'Buksan ang ilaw', 'Turn off flashlight'):\n"
+                + "  Confirm torch state. End with [ACTION:FLASHLIGHT_ON] or [ACTION:FLASHLIGHT_OFF].\n\n"
 
-                + "User: Open first aid\n"
-                + "You: Opening first aid guides now. "
-                + "[ACTION:OPEN_FIRSTAID]\n\n"
+                + "- Siren or locator alarm ('Sound siren', 'Play siren', 'Help rescuers locate me', 'Patunugin ang alarm', 'Stop siren'):\n"
+                + "  Confirm locator sound. End with [ACTION:PLAY_SIREN] or [ACTION:STOP_SIREN].\n\n"
 
-                + "User: Call fire station\n"
-                + "You: Calling BFP fire station now. "
-                + "[ACTION:CALL_STATION]\n\n"
+                + "- Condition, hazard, or trapped report ('I am trapped on the 2nd floor', 'Cannot walk leg broken', 'Heavy smoke outside'):\n"
+                + "  Give 1 immediate life safety instruction, reassure that condition is recorded for BFP, and end with [ACTION:UPDATE_CONDITION|SituationOrNotes].\n\n"
 
-                + "User: Hello\n"
-                + "You: Hello! I can send SOS, open first "
-                + "aid guides, or call the fire station. "
-                + "[ACTION:NONE]";
+                + "- Medical symptom, injury, or first aid question (e.g. 'I'm choking rn', 'treat a burn', 'CPR steps', 'bleeding arm'):\n"
+                + "  * FIRST inspect the CURRENT AVAILABLE FIRST AID GUIDES list above.\n"
+                + "  * IF A GUIDE MATCHES: Give 1 immediate crucial life-saving tip, announce you are opening the guide, and end with [ACTION:SEARCH_FIRSTAID|ExactTitle] using the exact title from the list.\n"
+                + "  * IF NO GUIDE MATCHES: You MUST state clearly: 'No corresponding first aid data found for that condition. Please contact emergency services or call the BFP hotline.' and end with [ACTION:NONE] or [ACTION:CALL_STATION]. NEVER invent guides that are not in the list.\n\n"
+
+                + "- BFP Hotline inquiry ('What is the hotline?', 'Emergency number', 'Numero ng bumbero'):\n"
+                + "  State that BFP emergency hotline is 09399337795 and national emergency is 911. Offer to call. End with [ACTION:NONE] or [ACTION:CALL_STATION].\n\n"
+
+                + "- Fire survival tips ('Electrical fire', 'Grease fire', 'LPG leak', 'Usok'):\n"
+                + "  Give the BFP safety rule (turn off breaker, never use water on grease or electric, crawl low under smoke). End with [ACTION:SEND_SOS] or [ACTION:NONE].\n\n"
+
+                + "- View or browse first aid library ('Open first aid', 'First aid guides', 'Tingnan ang first aid'):\n"
+                + "  Say opening first aid guides. End with [ACTION:OPEN_FIRSTAID].\n\n"
+
+                + "- Check responder / alert status ('Where are the responders?', 'Is BFP coming?', 'Nasaan na ang bumbero?', 'Check status'):\n"
+                + "  State you are checking status. End with [ACTION:CHECK_STATUS].\n\n"
+
+                + "- Cancel alert or false alarm ('Cancel SOS', 'False alarm', 'Kanselahin ang alert'):\n"
+                + "  Confirm cancelling SOS. End with [ACTION:CANCEL_SOS].\n\n"
+
+                + "- Call BFP fire station or emergency hotline ('Call station', 'Call BFP', 'Dial 911', 'Tawagan ang bumbero'):\n"
+                + "  Confirm calling station. End with [ACTION:CALL_STATION].\n\n"
+
+                + "- Greetings, help, or chit-chat ('Hello', 'Kamusta', 'What can you do?'):\n"
+                + "  State you can send victim SOS, turn on flashlight, trigger siren, provide first aid guides, or check responders. End with [ACTION:NONE].";
     }
 
     public void clearHistory() {

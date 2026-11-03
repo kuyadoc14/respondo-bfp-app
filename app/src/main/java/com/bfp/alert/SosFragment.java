@@ -40,7 +40,9 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SosFragment extends Fragment {
@@ -336,7 +338,31 @@ public class SosFragment extends Fragment {
     // Replace your existing sendSOSAlert() in SosFragment.java
 // with this complete version
 
-    private void sendSOSAlert() {
+    public void sendSOSAlert() {
+        sendSOSAlert(null);
+    }
+
+    public void sendSOSAlert(String role) {
+        if (!isAdded() || getContext() == null) return;
+
+        // If alert is already active and role is specified:
+        if (sAlertId != null && !sAlertId.isEmpty()) {
+            if ("victim".equalsIgnoreCase(role)) {
+                autoSubmitVictimDetails(sAlertId, null);
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "SOS updated: Victim details auto-transmitted.", Toast.LENGTH_SHORT).show();
+                }
+            } else if (role != null && !role.isEmpty()) {
+                Map<String, Object> update = new HashMap<>();
+                update.put("reporterRole", role);
+                db.collection("sos_alerts").document(sAlertId).update(update);
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "SOS updated: You are set as " + role + ".", Toast.LENGTH_SHORT).show();
+                }
+            }
+            return;
+        }
+
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -354,6 +380,7 @@ public class SosFragment extends Fragment {
 
         locationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
+                    if (!isAdded() || getContext() == null) return;
                     String userId = getOrCreateUserId();
 
                     Map<String, Object> alert =
@@ -368,20 +395,27 @@ public class SosFragment extends Fragment {
                                     .FieldValue.serverTimestamp());
                     alert.put("status",      "active");
                     alert.put("deviceToken", "");
+                    if (role != null && !role.isEmpty()) {
+                        alert.put("reporterRole", role);
+                    }
 
                     db.collection("sos_alerts")
                             .add(alert)
                             .addOnSuccessListener(ref -> {
+                                if (!isAdded()) return;
                                 sAlertId = ref.getId();
                                 saveAlertId(sAlertId);
                                 setSOSSentState();
                                 attachLiveListener(sAlertId);
 
-                                // ── Show role selection dialog
-                                // immediately after SOS is sent
-                                promptRoleSelection(sAlertId);
+                                if ("victim".equalsIgnoreCase(role)) {
+                                    autoSubmitVictimDetails(sAlertId, null);
+                                } else {
+                                    promptRoleSelection(sAlertId);
+                                }
                             })
                             .addOnFailureListener(e -> {
+                                if (!isAdded()) return;
                                 btnSOS.setEnabled(true);
                                 btnSOS.setText("SOS");
                                 Toast.makeText(
@@ -394,19 +428,121 @@ public class SosFragment extends Fragment {
                 });
     }
 
+    public void cancelActiveSOS() {
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if (alertId != null) {
+            Map<String, Object> update = new HashMap<>();
+            update.put("status", "resolved");
+            update.put("resolvedReason", "Cancelled by citizen");
+            db.collection("sos_alerts").document(alertId).update(update);
+            clearAlertState();
+            setIdleState();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "SOS alert cancelled.", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "No active SOS alert to cancel.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    public void checkCurrentAlertStatus() {
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if (alertId == null) {
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "No active SOS alert. You are safe.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        db.collection("sos_alerts").document(alertId).get()
+                .addOnSuccessListener(doc -> {
+                    if (!isAdded() || getContext() == null) return;
+                    if (!doc.exists()) {
+                        Toast.makeText(getContext(), "No active SOS alert found.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String status = doc.getString("status");
+                    if ("deployed".equalsIgnoreCase(status)) {
+                        Toast.makeText(getContext(), "🚒 BFP Responders are DEPLOYED and heading to your location!", Toast.LENGTH_LONG).show();
+                    } else if ("active".equalsIgnoreCase(status)) {
+                        Toast.makeText(getContext(), "SOS is active. Dispatchers are processing your alert.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getContext(), "Alert status: " + status, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    public void updateAlertCondition(String conditionNotes) {
+        String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
+        if (alertId != null && conditionNotes != null && !conditionNotes.trim().isEmpty()) {
+            Map<String, Object> update = new HashMap<>();
+            update.put("incidentNotes", conditionNotes.trim());
+            update.put("lastConditionUpdate", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            db.collection("sos_alerts").document(alertId).update(update);
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Condition updated: " + conditionNotes, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void autoSubmitVictimDetails(String alertId, @Nullable UserProfile profile) {
+        if (alertId == null || !isAdded()) return;
+
+        Context ctx = getContext();
+        if (ctx == null) return;
+
+        UserProfile victimProfile = profile != null ? profile : UserProfileManager.getLocalProfile(ctx);
+
+        Map<String, Object> update = new HashMap<>();
+        update.put("reporterRole", "victim");
+        update.put("countOfVictims", 1);
+        update.put("reportSubmitted", true);
+
+        if (victimProfile != null && !victimProfile.isEmpty()) {
+            if (!victimProfile.getFullName().isEmpty()) {
+                update.put("reporterName", victimProfile.getFullName());
+            }
+            if (!victimProfile.getPhone().isEmpty()) {
+                update.put("reporterPhone", victimProfile.getPhone());
+            }
+            update.put("reporterProfile", victimProfile.toMap());
+
+            Map<String, Object> patientMap = victimProfile.toPatientMap();
+            List<Map<String, Object>> patients = new ArrayList<>();
+            patients.add(patientMap);
+            update.put("patients", patients);
+        }
+
+        db.collection("sos_alerts")
+                .document(alertId)
+                .update(update)
+                .addOnSuccessListener(u -> {
+                    if (!isAdded() || getContext() == null) return;
+                    markReportSubmitted(alertId);
+                    hideReportButton();
+                    Toast.makeText(getContext(),
+                            "🚑 SOS Sent! Your medical & personal details were automatically dispatched to BFP.",
+                            Toast.LENGTH_LONG).show();
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded() || getContext() == null) return;
+                    Log.e(TAG, "Failed auto-submitting victim details: " + e.getMessage());
+                });
+    }
+
     private void promptRoleSelection(String alertId) {
         if (!isAdded()) return;
         RoleSelectionDialog dialog = RoleSelectionDialog.newInstance(alertId);
         dialog.setOnRoleSelectedListener(new RoleSelectionDialog.OnRoleSelectedListener() {
             @Override
             public void onRoleSelected(String role, UserProfile profile) {
-                // Save only the selected role now; report details are submitted later.
                 if ("victim".equalsIgnoreCase(role)) {
-                    Map<String, Object> update = new HashMap<>();
-                    update.put("reporterRole", "victim");
-                    db.collection("sos_alerts").document(alertId).update(update);
+                    autoSubmitVictimDetails(alertId, profile);
+                } else {
+                    openAccidentReportSheet(alertId, role, profile);
                 }
-                openAccidentReportSheet(alertId, role, profile);
             }
 
             @Override
@@ -471,6 +607,11 @@ public class SosFragment extends Fragment {
                             }
 
                             @Override
+                            public void onSendSOSWithRole(String role) {
+                                sendSOSAlert(role);
+                            }
+
+                            @Override
                             public void onOpenFirstAid() {
                                 if (getActivity()
                                         instanceof MainActivity) {
@@ -487,6 +628,31 @@ public class SosFragment extends Fragment {
                                     ((MainActivity) getActivity())
                                             .switchToFirstAid(query);
                                 }
+                            }
+
+                            @Override
+                            public void onOpenFirstAidDetail(FirstAidItem item) {
+                                if (item != null && getActivity() instanceof MainActivity) {
+                                    ((MainActivity) getActivity())
+                                            .openFirstAidDetail(item);
+                                } else if (item != null) {
+                                    onSearchFirstAid(item.title);
+                                }
+                            }
+
+                            @Override
+                            public void onCheckStatus() {
+                                checkCurrentAlertStatus();
+                            }
+
+                            @Override
+                            public void onCancelSOS() {
+                                cancelActiveSOS();
+                            }
+
+                            @Override
+                            public void onUpdateCondition(String conditionNotes) {
+                                updateAlertCondition(conditionNotes);
                             }
                         },
                 handsFreeMode);

@@ -32,8 +32,19 @@ public class VoiceAssistantDialog extends Dialog {
     // ── Action listener interface ─────────────────────────────────
     public interface ActionListener {
         void onSendSOS();
+        default void onSendSOSWithRole(String role) {
+            onSendSOS();
+        }
         void onOpenFirstAid();
         void onSearchFirstAid(String query);
+        default void onOpenFirstAidDetail(FirstAidItem item) {
+            if (item != null && item.title != null) {
+                onSearchFirstAid(item.title);
+            }
+        }
+        default void onCheckStatus() {}
+        default void onCancelSOS() {}
+        default void onUpdateCondition(String conditionNotes) {}
     }
 
     // ── Fields ────────────────────────────────────────────────────
@@ -537,10 +548,23 @@ public class VoiceAssistantDialog extends Dialog {
 
         switch (action) {
 
+            case ClaudeVoiceAssistant.ACTION_SEND_SOS_VICTIM:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onSendSOSWithRole("victim");
+                    }
+                    dismiss();
+                }, 600);
+                break;
+
             case ClaudeVoiceAssistant.ACTION_SEND_SOS:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        actionListener.onSendSOS();
+                        if ("victim".equalsIgnoreCase(data)) {
+                            actionListener.onSendSOSWithRole("victim");
+                        } else {
+                            actionListener.onSendSOS();
+                        }
                     }
                     dismiss();
                 }, 600);
@@ -560,11 +584,56 @@ public class VoiceAssistantDialog extends Dialog {
                          .ACTION_SEARCH_FIRSTAID:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        actionListener.onSearchFirstAid(
-                                data != null ? data : "");
+                        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(data);
+                        if (match != null) {
+                            actionListener.onOpenFirstAidDetail(match);
+                        } else {
+                            actionListener.onSearchFirstAid(
+                                    data != null ? data : "");
+                        }
                     }
                     dismiss();
                 }, 600);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_CHECK_STATUS:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onCheckStatus();
+                    }
+                }, 400);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_CANCEL_SOS:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onCancelSOS();
+                    }
+                }, 400);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_FLASHLIGHT_ON:
+                setFlashlight(true);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_FLASHLIGHT_OFF:
+                setFlashlight(false);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_PLAY_SIREN:
+                playSiren();
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_STOP_SIREN:
+                stopSiren();
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_UPDATE_CONDITION:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onUpdateCondition(data != null ? data : "");
+                    }
+                }, 400);
                 break;
 
             case ClaudeVoiceAssistant
@@ -577,6 +646,48 @@ public class VoiceAssistantDialog extends Dialog {
                 break;
         }
     }
+
+    private android.media.Ringtone sirenRingtone;
+
+    private void setFlashlight(boolean enable) {
+        try {
+            android.hardware.camera2.CameraManager cm =
+                    (android.hardware.camera2.CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+            if (cm != null) {
+                String[] ids = cm.getCameraIdList();
+                if (ids.length > 0) {
+                    cm.setTorchMode(ids[0], enable);
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("VoiceAssistantDialog", "Flashlight error", e);
+        }
+    }
+
+    private void playSiren() {
+        try {
+            if (sirenRingtone == null) {
+                Uri alert = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
+                if (alert == null) {
+                    alert = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE);
+                }
+                sirenRingtone = android.media.RingtoneManager.getRingtone(getContext(), alert);
+            }
+            if (sirenRingtone != null && !sirenRingtone.isPlaying()) {
+                sirenRingtone.play();
+            }
+        } catch (Exception e) {
+            android.util.Log.e("VoiceAssistantDialog", "Siren error", e);
+        }
+    }
+
+    private void stopSiren() {
+        if (sirenRingtone != null && sirenRingtone.isPlaying()) {
+            sirenRingtone.stop();
+        }
+    }
+
+
 
     private void callBFP() {
         try {
@@ -730,6 +841,7 @@ public class VoiceAssistantDialog extends Dialog {
 
     @Override
     public void dismiss() {
+        stopSiren();
         stopListeningSound();
         handler.removeCallbacks(finalizeSpeechRunnable);
         stopPulseAnimation();
