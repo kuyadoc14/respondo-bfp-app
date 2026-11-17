@@ -10,6 +10,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -35,7 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BLESOSService extends Service {
+public class BLESOSService extends Service implements SensorEventListener {
 
     private static final String TAG = "BLESOSService";
     public static final String CHANNEL_ID_MONITOR = "esp32_ble_monitor";
@@ -49,6 +53,7 @@ public class BLESOSService extends Service {
     public static final String EXTRA_CONNECTED             = "extra_connected";
     public static final String EXTRA_ALERT_ID              = "extra_alert_id";
     public static final String EXTRA_ROLE                  = "extra_role";
+    private static final String ACTION_TRIGGER_SHAKE_SOS = "com.bfp.alert.TRIGGER_SHAKE_SOS";
 
     private static final String PREFS     = "bfp_prefs";
     private static final String KEY_ALERT = "activeAlertId";
@@ -61,7 +66,10 @@ public class BLESOSService extends Service {
     private boolean isConnected = false;
     private String lastDeviceCoordinates = null;
     private long lastTriggerTime = 0;
+    private long lastShakeTriggerTime = 0;
     private TextToSpeech tts = null;
+    private SensorManager sensorManager;
+    private ShakeGestureDetector shakeGestureDetector;
 
     public static boolean isDeviceConnected() {
         return sInstance != null && sInstance.isConnected;
@@ -95,12 +103,14 @@ public class BLESOSService extends Service {
         sInstance = this;
         db = FirebaseFirestore.getInstance();
         locationClient = LocationServices.getFusedLocationProviderClient(this);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         createNotificationChannels();
         startForegroundServiceNotification("Searching for Respondo Wearable...");
 
         initTTS();
         initBLE();
+        updateShakeSensorRegistration();
     }
 
     private void createNotificationChannels() {
@@ -162,14 +172,23 @@ public class BLESOSService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        return new NotificationCompat.Builder(this, CHANNEL_ID_MONITOR)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID_MONITOR)
                 .setContentTitle("Respondo Wearable Monitor")
                 .setContentText(statusText)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build();
+                .setPriority(NotificationCompat.PRIORITY_LOW);
+        SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(ShakeGestureDetector.PREF_ENABLED, false)
+                && prefs.getBoolean(ShakeGestureDetector.PREF_BACKGROUND, false)) {
+            Sensor backgroundSensor = sensorManager == null
+                    ? null : ShakeGestureDetector.getBackgroundSensor(sensorManager);
+            builder.setSubText(backgroundSensor != null && backgroundSensor.isWakeUpSensor()
+                    ? "Shake SOS active in background, including screen-off"
+                    : "Shake SOS active while screen is on; screen-off detection may be unavailable");
+        }
+        return builder.build();
     }
 
     private void updateForegroundNotification(String statusText) {
@@ -303,30 +322,34 @@ public class BLESOSService extends Service {
     }
 
     private synchronized void triggerEmergencySOS() {
+        triggerEmergencySOS("ESP32_BLE");
+    }
+
+    private synchronized void triggerEmergencySOS(String source) {
         Log.i(TAG, "Executing Background SOS dispatch to Firestore...");
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener(loc -> {
                         if (loc != null) {
-                            uploadAlertToFirestore(loc.getLatitude(), loc.getLongitude());
+                            uploadAlertToFirestore(loc.getLatitude(), loc.getLongitude(), source);
                         } else {
                             locationClient.getLastLocation().addOnSuccessListener(lastLoc -> {
                                 if (lastLoc != null) {
-                                    uploadAlertToFirestore(lastLoc.getLatitude(), lastLoc.getLongitude());
+                                    uploadAlertToFirestore(lastLoc.getLatitude(), lastLoc.getLongitude(), source);
                                 } else {
-                                    uploadAlertFromFallback();
+                                    uploadAlertFromFallback(source);
                                 }
-                            }).addOnFailureListener(e -> uploadAlertFromFallback());
+                            }).addOnFailureListener(e -> uploadAlertFromFallback(source));
                         }
                     })
-                    .addOnFailureListener(e -> uploadAlertFromFallback());
+                    .addOnFailureListener(e -> uploadAlertFromFallback(source));
         } else {
-            uploadAlertFromFallback();
+            uploadAlertFromFallback(source);
         }
     }
 
-    private void uploadAlertFromFallback() {
+    private void uploadAlertFromFallback(String source) {
         double lat = 0.0;
         double lng = 0.0;
         if (lastDeviceCoordinates != null && lastDeviceCoordinates.startsWith("LAT:")) {
@@ -339,10 +362,10 @@ public class BLESOSService extends Service {
                 }
             } catch (Exception ignored) {}
         }
-        uploadAlertToFirestore(lat, lng);
+        uploadAlertToFirestore(lat, lng, source);
     }
 
-    private void uploadAlertToFirestore(double lat, double lng) {
+    private void uploadAlertToFirestore(double lat, double lng, String source) {
         String userId = getOrCreateUserId();
 
         Map<String, Object> alert = new HashMap<>();
@@ -351,7 +374,7 @@ public class BLESOSService extends Service {
         alert.put("longitude", lng);
         alert.put("timestamp", FieldValue.serverTimestamp());
         alert.put("status", "active");
-        alert.put("source", "ESP32_BLE");
+        alert.put("source", source);
         alert.put("deviceToken", "");
 
         db.collection("sos_alerts")
@@ -361,8 +384,12 @@ public class BLESOSService extends Service {
                     Log.i(TAG, "Emergency SOS successfully written to Firestore! ID: " + alertId);
 
                     saveAlertId(alertId);
-                    showHighPriorityAlertNotification(alertId);
-                    speakText("Emergency alert sent. Long press your wearable if you are the victim, or double press if reporting for someone else.");
+                    showHighPriorityAlertNotification(alertId, source);
+                    if ("PHONE_SHAKE".equals(source)) {
+                        speakText("Emergency alert sent by shake gesture.");
+                    } else {
+                        speakText("Emergency alert sent. Long press your wearable if you are the victim, or double press if reporting for someone else.");
+                    }
 
                     Intent intent = new Intent(ACTION_SOS_SENT);
                     intent.putExtra(EXTRA_ALERT_ID, alertId);
@@ -372,7 +399,7 @@ public class BLESOSService extends Service {
                 .addOnFailureListener(e -> Log.e(TAG, "Failed to upload SOS alert from service: " + e.getMessage()));
     }
 
-    private void showHighPriorityAlertNotification(String alertId) {
+    private void showHighPriorityAlertNotification(String alertId, String source) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pi = PendingIntent.getActivity(
@@ -382,7 +409,9 @@ public class BLESOSService extends Service {
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_ALERTS)
                 .setContentTitle("🚨 EMERGENCY SOS SENT TO BFP!")
-                .setContentText("Respondo Wearable panic button triggered. Help has been dispatched.")
+                .setContentText("PHONE_SHAKE".equals(source)
+                        ? "Phone shake detected. Help has been dispatched."
+                        : "Respondo Wearable panic button triggered. Help has been dispatched.")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -420,16 +449,103 @@ public class BLESOSService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && ACTION_TRIGGER_SHAKE_SOS.equals(intent.getAction())) {
+            handleShakeDetected();
+        }
+        updateShakeSensorRegistration();
         if (bleManager != null && !bleManager.isConnected()) {
             bleManager.startScan();
         }
         return START_STICKY;
     }
 
+    public static void triggerShakeSOS(Context context) {
+        if (context == null) return;
+        Intent intent = new Intent(context, BLESOSService.class);
+        intent.setAction(ACTION_TRIGGER_SHAKE_SOS);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(context, intent);
+            } else {
+                context.startService(intent);
+            }
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to dispatch shake-triggered SOS to the service.", e);
+        }
+    }
+
+    public static void refreshShakeMonitoring(Context context) {
+        BLESOSService service = sInstance;
+        if (service != null) {
+            service.updateShakeSensorRegistration();
+        } else if (context != null) {
+            start(context);
+        }
+    }
+
+    private void updateShakeSensorRegistration() {
+        if (sensorManager == null) return;
+        sensorManager.unregisterListener(this);
+        shakeGestureDetector = null;
+
+        SharedPreferences prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (!prefs.getBoolean(ShakeGestureDetector.PREF_ENABLED, false)
+                || !prefs.getBoolean(ShakeGestureDetector.PREF_BACKGROUND, false)) {
+            return;
+        }
+
+        Sensor sensor = ShakeGestureDetector.getBackgroundSensor(sensorManager);
+        if (sensor == null) {
+            Log.e(TAG, "Shake SOS is enabled, but this device has no supported accelerometer.");
+            return;
+        }
+
+        if (!sensor.isWakeUpSensor()) {
+            Log.w(TAG, "No wake-up accelerometer is available; background shake detection may stop when the screen turns off.");
+        }
+
+        shakeGestureDetector = new ShakeGestureDetector(
+                prefs.getFloat(ShakeGestureDetector.PREF_THRESHOLD, ShakeGestureDetector.DEFAULT_THRESHOLD));
+        if (!sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)) {
+            shakeGestureDetector = null;
+            Log.e(TAG, "Unable to register the background shake SOS sensor.");
+        } else {
+            Log.i(TAG, "Background shake sensor registered: " + sensor.getName()
+                    + ", wake-up=" + sensor.isWakeUpSensor());
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (shakeGestureDetector != null
+                && shakeGestureDetector.onSensorChanged(event.values, event.timestamp, event.sensor.getType())) {
+            handleShakeDetected();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    private synchronized void handleShakeDetected() {
+        long now = System.currentTimeMillis();
+        if (now - lastShakeTriggerTime < 8000) return;
+        String activeAlertId = getSavedAlertId();
+        if (activeAlertId != null && !activeAlertId.isEmpty()) {
+            Log.i(TAG, "Ignoring shake SOS because an alert is already active.");
+            return;
+        }
+        lastShakeTriggerTime = now;
+        triggerEmergencySOS("PHONE_SHAKE");
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         sInstance = null;
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
         if (bleManager != null) {
             bleManager.disconnect();
         }

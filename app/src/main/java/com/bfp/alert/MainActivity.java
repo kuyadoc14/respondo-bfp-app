@@ -2,6 +2,11 @@ package com.bfp.alert;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.util.Log;
 import android.view.View;
 import java.util.HashMap;
 
@@ -12,17 +17,20 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private final SosFragment       sosFragment       = new SosFragment();
     private final FirstAidFragment  firstAidFragment  = new FirstAidFragment();
     private final ProfileFragment   profileFragment   = new ProfileFragment();
+    private SensorManager sensorManager;
+    private ShakeGestureDetector shakeGestureDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         // Request BLE and Notification permissions on Android 12+ / 13+
         if (Build.VERSION.SDK_INT >= 33) {
@@ -83,6 +91,51 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         BLESOSService.start(this);
+        refreshShakeDetection();
+    }
+
+    @Override
+    protected void onPause() {
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+        shakeGestureDetector = null;
+        super.onPause();
+    }
+
+    public void refreshShakeDetection() {
+        if (sensorManager == null) return;
+        sensorManager.unregisterListener(this);
+        shakeGestureDetector = null;
+
+        android.content.SharedPreferences prefs =
+                getSharedPreferences("bfp_prefs", MODE_PRIVATE);
+        if (!prefs.getBoolean(ShakeGestureDetector.PREF_ENABLED, false)
+                || prefs.getBoolean(ShakeGestureDetector.PREF_BACKGROUND, false)) {
+            return;
+        }
+
+        Sensor sensor = ShakeGestureDetector.getSensor(sensorManager);
+        if (sensor == null) return;
+
+        shakeGestureDetector = new ShakeGestureDetector(
+                prefs.getFloat(ShakeGestureDetector.PREF_THRESHOLD, ShakeGestureDetector.DEFAULT_THRESHOLD));
+        if (!sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)) {
+            shakeGestureDetector = null;
+            Log.e("MainActivity", "Unable to register the foreground shake SOS sensor.");
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (shakeGestureDetector != null
+                && shakeGestureDetector.onSensorChanged(event.values, event.timestamp, event.sensor.getType())) {
+            BLESOSService.triggerShakeSOS(this);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
     private void setBottomNavVisibility(boolean visible) {

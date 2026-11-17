@@ -15,6 +15,7 @@ import android.os.Build;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,11 +25,15 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -127,9 +132,14 @@ public class SosFragment extends Fragment {
         tvLiveLabel = view.findViewById(R.id.tvLiveLabel);
         statusCard = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
+        View btnShakeSettings = view.findViewById(R.id.btnShakeSettings);
+        if (btnShakeSettings != null) {
+            btnShakeSettings.setOnClickListener(v -> showShakeSettingsDialog());
+        }
 
         SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.topBar));
         SystemBarUtils.applyTopInsetMargin(bleBadge);
+        SystemBarUtils.applyTopInsetMargin(btnShakeSettings);
 
         // Tactile press & release spring effect
         btnSOS.setOnTouchListener((v, event) -> {
@@ -200,6 +210,134 @@ public class SosFragment extends Fragment {
         syncWithFirestore();
 
         return view;
+    }
+
+    private void showShakeSettingsDialog() {
+        Context context = requireContext();
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int horizontalPadding = dp(24);
+        content.setPadding(horizontalPadding, dp(8), horizontalPadding, 0);
+
+        SwitchMaterial enabledSwitch = new SwitchMaterial(context);
+        enabledSwitch.setText("Enable shake SOS");
+        enabledSwitch.setChecked(prefs.getBoolean(ShakeGestureDetector.PREF_ENABLED, false));
+        content.addView(enabledSwitch);
+
+        TextView explanation = new TextView(context);
+        explanation.setText("SOS sends immediately after three shake peaks above the threshold. Lower values are more sensitive. Screen-off detection depends on your phone having a wake-up accelerometer.");
+        explanation.setTextColor(0xFF666666);
+        explanation.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        LinearLayout.LayoutParams explanationParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        explanationParams.topMargin = dp(8);
+        content.addView(explanation, explanationParams);
+
+        RadioGroup scopeOptions = new RadioGroup(context);
+        scopeOptions.setOrientation(RadioGroup.VERTICAL);
+        RadioButton foregroundOption = new RadioButton(context);
+        foregroundOption.setId(1001);
+        foregroundOption.setText("Only while the app is open");
+        RadioButton backgroundOption = new RadioButton(context);
+        backgroundOption.setId(1002);
+        backgroundOption.setText("Always, including in the background");
+        scopeOptions.addView(foregroundOption);
+        scopeOptions.addView(backgroundOption);
+        boolean backgroundEnabled = prefs.getBoolean(ShakeGestureDetector.PREF_BACKGROUND, false);
+        scopeOptions.check(backgroundEnabled ? backgroundOption.getId() : foregroundOption.getId());
+        LinearLayout.LayoutParams scopeParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        scopeParams.topMargin = dp(8);
+        content.addView(scopeOptions, scopeParams);
+
+        TextView thresholdLabel = new TextView(context);
+        float savedThreshold = prefs.getFloat(
+                ShakeGestureDetector.PREF_THRESHOLD, ShakeGestureDetector.DEFAULT_THRESHOLD);
+        savedThreshold = Math.max(ShakeGestureDetector.MIN_THRESHOLD,
+                Math.min(ShakeGestureDetector.MAX_THRESHOLD, savedThreshold));
+        thresholdLabel.setText(formatShakeThreshold(savedThreshold));
+        thresholdLabel.setTextColor(0xFF222222);
+        thresholdLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        LinearLayout.LayoutParams thresholdParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        thresholdParams.topMargin = dp(12);
+        content.addView(thresholdLabel, thresholdParams);
+
+        SeekBar thresholdSeekBar = new SeekBar(context);
+        thresholdSeekBar.setMax(Math.round(
+                (ShakeGestureDetector.MAX_THRESHOLD - ShakeGestureDetector.MIN_THRESHOLD) * 10));
+        thresholdSeekBar.setProgress(Math.round((savedThreshold - ShakeGestureDetector.MIN_THRESHOLD) * 10));
+        thresholdSeekBar.setContentDescription("Shake acceleration threshold");
+        thresholdSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                thresholdLabel.setText(formatShakeThreshold(
+                        ShakeGestureDetector.MIN_THRESHOLD + progress / 10.0f));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+        content.addView(thresholdSeekBar);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Shake SOS settings")
+                .setView(content)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    boolean enabled = enabledSwitch.isChecked();
+                    SensorManager sensors = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+                    if (enabled) {
+                        if (sensors == null || ShakeGestureDetector.getSensor(sensors) == null) {
+                            Toast.makeText(context,
+                                    "Shake SOS is not supported on this device.",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                    }
+
+                    boolean background = scopeOptions.getCheckedRadioButtonId()
+                            == backgroundOption.getId();
+                    float threshold = ShakeGestureDetector.MIN_THRESHOLD
+                            + thresholdSeekBar.getProgress() / 10.0f;
+                    prefs.edit()
+                            .putBoolean(ShakeGestureDetector.PREF_ENABLED, enabled)
+                            .putBoolean(ShakeGestureDetector.PREF_BACKGROUND, background)
+                            .putFloat(ShakeGestureDetector.PREF_THRESHOLD, threshold)
+                            .apply();
+
+                    if (enabled && background
+                            && !ShakeGestureDetector.getBackgroundSensor(sensors).isWakeUpSensor()) {
+                        Toast.makeText(context,
+                                "This phone has no wake-up accelerometer. Background shake detection may not work when the screen is off.",
+                                Toast.LENGTH_LONG).show();
+                    }
+
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).refreshShakeDetection();
+                    }
+                    BLESOSService.refreshShakeMonitoring(context);
+                    Toast.makeText(context,
+                            enabled ? "Shake SOS settings saved." : "Shake SOS is off.",
+                            Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private String formatShakeThreshold(float threshold) {
+        return String.format(java.util.Locale.getDefault(),
+                "Shake intensity threshold: %.1f m/s²", threshold);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     // ─────────────────────────────────────────────────────────
