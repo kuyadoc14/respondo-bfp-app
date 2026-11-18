@@ -205,7 +205,7 @@ public class AdminFirstAidFragment extends Fragment {
                 tvAdminIcon = v.findViewById(R.id.tvAdminIcon);
                 tvAdminTitle = v.findViewById(R.id.tvAdminTitle);
                 tvAdminCategory = v.findViewById(R.id.tvAdminCategory);
-                btnEdit = v.findViewById(R.id.btnEdit);
+                btnEdit = v.findViewById(R.id.btnAdminEdit);
                 btnAdminDelete = v.findViewById(R.id.btnAdminDelete);
             }
         }

@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:animateLayoutChanges="true"
     android:background="@drawable/bg_bottom_sheet_dark"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
@@ -27,19 +28,20 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="16dp">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="#242424"
-            android:gravity="center"
             android:layout_marginEnd="14dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📡"
-                android:textSize="22sp"/>
-        </LinearLayout>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_bluetooth_signal"
+                app:tint="#3B82F6"
+                android:contentDescription="Wearable Icon"/>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -205,7 +207,7 @@
             android:textSize="12sp"/>
     </LinearLayout>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons with press animation -->
     <Button
         android:id="@+id/btnConnectToggle"
         android:layout_width="match_parent"
@@ -215,6 +217,7 @@
         android:textSize="13sp"
         android:textStyle="bold"
         android:backgroundTint="#2E7D32"
+        android:stateListAnimator="@animator/btn_press_scale"
         android:layout_marginBottom="10dp"/>
 
     <Button
@@ -225,6 +228,7 @@
         android:textColor="#DDDDDD"
         android:textSize="13sp"
         android:backgroundTint="#282828"
+        android:stateListAnimator="@animator/btn_press_scale"
         android:layout_marginBottom="10dp"/>
 
     <Button
@@ -234,6 +238,7 @@
         android:text="TEST WEARABLE SOS"
         android:textColor="#FF6B00"
         android:textSize="13sp"
+        android:stateListAnimator="@animator/btn_press_scale"
         android:backgroundTint="#241B15"/>
 
 </LinearLayout>

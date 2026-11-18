@@ -9,6 +9,7 @@
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
     app:strokeColor="@color/border"
+    android:stateListAnimator="@animator/card_press_scale"
     app:cardBackgroundColor="@color/surface">
 
     <LinearLayout
@@ -48,11 +49,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginBottom="4dp"/>
+                android:ellipsize="end"/>
 
             <TextView
                 android:id="@+id/tvAdminCategory"
@@ -61,43 +61,45 @@
                 android:textColor="@color/primary"
                 android:textSize="11sp"
                 android:textStyle="bold"
-                android:background="@drawable/bg_badge_active"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"/>
+                android:layout_marginTop="2dp"/>
 
         </LinearLayout>
 
-        <!-- Edit button -->
-        <TextView
-            android:id="@+id/btnEdit"
+        <!-- Action buttons -->
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="Edit"
-            android:textSize="12sp"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:background="@drawable/bg_button_info"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <ImageButton
-            android:id="@+id/btnAdminDelete"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_badge_active"
-            android:padding="8dp"
-            android:src="@drawable/ic_delete_trashcan"
-            android:scaleType="fitCenter"
-            android:contentDescription="Delete"
-            android:clickable="true"
-            android:focusable="true"/>
+            <!-- Edit button -->
+            <ImageButton
+                android:id="@+id/btnAdminEdit"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_chip"
+                android:src="@drawable/ic_managefirstaid"
+                app:tint="@color/text_primary"
+                android:contentDescription="Edit"
+                android:scaleType="centerInside"
+                android:padding="8dp"
+                android:stateListAnimator="@animator/btn_press_scale"
+                android:layout_marginEnd="8dp"/>
 
+            <!-- Delete button -->
+            <ImageButton
+                android:id="@+id/btnAdminDelete"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_chip"
+                android:src="@drawable/ic_delete_trashcan"
+                app:tint="@color/primary"
+                android:contentDescription="Delete"
+                android:scaleType="centerInside"
+                android:padding="8dp"
+                android:stateListAnimator="@animator/btn_press_scale"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 

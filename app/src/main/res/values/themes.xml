@@ -18,8 +18,8 @@
         <item name="cornerRadius">14dp</item>
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingBottom">12dp</item>
-        <item name="android:stateListAnimator">@null</item>
-        <item name="elevation">0dp</item>
+        <item name="android:stateListAnimator">@animator/btn_press_scale</item>
+        <item name="elevation">2dp</item>
     </style>
 
     <style name="Widget.BFP.Button.Outlined"
@@ -28,13 +28,13 @@
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingBottom">12dp</item>
         <item name="strokeColor">@color/primary</item>
-        <item name="android:stateListAnimator">@null</item>
+        <item name="android:stateListAnimator">@animator/btn_press_scale</item>
     </style>
 
     <style name="Widget.BFP.Button.Text"
         parent="Widget.MaterialComponents.Button.TextButton">
         <item name="cornerRadius">14dp</item>
-        <item name="android:stateListAnimator">@null</item>
+        <item name="android:stateListAnimator">@animator/btn_press_scale</item>
     </style>
 
     <style name="Theme.Dialog.Custom"
@@ -48,23 +48,59 @@
         <item name="android:windowMinWidthMinor">90%</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.5</item>
+        <item name="android:windowAnimationStyle">@style/Animation.BFP.Dialog</item>
     </style>
 
-    <!-- Add this style inside your res/values/themes.xml -->
+    <style name="Animation.BFP.Dialog" parent="">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit</item>
+    </style>
+
+    <!-- Bottom sheet theme with slide-up / slide-down animations -->
     <style name="Theme.BFPAlert.BottomSheet"
         parent="Theme.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">
             @style/BFPBottomSheet
         </item>
+        <item name="android:windowAnimationStyle">@style/Animation.BFP.BottomSheet</item>
+    </style>
+
+    <style name="Animation.BFP.BottomSheet" parent="">
+        <item name="android:windowEnterAnimation">@anim/bottom_sheet_enter</item>
+        <item name="android:windowExitAnimation">@anim/bottom_sheet_exit</item>
     </style>
 
     <style name="BFPBottomSheet"
         parent="Widget.MaterialComponents.BottomSheet.Modal">
         <item name="android:background">
-            @color/surface
+            @drawable/bg_bottom_sheet_modern
         </item>
         <item name="behavior_peekHeight">600dp</item>
         <item name="behavior_fitToContents">true</item>
         <item name="behavior_skipCollapsed">true</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.BFP.BottomSheet</item>
+    </style>
+
+    <style name="ShapeAppearance.BFP.BottomSheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <!-- Modern chip style — outlined default, filled when selected -->
+    <style name="Widget.BFP.Chip.Choice" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_bg_color_selector</item>
+        <item name="chipStrokeColor">@color/chip_stroke_color_selector</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipCornerRadius">20dp</item>
+        <item name="chipMinHeight">38dp</item>
+        <item name="chipStartPadding">14dp</item>
+        <item name="chipEndPadding">14dp</item>
+        <item name="android:textColor">@color/chip_text_color_selector</item>
+        <item name="android:textSize">13sp</item>
+        <item name="chipMinTouchTargetSize">0dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
     </style>
 </resources>

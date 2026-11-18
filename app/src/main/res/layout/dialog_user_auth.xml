@@ -5,18 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_bottom_sheet"
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_bottom_sheet_modern"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="24dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
 
     <!-- Drag Handle -->
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="36dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
-        android:background="#D1D5DB"
+        android:background="@drawable/bg_drag_handle"
         android:layout_marginBottom="16dp"/>
 
     <TextView
@@ -41,10 +42,11 @@
     <!-- Tabs: Sign In / Create Account -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="42dp"
+        android:layout_height="44dp"
         android:background="@drawable/bg_chip"
         android:orientation="horizontal"
         android:padding="3dp"
+        android:animateLayoutChanges="true"
         android:layout_marginBottom="16dp">
 
         <TextView
@@ -80,19 +82,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Email Address"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etAuthEmail"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="name@example.com"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="textEmailAddress"
@@ -103,19 +106,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Password"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etAuthPassword"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="At least 6 characters"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="textPassword"
@@ -140,30 +144,34 @@
         android:textAllCaps="false"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        app:backgroundTint="@color/primary"
+        android:background="@drawable/bg_button_primary_gradient"
+        app:backgroundTint="@null"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
         app:cornerRadius="12dp"
-        android:elevation="0dp"
+        android:elevation="2dp"
+        android:stateListAnimator="@animator/btn_press_scale"
         android:layout_marginBottom="8dp"/>
 
     <!-- Cancel button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAuthCancel"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="46dp"
         android:text="Cancel"
         android:textAllCaps="false"
         android:textStyle="bold"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        app:backgroundTint="@color/white"
+        android:background="@drawable/bg_button_ghost"
+        app:backgroundTint="@null"
         app:strokeColor="@color/border"
-        app:strokeWidth="1.5dp"
-        android:textColor="@color/text_primary"
+        app:strokeWidth="1dp"
+        android:textColor="@color/text_secondary"
         android:textSize="13sp"
         app:cornerRadius="12dp"
-        android:elevation="0dp"/>
+        android:elevation="0dp"
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
 </LinearLayout>

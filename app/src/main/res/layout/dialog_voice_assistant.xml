@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:animateLayoutChanges="true"
     android:background="@drawable/bg_bottom_sheet"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
@@ -30,20 +31,21 @@
         android:layout_marginBottom="20dp">
 
         <!-- AI icon -->
-        <LinearLayout
+        <FrameLayout
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="@drawable/bg_icon_circle"
-            android:gravity="center"
             android:layout_marginEnd="14dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🤖"
-                android:textSize="20sp"/>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_bot_assistant"
+                app:tint="#3B82F6"
+                android:contentDescription="AI Icon"/>
 
-        </LinearLayout>
+        </FrameLayout>
 
         <!-- Title -->
         <LinearLayout
@@ -200,13 +202,14 @@
             android:alpha="0.45"
             android:visibility="gone"/>
 
-        <!-- Main mic button -->
+        <!-- Main mic button with press animation -->
         <FrameLayout
             android:id="@+id/btnMic"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_mic_button"
+            android:stateListAnimator="@animator/btn_press_scale"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackgroundBorderless"

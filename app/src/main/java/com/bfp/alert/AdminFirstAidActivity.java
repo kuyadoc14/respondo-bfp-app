@@ -199,7 +199,7 @@ public class AdminFirstAidActivity extends AppCompatActivity {
                 tvAdminCategory =
                         v.findViewById(R.id.tvAdminCategory);
                 btnEdit         =
-                        v.findViewById(R.id.btnEdit);
+                        v.findViewById(R.id.btnAdminEdit);
                 btnAdminDelete  =
                         v.findViewById(R.id.btnAdminDelete);
             }

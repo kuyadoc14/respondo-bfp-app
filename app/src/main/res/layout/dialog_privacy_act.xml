@@ -5,18 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_bottom_sheet"
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_bottom_sheet_modern"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
-    android:paddingTop="18dp"
-    android:paddingBottom="24dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
 
     <!-- Drag Handle -->
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="36dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
-        android:background="#D1D5DB"
+        android:background="@drawable/bg_drag_handle"
         android:layout_marginBottom="16dp"/>
 
     <!-- Header -->
@@ -27,20 +28,21 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="6dp">
 
-        <LinearLayout
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/bg_status_resolved"
-            android:gravity="center"
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_banner_icon"
             android:layout_marginEnd="12dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚖️"
-                android:textSize="20sp"/>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_privacy_shield"
+                app:tint="#10B981"
+                android:contentDescription="Privacy Shield"/>
 
-        </LinearLayout>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -69,27 +71,28 @@
 
     </LinearLayout>
 
-    <TextView
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Please review the privacy policy below before providing your sensitive emergency medical details."
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
-        android:layout_marginBottom="12dp"/>
+        android:layout_height="1dp"
+        android:background="@drawable/bg_section_divider"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="14dp"/>
 
-    <!-- Scrollable Terms Box -->
-    <androidx.core.widget.NestedScrollView
+    <!-- Scrollable Terms -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:background="@drawable/card_bg"
-        android:padding="14dp"
-        android:layout_marginBottom="14dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:maxHeight="300dp"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingEnd="4dp">
 
+            <!-- Section 1 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -105,13 +108,14 @@
                 android:text="Under Section 13 of the Philippine Data Privacy Act (RA 10173), health information such as blood type, known allergies, pre-existing medical conditions, and emergency contact details are classified as Sensitive Personal Information. BFP Respondo collects these details solely on a voluntary basis."
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:lineSpacingExtra="2dp"
+                android:lineSpacingExtra="3dp"
                 android:layout_marginBottom="12dp"/>
 
+            <!-- Section 2 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2. Purpose &amp; Emergency Scope"
+                android:text="2. Purpose of Processing"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -120,16 +124,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Your medical information is gathered exclusively for life preservation and emergency medical services (EMS). When an SOS alert is activated and you identify as the victim, your saved profile is transmitted to the Bureau of Fire Protection (BFP) dispatch console to equip first responders with critical health facts prior to arrival."
+                android:text="Your emergency profile is processed strictly for emergency dispatch and medical triage. When an SOS alert is transmitted, authorized Bureau of Fire Protection responders receive this information to deliver life-saving interventions."
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:lineSpacingExtra="2dp"
+                android:lineSpacingExtra="3dp"
                 android:layout_marginBottom="12dp"/>
 
+            <!-- Section 3 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3. Confidentiality &amp; Bystander Control"
+                android:text="3. Data Retention and Security"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -138,12 +143,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• If you act as a bystander reporting an emergency, you have the right to remain anonymous; your personal medical profile will never be attached.\n• Transmitted data is accessible solely by authorized BFP emergency personnel handling active incidents.\n• Information is not shared with third parties or used for commercial marketing."
+                android:text="Your medical profile is stored locally on this device in encrypted private storage, and in Google Cloud Firestore if linked to an authenticated account. Respondo enforces industry-standard access control and never sells or discloses your information to unauthorized third parties."
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:lineSpacingExtra="2dp"
+                android:lineSpacingExtra="3dp"
                 android:layout_marginBottom="12dp"/>
 
+            <!-- Section 4 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -159,19 +165,22 @@
                 android:text="Under RA 10173, you retain the full right to:\n• Access, inspect, and update your profile anytime in this app.\n• Delete or withdraw your medical profile at will.\n• Withhold medical data without forfeiting emergency SOS button functionality."
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:lineSpacingExtra="2dp"
-                android:layout_marginBottom="6dp"/>
+                android:lineSpacingExtra="3dp"
+                android:layout_marginBottom="14dp"/>
 
         </LinearLayout>
 
-    </androidx.core.widget.NestedScrollView>
+    </ScrollView>
 
-    <!-- Consent Checkbox -->
+    <!-- Consent Checkbox Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/card_bg"
+        android:padding="14dp"
         android:orientation="horizontal"
         android:gravity="top"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp">
 
         <CheckBox
@@ -179,6 +188,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="false"
+            app:buttonTint="@color/primary"
             android:layout_marginEnd="8dp"/>
 
         <TextView
@@ -193,38 +203,42 @@
 
     </LinearLayout>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons with press scale animation -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAgreePrivacy"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="50dp"
         android:text="I Agree &amp; Proceed"
         android:textAllCaps="false"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        app:backgroundTint="@color/primary"
+        android:background="@drawable/bg_button_primary_gradient"
+        app:backgroundTint="@null"
         android:textColor="@color/white"
         android:textSize="14sp"
         android:textStyle="bold"
         app:cornerRadius="12dp"
-        android:elevation="0dp"
+        android:elevation="2dp"
+        android:stateListAnimator="@animator/btn_press_scale"
         android:layout_marginBottom="8dp"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDeclinePrivacy"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="46dp"
         android:text="Decline / Back"
         android:textAllCaps="false"
         android:textStyle="bold"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        app:backgroundTint="@color/white"
+        android:background="@drawable/bg_button_ghost"
+        app:backgroundTint="@null"
         app:strokeColor="@color/border"
-        app:strokeWidth="1.5dp"
-        android:textColor="@color/text_primary"
+        app:strokeWidth="1dp"
+        android:textColor="@color/text_secondary"
         android:textSize="13sp"
         app:cornerRadius="12dp"
-        android:elevation="0dp"/>
+        android:elevation="0dp"
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
 </LinearLayout>

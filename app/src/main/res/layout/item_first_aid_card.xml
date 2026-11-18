@@ -9,6 +9,7 @@
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
     app:strokeColor="@color/border"
+    android:stateListAnimator="@animator/card_press_scale"
     app:cardBackgroundColor="@color/surface">
 
     <LinearLayout

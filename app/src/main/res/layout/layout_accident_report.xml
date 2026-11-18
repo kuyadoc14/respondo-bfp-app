@@ -5,16 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/surface">
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_bottom_sheet_modern">
 
-    <!-- Drag handle -->
+    <!-- Drag handle — modern pill -->
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="36dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="8dp"
-        android:background="#DEDEDE"/>
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_drag_handle"/>
 
     <!-- Scrollable body -->
     <ScrollView
@@ -26,18 +27,39 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="32dp">
+            android:animateLayoutChanges="true"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
+            android:paddingBottom="36dp">
 
-            <!-- Header -->
+            <!-- ============================================= -->
+            <!-- HEADER                                        -->
+            <!-- ============================================= -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="20dp">
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="22dp">
+
+                <!-- Icon indicator container -->
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_header_icon"
+                    android:layout_marginEnd="14dp">
+
+                    <ImageView
+                        android:id="@+id/ivHeaderIcon"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_report_alert"
+                        app:tint="@color/primary"
+                        android:contentDescription="Accident Report Icon"/>
+
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -59,50 +81,75 @@
                         android:text="SOS sent. Fill in details to help responders prepare."
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:lineSpacingExtra="2dp"/>
 
                 </LinearLayout>
 
-                <!-- Close button -->
+                <!-- Close button with ripple and scale animation -->
                 <LinearLayout
                     android:id="@+id/btnCloseReport"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/bg_chip"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="@drawable/bg_close_button"
+                    android:stateListAnimator="@animator/btn_press_scale"
                     android:gravity="center"
                     android:layout_marginStart="12dp"
                     android:clickable="true"
                     android:focusable="true">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="✕"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp"/>
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_close"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="Close Report"/>
 
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- SOS sent confirmation / role banner -->
+            <!-- ============================================= -->
+            <!-- SOS STATUS BANNER                             -->
+            <!-- ============================================= -->
             <LinearLayout
                 android:id="@+id/bannerRoleInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_resolved"
-                android:padding="14dp"
+                android:background="@drawable/bg_banner_success"
+                android:paddingStart="14dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="24dp">
+
+                <!-- Icon circle -->
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_banner_icon"
+                    android:layout_marginEnd="12dp">
+
+                    <ImageView
+                        android:id="@+id/ivBannerIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_check_circle"
+                        app:tint="#10B981"
+                        android:contentDescription="Status check"/>
+
+                </FrameLayout>
 
                 <View
                     android:id="@+id/dotRoleInfo"
                     android:layout_width="8dp"
                     android:layout_height="8dp"
                     android:background="@drawable/circle_dot_green"
-                    android:layout_marginEnd="10dp"/>
+                    android:layout_marginEnd="10dp"
+                    android:visibility="gone"/>
 
                 <TextView
                     android:id="@+id/tvRoleBannerText"
@@ -110,32 +157,73 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="SOS alert sent to BFP"
-                    android:textColor="#34C759"
+                    android:textColor="#059669"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="2dp"/>
+
+            </LinearLayout>
+
+            <!-- ============================================= -->
+            <!-- INCIDENT SECTION LABEL                        -->
+            <!-- ============================================= -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/bg_section_accent"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="INCIDENT"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"/>
+
+            </LinearLayout>
+
+            <!-- Section separator line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@drawable/bg_section_divider"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Accident type label with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/ivIconAccidentType"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_fire_type"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Type of Accident"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Type of Accident"
+                    android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold"/>
 
             </LinearLayout>
-
-            <!-- INCIDENT section label -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="INCIDENT"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="10dp"/>
-
-            <!-- Accident type label -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Type of Accident"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
 
             <!-- Accident type chips -->
             <com.google.android.material.chip.ChipGroup
@@ -144,31 +232,33 @@
                 android:layout_height="wrap_content"
                 app:singleSelection="true"
                 app:selectionRequired="false"
-                android:layout_marginBottom="16dp">
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                android:layout_marginBottom="20dp">
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:id="@+id/chipFire"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fire"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:id="@+id/chipMedical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Medical"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:id="@+id/chipVehicle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vehicle"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:id="@+id/chipOtherType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -176,15 +266,32 @@
 
             </com.google.android.material.chip.ChipGroup>
 
-            <!-- Count of victims -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Count of victims label with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Count of Victims *"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/ivIconVictims"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_victims_count"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Count of Victims"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Count of Victims *"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/etVictimCount"
@@ -194,21 +301,40 @@
                 android:hint="0"
                 android:textColorHint="@color/text_hint"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:background="@drawable/bg_input"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_input_modern"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:layout_marginBottom="16dp"/>
+                android:gravity="center"
+                android:layout_marginBottom="20dp"/>
 
-            <!-- Nature of injury -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Nature of injury label with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nature of Injury (optional)"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/ivIconNature"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_injury_nature"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Nature of Injury"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nature of Injury (optional)"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupNature"
@@ -216,79 +342,98 @@
                 android:layout_height="wrap_content"
                 app:singleSelection="true"
                 app:selectionRequired="false"
-                android:layout_marginBottom="16dp">
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                android:layout_marginBottom="20dp">
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Burns"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Laceration"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fracture"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Head Trauma"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cardiac Arrest"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Smoke Inhalation"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sprain / Strain"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Drowning"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Poisoning"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Other"/>
 
             </com.google.android.material.chip.ChipGroup>
 
-            <!-- Mode of injury -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Mode of injury label with icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Mode of Injury (optional)"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:id="@+id/ivIconMode"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_mode_incident"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Mode of Injury"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mode of Injury (optional)"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chipGroupMode"
@@ -296,133 +441,190 @@
                 android:layout_height="wrap_content"
                 app:singleSelection="true"
                 app:selectionRequired="false"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
                 android:layout_marginBottom="24dp">
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fire / Explosion"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Fall"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vehicle Accident"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Physical Assault"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Drowning / Submersion"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Electrocution"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Self-inflicted"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Natural Cause"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Unknown"/>
 
                 <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.BFP.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Other"/>
 
             </com.google.android.material.chip.ChipGroup>
 
-            <!-- Divider -->
+            <!-- Gradient fading divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#EBEBEB"
-                android:layout_marginBottom="20dp"/>
+                android:background="@drawable/bg_section_divider"
+                android:layout_marginBottom="22dp"/>
 
-            <!-- PATIENTS section label -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- ============================================= -->
+            <!-- PATIENTS SECTION LABEL                        -->
+            <!-- ============================================= -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="PATIENTS"
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="12dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
 
-            <!-- Patient cards container -->
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/bg_section_accent"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PATIENTS"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"/>
+
+            </LinearLayout>
+
+            <!-- Section separator line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@drawable/bg_section_divider"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Patient cards container with layout transition animation -->
             <LinearLayout
                 android:id="@+id/patientContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:animateLayoutChanges="true"
                 android:orientation="vertical"/>
 
-            <!-- Add patient button -->
+            <!-- Add patient button with native Material icon & press animation -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAddPatient"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="+ Add Patient"
+                android:text="Add Patient"
                 android:textAllCaps="false"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                app:backgroundTint="#F2F2F7"
+                android:background="@drawable/bg_add_patient_dashed"
+                android:stateListAnimator="@animator/btn_press_scale"
+                app:backgroundTint="@null"
+                app:icon="@drawable/ic_add"
+                app:iconTint="@color/primary"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
                 android:textColor="@color/primary"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/primary"
-                app:strokeWidth="1dp"
+                app:cornerRadius="14dp"
+                app:strokeWidth="0dp"
                 android:elevation="0dp"
-                android:stateListAnimator="@null"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:layout_marginBottom="24dp"/>
 
-            <!-- Bystander Contact Info Card (Visible only when role is bystander) -->
+            <!-- ============================================= -->
+            <!-- BYSTANDER CONTACT INFO CARD                   -->
+            <!-- ============================================= -->
             <LinearLayout
                 android:id="@+id/sectionBystanderContact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/card_bg"
-                android:padding="16dp"
-                android:layout_marginBottom="20dp"
+                android:animateLayoutChanges="true"
+                android:background="@drawable/bg_bystander_card"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="18dp"
+                android:layout_marginBottom="24dp"
+                android:elevation="1dp"
                 android:visibility="gone">
 
+                <!-- Header row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginBottom="4dp">
+
+                    <!-- Info icon circle -->
+                    <FrameLayout
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_info_icon_circle"
+                        android:layout_marginEnd="10dp">
+
+                        <ImageView
+                            android:id="@+id/ivBystanderInfoIcon"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_info_circle"
+                            app:tint="#3B82F6"
+                            android:contentDescription="Info Icon"/>
+
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="0dp"
@@ -447,53 +649,76 @@
                     android:text="Share your contact info with BFP for verification and follow-up."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
-                    android:layout_marginBottom="12dp"/>
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="14dp"
+                    android:layout_marginStart="38dp"/>
 
                 <LinearLayout
                     android:id="@+id/containerBystanderFields"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:animateLayoutChanges="true"
                     android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Full Name"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp"/>
 
                     <EditText
                         android:id="@+id/etBystanderName"
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
+                        android:layout_height="48dp"
                         android:hint="Your Full Name"
                         android:textColorHint="@color/text_hint"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:background="@drawable/bg_input"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_input_modern"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
                         android:inputType="textPersonName"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Phone Number"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp"/>
 
                     <EditText
                         android:id="@+id/etBystanderPhone"
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
+                        android:layout_height="48dp"
                         android:hint="Your Phone Number"
                         android:textColorHint="@color/text_hint"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:background="@drawable/bg_input"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_input_modern"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
                         android:inputType="phone"/>
 
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Divider -->
+            <!-- Gradient fading divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#EBEBEB"
-                android:layout_marginBottom="20dp"/>
+                android:background="@drawable/bg_section_divider"
+                android:layout_marginBottom="22dp"/>
 
-            <!-- Submit button -->
+            <!-- ============================================= -->
+            <!-- SUBMIT BUTTON                                 -->
+            <!-- ============================================= -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitReport"
                 android:layout_width="match_parent"
@@ -502,16 +727,17 @@
                 android:textAllCaps="false"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                app:backgroundTint="@color/primary"
+                android:background="@drawable/bg_button_primary_gradient"
+                android:stateListAnimator="@animator/btn_press_scale"
+                app:backgroundTint="@null"
                 android:textColor="@color/white"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
-                android:elevation="0dp"
-                android:stateListAnimator="@null"
+                app:cornerRadius="14dp"
+                android:elevation="3dp"
                 android:layout_marginBottom="8dp"/>
 
-            <!-- Skip button -->
+            <!-- Skip button — ghost / text style -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSkipReport"
                 android:layout_width="match_parent"
@@ -521,14 +747,14 @@
                 android:textStyle="bold"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                app:backgroundTint="@color/white"
-                app:strokeColor="@color/border"
-                app:strokeWidth="1.5dp"
-                android:textColor="@color/text_primary"
+                android:background="@drawable/bg_button_ghost"
+                android:stateListAnimator="@animator/btn_press_scale"
+                app:backgroundTint="@null"
+                app:strokeWidth="0dp"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp"
-                app:cornerRadius="12dp"
-                android:elevation="0dp"
-                android:stateListAnimator="@null"/>
+                app:cornerRadius="14dp"
+                android:elevation="0dp"/>
 
         </LinearLayout>
 

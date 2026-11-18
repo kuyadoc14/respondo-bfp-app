@@ -5,19 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_bottom_sheet"
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_bottom_sheet_modern"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="24dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
 
     <!-- Drag Handle -->
     <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
+        android:layout_width="36dp"
+        android:layout_height="5dp"
         android:layout_gravity="center_horizontal"
-        android:background="#D1D5DB"
-        android:layout_marginBottom="18dp"/>
+        android:background="@drawable/bg_drag_handle"
+        android:layout_marginBottom="16dp"/>
 
     <!-- Header Badge + Icon -->
     <LinearLayout
@@ -25,22 +26,23 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="12dp">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/bg_status_resolved"
-            android:gravity="center"
-            android:layout_marginEnd="12dp">
+            android:background="@drawable/bg_header_icon"
+            android:layout_marginEnd="14dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🚨"
-                android:textSize="20sp"/>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_report_alert"
+                app:tint="@color/primary"
+                android:contentDescription="SOS Dispatched Icon"/>
 
-        </LinearLayout>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -68,11 +70,12 @@
 
     </LinearLayout>
 
+    <!-- Fading Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/border"
-        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_section_divider"
+        android:layout_marginTop="6dp"
         android:layout_marginBottom="16dp"/>
 
     <!-- Option 1: Victim -->
@@ -84,6 +87,7 @@
         app:cardElevation="2dp"
         app:cardBackgroundColor="@color/surface"
         android:foreground="?android:attr/selectableItemBackground"
+        android:stateListAnimator="@animator/card_press_scale"
         android:clickable="true"
         android:focusable="true"
         android:layout_marginBottom="12dp">
@@ -95,20 +99,21 @@
             android:padding="16dp"
             android:gravity="center_vertical">
 
-            <LinearLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_status_resolved"
-                android:gravity="center"
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_patient_number_badge"
                 android:layout_marginEnd="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🙋"
-                    android:textSize="24sp"/>
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_victims_count"
+                    app:tint="@color/primary"
+                    android:contentDescription="Victim Role"/>
 
-            </LinearLayout>
+            </FrameLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -116,21 +121,13 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="I AM the Victim"
-                        android:textColor="@color/primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
-
-                </LinearLayout>
+                    android:text="I AM the Victim"
+                    android:textColor="@color/primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/tvVictimSubtext"
@@ -139,17 +136,18 @@
                     android:text="I am injured or in immediate danger. Auto-fills my saved profile to responders."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
-                    android:layout_marginTop="2dp"/>
+                    android:layout_marginTop="3dp"
+                    android:lineSpacingExtra="2dp"/>
 
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="➔"
-                android:textColor="@color/primary"
-                android:textSize="18sp"
-                android:textStyle="bold"/>
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="@color/primary"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Select Victim"/>
 
         </LinearLayout>
 
@@ -164,9 +162,10 @@
         app:cardElevation="2dp"
         app:cardBackgroundColor="@color/surface"
         android:foreground="?android:attr/selectableItemBackground"
+        android:stateListAnimator="@animator/card_press_scale"
         android:clickable="true"
         android:focusable="true"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="18dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -175,20 +174,21 @@
             android:padding="16dp"
             android:gravity="center_vertical">
 
-            <LinearLayout
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:background="@drawable/bg_chip"
-                android:gravity="center"
                 android:layout_marginEnd="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👥"
-                    android:textSize="24sp"/>
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_info_circle"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="Bystander Role"/>
 
-            </LinearLayout>
+            </FrameLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -196,21 +196,13 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <LinearLayout
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="I am a Bystander"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
-
-                </LinearLayout>
+                    android:text="I am a Bystander"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -218,39 +210,41 @@
                     android:text="Reporting on behalf of others. Fill in details manually; choose whether to share your info."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
-                    android:layout_marginTop="2dp"/>
+                    android:layout_marginTop="3dp"
+                    android:lineSpacingExtra="2dp"/>
 
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="➔"
-                android:textColor="@color/text_secondary"
-                android:textSize="18sp"
-                android:textStyle="bold"/>
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="@color/text_secondary"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Select Bystander"/>
 
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 
-    <!-- Skip Option -->
+    <!-- Skip Option with press animation -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSkipRole"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:text="Skip Report for Now"
         android:textAllCaps="false"
         android:textStyle="bold"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        app:backgroundTint="@color/white"
+        android:background="@drawable/bg_button_ghost"
+        app:backgroundTint="@null"
         app:strokeColor="@color/border"
-        app:strokeWidth="1.5dp"
-        android:textColor="@color/text_primary"
+        app:strokeWidth="1dp"
+        android:textColor="@color/text_secondary"
         android:textSize="13sp"
         app:cornerRadius="12dp"
         android:elevation="0dp"
-        android:stateListAnimator="@null"/>
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
 </LinearLayout>

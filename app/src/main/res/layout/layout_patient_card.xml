@@ -5,9 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/card_bg"
-    android:padding="16dp"
-    android:layout_marginBottom="12dp">
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_patient_card"
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:layout_marginBottom="14dp"
+    android:elevation="2dp">
 
     <!-- Card header -->
     <LinearLayout
@@ -15,56 +20,78 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="14dp">
+        android:layout_marginBottom="16dp">
 
+        <!-- Patient number badge -->
         <TextView
             android:id="@+id/tvPatientNumber"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="Patient 1"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:textStyle="bold"/>
+            android:textColor="@color/primary"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_patient_number_badge"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"/>
 
+        <!-- Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <!-- Remove button with vector icon, press scale animation and ripple -->
         <TextView
             android:id="@+id/btnRemovePatient"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Remove"
-            android:textColor="@color/primary"
+            android:textColor="#EF4444"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:padding="6dp"
+            android:drawableStart="@drawable/ic_trash_remove"
+            android:drawablePadding="5dp"
+            app:drawableTint="#EF4444"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_remove_patient_btn"
+            android:stateListAnimator="@animator/btn_press_scale"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:clickable="true"
             android:focusable="true"/>
 
     </LinearLayout>
 
-    <!-- Name -->
+    <!-- ===== Name ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Name"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etPatientName"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="Full name"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="textPersonName"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Age + Birthdate row -->
+    <!-- ===== Age + Birthdate row ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -76,25 +103,26 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:layout_marginEnd="8dp">
+            android:layout_marginEnd="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Age"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/text_primary"
                 android:textSize="12sp"
-                android:layout_marginBottom="4dp"/>
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp"/>
 
             <EditText
                 android:id="@+id/etPatientAge"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="48dp"
                 android:hint="Age"
                 android:textColorHint="@color/text_hint"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp"
-                android:background="@drawable/bg_input"
+                android:background="@drawable/bg_input_modern"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
                 android:inputType="number"/>
@@ -111,19 +139,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Birthdate"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/text_primary"
                 android:textSize="12sp"
-                android:layout_marginBottom="4dp"/>
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp"/>
 
             <EditText
                 android:id="@+id/etPatientBirthdate"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="48dp"
                 android:hint="YYYY-MM-DD"
                 android:textColorHint="@color/text_hint"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp"
-                android:background="@drawable/bg_input"
+                android:background="@drawable/bg_input_modern"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
                 android:inputType="date"/>
@@ -132,83 +161,94 @@
 
     </LinearLayout>
 
-    <!-- Address -->
+    <!-- ===== Address ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Address"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etPatientAddress"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="Home address"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="textPostalAddress"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Allergies -->
+    <!-- ===== Allergies ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Allergies"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etPatientAllergies"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="e.g. Penicillin, Aspirin"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="text"
         android:layout_marginBottom="12dp"/>
 
-    <!-- Emergency contact -->
+    <!-- ===== Emergency contact ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Emergency Contact"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etEmergencyContact"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="48dp"
         android:hint="Name and phone number"
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:inputType="text"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="16dp"/>
 
-    <!-- Level of consciousness -->
+    <!-- Subtle field separator -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@drawable/bg_section_divider"
+        android:layout_marginBottom="14dp"/>
+
+    <!-- ===== Level of consciousness ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Level of Consciousness"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="6dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipGroupConsciousness"
@@ -216,69 +256,82 @@
         android:layout_height="wrap_content"
         app:singleSelection="true"
         app:selectionRequired="false"
-        android:layout_marginBottom="12dp">
+        app:chipSpacingHorizontal="8dp"
+        app:chipSpacingVertical="8dp"
+        android:layout_marginBottom="14dp">
 
         <com.google.android.material.chip.Chip
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.BFP.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Alert"/>
 
         <com.google.android.material.chip.Chip
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.BFP.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Verbal"/>
 
         <com.google.android.material.chip.Chip
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.BFP.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Pain"/>
 
         <com.google.android.material.chip.Chip
-            style="@style/Widget.MaterialComponents.Chip.Choice"
+            style="@style/Widget.BFP.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Unresponsive"/>
 
     </com.google.android.material.chip.ChipGroup>
 
-    <!-- Condition -->
+    <!-- ===== Condition ===== -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Condition"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp"/>
 
     <EditText
         android:id="@+id/etPatientCondition"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="80dp"
+        android:minHeight="84dp"
         android:hint="Describe current condition..."
         android:textColorHint="@color/text_hint"
         android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_input"
+        android:background="@drawable/bg_input_modern"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
         android:inputType="textMultiLine"
         android:gravity="top"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="14dp"/>
 
-    <!-- Seizure -->
+    <!-- ===== Seizure toggle ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="2dp"
-        android:paddingEnd="2dp">
+        android:background="@drawable/bg_input_modern"
+        android:paddingStart="14dp"
+        android:paddingEnd="10dp">
+
+        <ImageView
+            android:id="@+id/ivSeizureIcon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_warning_seizure"
+            app:tint="#FF6B00"
+            android:layout_marginEnd="10dp"
+            android:contentDescription="Seizure Warning"/>
 
         <TextView
             android:layout_width="0dp"
@@ -286,7 +339,8 @@
             android:layout_weight="1"
             android:text="Seizure"
             android:textColor="@color/text_primary"
-            android:textSize="13sp"/>
+            android:textSize="13sp"
+            android:textStyle="bold"/>
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchSeizure"
