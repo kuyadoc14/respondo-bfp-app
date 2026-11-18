@@ -208,6 +208,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     public void openFirstAidDetail(FirstAidItem item) {
+        openFirstAidDetail(item, false);
+    }
+
+    public void openFirstAidDetail(FirstAidItem item, boolean autoPlayVideo) {
         if (item == null) return;
         setBottomNavVisibility(true);
         FirstAidDetailFragment detailFragment =
@@ -219,17 +223,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         item.storageVideoUrl != null ? item.storageVideoUrl : "",
                         item.iconEmoji != null ? item.iconEmoji : "🩺",
                         new java.util.ArrayList<>(item.steps != null ? item.steps : new java.util.ArrayList<>()),
-                        new java.util.ArrayList<>(item.photoUrls != null ? item.photoUrls : new java.util.ArrayList<>()));
+                        new java.util.ArrayList<>(item.photoUrls != null ? item.photoUrls : new java.util.ArrayList<>()),
+                        autoPlayVideo);
 
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragmentContainer, detailFragment)
                 .addToBackStack("first_aid_detail")
-                .commit();
+                .commitAllowingStateLoss();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         if (bottomNav != null) {
-            bottomNav.setSelectedItemId(R.id.firstAid);
+            android.view.MenuItem itemToSelect = bottomNav.getMenu().findItem(R.id.firstAid);
+            if (itemToSelect != null) {
+                itemToSelect.setChecked(true);
+            }
+        }
+    }
+
+    public void playCurrentVideo() {
+        androidx.fragment.app.Fragment current = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+        if (current instanceof FirstAidDetailFragment) {
+            ((FirstAidDetailFragment) current).playVideo();
+        }
+    }
+
+    public void pauseCurrentVideo() {
+        androidx.fragment.app.Fragment current = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+        if (current instanceof FirstAidDetailFragment) {
+            ((FirstAidDetailFragment) current).pauseVideo();
         }
     }
 
@@ -279,7 +301,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                     @Override
                     public void onOpenFirstAidDetail(FirstAidItem item) {
-                        openFirstAidDetail(item);
+                        openFirstAidDetail(item, false);
+                    }
+
+                    @Override
+                    public void onOpenFirstAidDetail(FirstAidItem item, boolean autoPlayVideo) {
+                        openFirstAidDetail(item, autoPlayVideo);
+                    }
+
+                    @Override
+                    public void onPlayVideo() {
+                        playCurrentVideo();
+                    }
+
+                    @Override
+                    public void onPauseVideo() {
+                        pauseCurrentVideo();
                     }
 
                     @Override

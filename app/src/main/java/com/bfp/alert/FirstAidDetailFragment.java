@@ -30,12 +30,23 @@ public class FirstAidDetailFragment extends Fragment {
 
     private ExoPlayer exoPlayer;
     private String    storageVideoUrl;
+    private String    videoUrl;
+    private boolean   shouldAutoPlay = false;
 
     public static FirstAidDetailFragment newInstance(
             String title, String category, String description,
             String videoUrl, String storageVideoUrl,
             String iconEmoji,
             ArrayList<String> steps, ArrayList<String> photoUrls) {
+        return newInstance(title, category, description, videoUrl, storageVideoUrl, iconEmoji, steps, photoUrls, false);
+    }
+
+    public static FirstAidDetailFragment newInstance(
+            String title, String category, String description,
+            String videoUrl, String storageVideoUrl,
+            String iconEmoji,
+            ArrayList<String> steps, ArrayList<String> photoUrls,
+            boolean autoPlay) {
 
         FirstAidDetailFragment fragment = new FirstAidDetailFragment();
         Bundle args = new Bundle();
@@ -47,6 +58,7 @@ public class FirstAidDetailFragment extends Fragment {
         args.putString("iconEmoji",       iconEmoji);
         args.putStringArrayList("steps",     steps);
         args.putStringArrayList("photoUrls", photoUrls);
+        args.putBoolean("autoPlay",       autoPlay);
         fragment.setArguments(args);
         return fragment;
     }
@@ -66,8 +78,9 @@ public class FirstAidDetailFragment extends Fragment {
         String            title       = args.getString("title");
         String            category    = args.getString("category");
         String            description = args.getString("description");
-        String            videoUrl    = args.getString("videoUrl");
+        videoUrl                      = args.getString("videoUrl");
         storageVideoUrl               = args.getString("storageVideoUrl");
+        shouldAutoPlay                = args.getBoolean("autoPlay", false);
         String            iconEmoji   = args.getString("iconEmoji");
         ArrayList<String> steps       = args.getStringArrayList("steps");
         ArrayList<String> photoUrls   = args.getStringArrayList("photoUrls");
@@ -190,6 +203,11 @@ public class FirstAidDetailFragment extends Fragment {
             btnVideo.setOnClickListener(v ->
                     startActivity(new Intent(
                             Intent.ACTION_VIEW, Uri.parse(videoUrl))));
+            if (shouldAutoPlay && (storageVideoUrl == null || storageVideoUrl.isEmpty())) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)));
+                } catch (Exception ignored) {}
+            }
         } else {
             btnVideo.setText("No YouTube video");
             btnVideo.setEnabled(false);
@@ -292,12 +310,45 @@ public class FirstAidDetailFragment extends Fragment {
     }
 
     private void playVideo(PlayerView playerView, Uri uri) {
+        if (exoPlayer != null) {
+            exoPlayer.release();
+        }
         exoPlayer = new ExoPlayer.Builder(requireContext()).build();
         playerView.setPlayer(exoPlayer);
         playerView.setKeepScreenOn(true);
         exoPlayer.setMediaItem(MediaItem.fromUri(uri));
         exoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
         exoPlayer.prepare();
+        if (shouldAutoPlay) {
+            exoPlayer.setPlayWhenReady(true);
+            exoPlayer.play();
+        }
+    }
+
+    public void playVideo() {
+        if (exoPlayer != null) {
+            exoPlayer.setPlayWhenReady(true);
+            exoPlayer.play();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "▶ Playing video", Toast.LENGTH_SHORT).show();
+            }
+        } else if (storageVideoUrl != null && !storageVideoUrl.isEmpty() && getView() != null) {
+            shouldAutoPlay = true;
+            setupVideo(getView());
+        } else if (videoUrl != null && !videoUrl.isEmpty() && getContext() != null) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl)));
+            } catch (Exception ignored) {}
+        }
+    }
+
+    public void pauseVideo() {
+        if (exoPlayer != null) {
+            exoPlayer.pause();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "⏸ Video paused", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override

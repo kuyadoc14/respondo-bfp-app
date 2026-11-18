@@ -1,69 +1,74 @@
 /*
  * ======================================================================================
- * RESPONDO BFP — ESP32 EMERGENCY WEARABLE ACCESSORY
- * Firmware: respondo_wearable.ino
+ * RESPONDO BFP — SMART EMERGENCY WEARABLE ACCESSORY
+ * Hardware: LilyGO TTGO T-Display (ESP32-D0WDQ6 + ST7789 240x135 IPS Display)
+ * Physical Buttons:
+ *   [TOP BUTTON - GPIO 35]   -> INSTANT VICTIM SOS (Sends User Medical & Profile)
+ *   [BOTTOM BUTTON - GPIO 0] -> INSTANT BYSTANDER SOS (Report Incident Scene)
  *
- * Device Name: "Respondo Wearable"
- * Description: Wearable panic accessory with Android Bluetooth Settings Pairing & Bonding.
+ * Bluetooth Behavior (Like Smartwatch / BT Audio Device):
+ *   - Device Name: "Respondo Device"
+ *   - Always-Active high-frequency advertising (20ms-40ms beacon).
+ *   - Direct pairing & bonding with Android Bluetooth Settings.
+ *   - Ultra-low latency BLE connection priority (7.5ms interval).
  *
- * How to Pair with your Android Phone:
- *   1. Power on the ESP32. It will advertise as "Respondo Wearable".
- *   2. On your Android phone, go to:
- *      Settings -> Connected Devices / Bluetooth -> "Pair new device"
- *   3. Tap "Respondo Wearable" and confirm the "Pair" prompt.
- *   4. Once paired, open the Respondo BFP app. The app directly connects to your
- *      paired wearable and the status pill turns green.
- *
- * Button Emergency Sequence:
- *   1. FIRST PRESS (SOS):
- *      - User presses the button -> Sends "SOS_TRIGGER" to the phone.
- *      - Phone dispatches GPS alert to BFP and announces instructions via TTS.
- *      - Wearable enters 20-second "Awaiting Role" mode (heartbeat LED).
- *
- *   2. ROLE CONFIRMATION (Second Action):
- *      - LONG-PRESS (Hold >= 1.5 seconds): Confirms user IS THE VICTIM.
- *        -> Wearable sends "ROLE_VICTIM".
- *        -> Phone automatically transmits victim profile & medical details to BFP.
- *        -> Wearable gives 3 beeps + solid LED confirmation.
- *      - DOUBLE-PRESS (2 rapid clicks): Confirms user IS A BYSTANDER / WITNESS.
- *        -> Wearable sends "ROLE_BYSTANDER".
- *        -> Phone opens accident report sheet for scene documentation.
- *        -> Wearable gives 2 beeps + double blink confirmation.
+ * 2-Way Full Synchronization with Respondo Android App:
+ *   - STATUS:ACTIVE   -> Screen displays Emergency Alert Active.
+ *   - STATUS:DEPLOYED -> Screen turns green: "BFP DISPATCHED - HELP ON THE WAY!".
+ *   - STATUS:RESOLVED -> Screen immediately returns to Standby GUI!
+ *   - STATUS:IDLE     -> Resets to Standby GUI.
  * ======================================================================================
  */
 
+#define LILYGO_LGFX_USE_T_DISPLAY
+#include <LilyGo_LovyanGFX.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <BLESecurity.h>
 
-// ── Hardware Pin Configuration ─────────────────────────────────────────────────────────
-// Adjust pins to match your physical hardware board
-#define BUTTON_PIN      4     // Push button (Active LOW with internal PULLUP). (Or GPIO 0 for BOOT)
-#define LED_PIN         2     // Built-in status LED (GPIO 2 on most ESP32 boards)
-#define BUZZER_PIN      18    // Passive/Active Buzzer pin (Set to -1 if no buzzer is connected)
+// ── Hardware Configuration ─────────────────────────────────────────────────────────────
+LilyGo_T_Display display;
 
-// ── BLE UUID Configuration (Must match Android app exactly) ───────────────────────────
-#define DEVICE_NAME         "Respondo Wearable"
+#define BUTTON_TOP       35    // Top Button (Active LOW, board external pullup)
+#define BUTTON_BOTTOM    0     // Bottom BOOT Button (Active LOW, internal pullup)
+
+// ── BLE UUID Configuration (Matches Android App Exactly) ──────────────────────────────
+#define DEVICE_NAME         "Respondo Device"
 #define SERVICE_UUID        "12345678-1234-1234-1234-123456789abc"
 #define CHARACTERISTIC_UUID "87654321-4321-4321-4321-cba987654321"
 
-// ── Timing Parameters (milliseconds) ──────────────────────────────────────────────────
-#define DEBOUNCE_DELAY      50      // Debounce delay
-#define LONG_PRESS_TIME     1500    // Hold >= 1.5s to confirm VICTIM role
-#define DOUBLE_CLICK_TIME   450     // Max interval between 2 clicks for BYSTANDER role
-#define ROLE_WINDOW_TIME    20000   // 20-second window to confirm role after initial SOS
+// ── 16-Bit RGB565 Color Palette (Matching Respondo Android App) ───────────────────────
+#define COLOR_BG          0x0842    // Sleek dark charcoal (#0A0A0A)
+#define COLOR_SURFACE     0x18E3    // Elevated card background
+#define COLOR_BORDER      0x2965    // Card border
+#define COLOR_RED         0xFC4D    // Respondo Primary Red (#FC4D4D)
+#define COLOR_RED_DARK    0x8800    // Dark Red Glow
+#define COLOR_RED_BG      0x3000    // Red container background
+#define COLOR_GREEN       0x15D0    // Respondo Success Green (#10B981)
+#define COLOR_GREEN_BG    0x0284    // Dark Forest Green
+#define COLOR_BLUE        0x3C1F    // Respondo Info Blue (#3B82F6)
+#define COLOR_BLUE_BG     0x0973    // Dark Navy container
+#define COLOR_ORANGE      0xFD20    // Warning Orange (#FF6B00)
+#define COLOR_YELLOW      0xFFE0    // Yellow highlight
+#define COLOR_WHITE       0xFFFF    // Clean white
+#define COLOR_MUTED       0x8410    // Muted secondary text
+#define COLOR_DARK_GRAY   0x4208    // Disabled / footer text
 
 // ── System States ─────────────────────────────────────────────────────────────────────
 enum WearableState {
-  STATE_IDLE,             // Normal standby, waiting for SOS press
-  STATE_AWAITING_ROLE,    // Initial SOS sent; waiting for Long-Press (Victim) or Double-Press (Bystander)
-  STATE_SOS_ACTIVE        // Emergency confirmed and active
+  STATE_UNLINKED,          // Phone not connected
+  STATE_IDLE,              // Phone connected & Ready on Standby
+  STATE_VICTIM,            // Confirmed Victim SOS dispatched
+  STATE_BYSTANDER,         // Confirmed Bystander SOS dispatched
+  STATE_DEPLOYED,          // BFP Responders En Route
+  STATE_NOT_CONNECTED_WARN // Warning when button pressed while unlinked
 };
 
-WearableState currentState = STATE_IDLE;
-unsigned long roleWindowStart = 0;
+WearableState currentState = STATE_UNLINKED;
+unsigned long warningStartTime = 0;
+bool needScreenRedraw = true;
 
 // ── BLE Global References ─────────────────────────────────────────────────────────────
 BLEServer* pServer = nullptr;
@@ -71,155 +76,379 @@ BLECharacteristic* pCharacteristic = nullptr;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-// ── Button Debounce & Detection Variables ─────────────────────────────────────────────
-int lastButtonState = HIGH;
-int buttonState = HIGH;
-unsigned long lastDebounceTime = 0;
-unsigned long pressStartTime = 0;
-bool isPressing = false;
-bool longPressTriggered = false;
+// ── Button Debounce States ─────────────────────────────────────────────────────────────
+int lastTopState = HIGH;
+int lastBottomState = HIGH;
+unsigned long lastTopPressTime = 0;
+unsigned long lastBottomPressTime = 0;
+const unsigned long DEBOUNCE_MS = 50;
 
-int clickCount = 0;
-unsigned long lastReleaseTime = 0;
+// ── Forward Declarations ──────────────────────────────────────────────────────────────
+void drawScreen();
+void handlePhoneCommand(String cmd);
 
-// ── Beep & LED Feedback Helpers ───────────────────────────────────────────────────────
-void playTone(int frequency, int durationMs) {
-  if (BUZZER_PIN < 0) return;
-  #if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3)
-    tone(BUZZER_PIN, frequency, durationMs);
-    delay(durationMs);
-    noTone(BUZZER_PIN);
-  #else
-    // Universally compatible square-wave generation (works across all ESP32 core versions)
-    long halfPeriodUs = 1000000L / (frequency * 2);
-    long cycles = ((long)durationMs * 1000L) / (halfPeriodUs * 2);
-    for (long i = 0; i < cycles; i++) {
-      digitalWrite(BUZZER_PIN, HIGH);
-      delayMicroseconds(halfPeriodUs);
-      digitalWrite(BUZZER_PIN, LOW);
-      delayMicroseconds(halfPeriodUs);
+// ── Transmit BLE Notification to Phone ─────────────────────────────────────────────────
+void sendBLEMessage(const char* message) {
+  if (!deviceConnected || pCharacteristic == nullptr) {
+    Serial.printf("[BLE WARN] Cannot send '%s' — phone not connected!\n", message);
+    return;
+  }
+  pCharacteristic->setValue(message);
+  pCharacteristic->notify();
+  Serial.printf("[BLE TX -> Phone]: %s\n", message);
+}
+
+// ── Handle Incoming Sync Commands from Phone ──────────────────────────────────────────
+void handlePhoneCommand(String cmd) {
+  Serial.printf("[SYNC FROM PHONE]: %s\n", cmd.c_str());
+
+  if (cmd == "STATUS:RESOLVED" || cmd == "STATUS:IDLE") {
+    Serial.println("[SYNC] Incident resolved on phone! Returning to Standby GUI.");
+    currentState = deviceConnected ? STATE_IDLE : STATE_UNLINKED;
+    needScreenRedraw = true;
+  } else if (cmd == "STATUS:DEPLOYED") {
+    Serial.println("[SYNC] BFP Responders en route! Updating screen to DEPLOYED.");
+    currentState = STATE_DEPLOYED;
+    needScreenRedraw = true;
+  } else if (cmd == "STATUS:ACTIVE") {
+    Serial.println("[SYNC] SOS confirmed active in BFP system.");
+    if (currentState == STATE_IDLE || currentState == STATE_UNLINKED) {
+      currentState = STATE_VICTIM;
+      needScreenRedraw = true;
     }
-  #endif
-}
-
-void feedbackSOSSent() {
-  for (int i = 0; i < 4; i++) {
-    digitalWrite(LED_PIN, HIGH);
-    playTone(2800, 80);
-    digitalWrite(LED_PIN, LOW);
-    delay(60);
+  } else if (cmd == "STATUS:VICTIM") {
+    currentState = STATE_VICTIM;
+    needScreenRedraw = true;
+  } else if (cmd == "STATUS:BYSTANDER") {
+    currentState = STATE_BYSTANDER;
+    needScreenRedraw = true;
   }
 }
-
-void feedbackVictimConfirmed() {
-  digitalWrite(LED_PIN, HIGH);
-  playTone(2200, 150);
-  delay(80);
-  playTone(2600, 150);
-  delay(80);
-  playTone(3200, 300);
-  delay(1000);
-  digitalWrite(LED_PIN, LOW);
-}
-
-void feedbackBystanderConfirmed() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(LED_PIN, HIGH);
-    playTone(1800, 120);
-    digitalWrite(LED_PIN, LOW);
-    delay(100);
-  }
-}
-
-// ── BLE Security Callbacks (Enables Phone Settings Pairing) ───────────────────────────
-class SecurityCallbacks : public BLESecurityCallbacks {
-  uint32_t onPassKeyRequest() override {
-    Serial.println("[BLE SEC] Passkey requested");
-    return 0;
-  }
-
-  void onPassKeyNotify(uint32_t pass_key) override {
-    Serial.printf("[BLE SEC] Passkey notification: %d\n", pass_key);
-  }
-
-  bool onConfirmPIN(uint32_t pass_key) override {
-    Serial.printf("[BLE SEC] Confirm PIN: %d\n", pass_key);
-    return true;
-  }
-
-  bool onSecurityRequest() override {
-    Serial.println("[BLE SEC] Security pairing request received from phone");
-    return true;
-  }
-
-  void onAuthenticationComplete(esp_ble_auth_cmpl_t cmpl) override {
-    if (cmpl.success) {
-      Serial.println("\n[BLE SEC] >>> PAIRED & BONDED WITH PHONE SUCCESSFULLY! <<<");
-      digitalWrite(LED_PIN, HIGH);
-      playTone(2400, 150);
-      delay(150);
-      playTone(3000, 200);
-      digitalWrite(LED_PIN, LOW);
-    } else {
-      Serial.printf("[BLE SEC] Pairing failed, reason code: 0x%x\n", cmpl.fail_reason);
-    }
-  }
-};
 
 // ── BLE Server Callbacks ──────────────────────────────────────────────────────────────
 class ServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) override {
     deviceConnected = true;
-    Serial.println("[BLE] Direct connection established with phone!");
-    digitalWrite(LED_PIN, HIGH);
-    delay(200);
-    digitalWrite(LED_PIN, LOW);
+    Serial.println("\n[BLE] >>> DIRECT GATT CONNECTION ESTABLISHED WITH PHONE! <<<");
+    currentState = STATE_IDLE;
+    needScreenRedraw = true;
   }
 
   void onDisconnect(BLEServer* pServer) override {
     deviceConnected = false;
-    Serial.println("[BLE] Phone disconnected. Resuming advertising for reconnection...");
+    Serial.println("\n[BLE] Phone disconnected. Resuming high-speed advertising beacon...");
+    currentState = STATE_UNLINKED;
+    needScreenRedraw = true;
+    pServer->startAdvertising(); // Immediately resume advertising like BT headphones
   }
 };
 
-// ── Transmit BLE Command to Phone ─────────────────────────────────────────────────────
-void sendBLEMessage(const char* message) {
-  if (!deviceConnected) {
-    Serial.printf("[BLE WARN] Cannot send '%s' — phone is not directly connected!\n", message);
-    return;
+// ── BLE Characteristic Callbacks (Receives Writes from Phone) ─────────────────────────
+class CharacteristicCallbacks: public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pChar) override {
+    String msg = pChar->getValue();
+    if (msg.length() > 0) {
+      msg.trim();
+      handlePhoneCommand(msg);
+    }
   }
-  pCharacteristic->setValue(message);
-  pCharacteristic->notify();
-  Serial.printf("[BLE TX] Transmitted notification: '%s'\n", message);
+};
+
+// ── BLE Security Callbacks (Allows Android Settings Pairing) ──────────────────────────
+class SecurityCallbacks : public BLESecurityCallbacks {
+  uint32_t onPassKeyRequest() override { return 0; }
+  void onPassKeyNotify(uint32_t pass_key) {}
+  bool onConfirmPIN(uint32_t pass_key) { return true; }
+  bool onSecurityRequest() { return true; }
+  void onAuthenticationComplete(esp_ble_auth_cmpl_t cmpl) {
+    if (cmpl.success) {
+      Serial.println("[BLE SEC] Paired & bonded successfully with phone!");
+    }
+  }
+};
+
+// ── UI Drawing Functions (240x135 Landscape) ──────────────────────────────────────────
+
+// Top App Bar
+void drawTopBar(const char* title, const char* statusPill, uint16_t pillColor) {
+  // Brand red accent stripe across top
+  display.fillRect(0, 0, display.width(), 2, COLOR_RED);
+  // Header background
+  display.fillRect(0, 2, display.width(), 20, COLOR_BG);
+
+  // App Title
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_WHITE, COLOR_BG);
+  display.drawString(title, 8, 12, &fonts::Font2);
+
+  // Subtitle BFP badge
+  display.fillRoundRect(88, 5, 28, 14, 3, COLOR_RED_BG);
+  display.drawRoundRect(88, 5, 28, 14, 3, COLOR_RED);
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_RED, COLOR_RED_BG);
+  display.drawString("BFP", 102, 12, &fonts::Font0);
+
+  // Status Pill on top right
+  display.setTextDatum(textdatum_t::middle_right);
+  display.setTextColor(pillColor, COLOR_BG);
+  display.drawString(statusPill, display.width() - 8, 12, &fonts::Font2);
+
+  // Separator line
+  display.drawFastHLine(0, 22, display.width(), COLOR_BORDER);
+}
+
+// Screen 1: Unlinked / Bluetooth Pairing Screen (Matches Android BLE Bottom Sheet)
+void drawUnlinkedScreen() {
+  display.fillScreen(COLOR_BG);
+  drawTopBar("RESPONDO", "* PAIRING", COLOR_ORANGE);
+
+  // Main pairing card
+  display.fillRoundRect(6, 26, display.width() - 12, display.height() - 32, 6, COLOR_SURFACE);
+  display.drawRoundRect(6, 26, display.width() - 12, display.height() - 32, 6, COLOR_BORDER);
+
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_BLUE, COLOR_SURFACE);
+  display.drawString("BLUETOOTH PAIRING", display.width() / 2, 42, &fonts::Font2);
+
+  display.setTextColor(COLOR_MUTED, COLOR_SURFACE);
+  display.drawString("Connect Phone in Bluetooth Settings:", display.width() / 2, 62, &fonts::Font0);
+
+  // Device Name Badge
+  display.fillRoundRect(24, 73, display.width() - 48, 28, 5, COLOR_BG);
+  display.drawRoundRect(24, 73, display.width() - 48, 28, 5, COLOR_YELLOW);
+  display.setTextColor(COLOR_YELLOW, COLOR_BG);
+  display.drawString("\"Respondo Device\"", display.width() / 2, 87, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.setTextColor(COLOR_MUTED, COLOR_SURFACE);
+  display.drawString("Open Respondo App to link automatically", display.width() / 2, display.height() - 8, &fonts::Font0);
+}
+
+// Screen 2: Button Pressed While Not Connected
+void drawNotConnectedWarning() {
+  display.fillScreen(COLOR_RED);
+
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_RED);
+  display.drawString("PHONE NOT LINKED!", display.width() / 2, 32, &fonts::Font4);
+
+  display.setTextColor(COLOR_YELLOW, COLOR_RED);
+  display.drawString("Connect Bluetooth First:", display.width() / 2, 64, &fonts::Font2);
+
+  display.setTextColor(COLOR_WHITE, COLOR_RED);
+  display.drawString("\"Respondo Device\"", display.width() / 2, 88, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.drawString("Alert requires phone connection", display.width() / 2, display.height() - 6, &fonts::Font0);
+}
+
+// Screen 3: Standby Screen (Mirroring the Respondo Android App Layout)
+void drawIdleScreen() {
+  display.fillScreen(COLOR_BG);
+  drawTopBar("RESPONDO", "* SYNCED", COLOR_GREEN);
+
+  // ── LEFT SIDE: Stylized Circular SOS Button (Matches Android btnSOS) ───────────────
+  int cx = 46;
+  int cy = 76;
+
+  // Outer glowing ring
+  display.drawCircle(cx, cy, 38, COLOR_RED_DARK);
+  display.drawCircle(cx, cy, 37, COLOR_RED_DARK);
+
+  // Mid pulse ring
+  display.drawCircle(cx, cy, 33, display.color565(180, 20, 20));
+
+  // Solid Center Red Button
+  display.fillCircle(cx, cy, 28, COLOR_RED);
+
+  // Bold "SOS" text
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_RED);
+  display.drawString("SOS", cx, cy, &fonts::Font4);
+
+  // Subtext under circle
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.setTextColor(COLOR_MUTED, COLOR_BG);
+  display.drawString("DIRECT SYNC", cx, 126, &fonts::Font0);
+
+  // ── RIGHT SIDE: Dual Role Action Cards ─────────────────────────────────────────────
+
+  // TOP CARD: VICTIM SOS (Triggered by Top Button - GPIO 35)
+  display.fillRoundRect(94, 26, 140, 48, 6, COLOR_RED_BG);
+  display.drawRoundRect(94, 26, 140, 48, 6, COLOR_RED);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_YELLOW, COLOR_RED_BG);
+  display.drawString("[TOP BTN]", 98, 38, &fonts::Font0);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_WHITE, COLOR_RED_BG);
+  display.drawString("VICTIM SOS", 98, 54, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_MUTED, COLOR_RED_BG);
+  display.drawString("Medical & Profile", 98, 67, &fonts::Font0);
+
+  // BOTTOM CARD: BYSTANDER SOS (Triggered by Bottom Button - GPIO 0)
+  display.fillRoundRect(94, 78, 140, 48, 6, COLOR_BLUE_BG);
+  display.drawRoundRect(94, 78, 140, 48, 6, COLOR_BLUE);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_YELLOW, COLOR_BLUE_BG);
+  display.drawString("[BOT BTN]", 98, 90, &fonts::Font0);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_WHITE, COLOR_BLUE_BG);
+  display.drawString("BYSTANDER", 98, 106, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::middle_left);
+  display.setTextColor(COLOR_MUTED, COLOR_BLUE_BG);
+  display.drawString("Report Scene / Witness", 98, 119, &fonts::Font0);
+}
+
+// Screen 4: Victim SOS Active (Mirroring Android "ALERT ACTIVE")
+void drawVictimScreen() {
+  display.fillScreen(COLOR_BG);
+
+  // Red Emergency Header Banner
+  display.fillRect(0, 0, display.width(), 24, COLOR_RED);
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_RED);
+  display.drawString("! EMERGENCY ALERT ACTIVE !", display.width() / 2, 12, &fonts::Font2);
+
+  // Card
+  display.fillRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_RED_BG);
+  display.drawRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_RED);
+
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_RED_BG);
+  display.drawString("VICTIM CONFIRMED", display.width() / 2, 48, &fonts::Font4);
+
+  display.setTextColor(COLOR_YELLOW, COLOR_RED_BG);
+  display.drawString("Medical Profile Transmitted", display.width() / 2, 76, &fonts::Font2);
+
+  display.setTextColor(COLOR_WHITE, COLOR_RED_BG);
+  display.drawString("BFP Station Notified via Phone", display.width() / 2, 98, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.setTextColor(COLOR_MUTED, COLOR_RED_BG);
+  display.drawString("Hold tight - Responders alerted", display.width() / 2, display.height() - 8, &fonts::Font0);
+}
+
+// Screen 5: Bystander SOS Active
+void drawBystanderScreen() {
+  display.fillScreen(COLOR_BG);
+
+  // Blue Emergency Header Banner
+  display.fillRect(0, 0, display.width(), 24, COLOR_BLUE);
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_BLUE);
+  display.drawString("! BYSTANDER REPORT ACTIVE !", display.width() / 2, 12, &fonts::Font2);
+
+  // Card
+  display.fillRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_BLUE_BG);
+  display.drawRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_BLUE);
+
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_BLUE_BG);
+  display.drawString("WITNESS REPORT SENT", display.width() / 2, 48, &fonts::Font4);
+
+  display.setTextColor(COLOR_YELLOW, COLOR_BLUE_BG);
+  display.drawString("Scene Alert Transmitted", display.width() / 2, 76, &fonts::Font2);
+
+  display.setTextColor(COLOR_WHITE, COLOR_BLUE_BG);
+  display.drawString("BFP Station Notified via Phone", display.width() / 2, 98, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.setTextColor(COLOR_MUTED, COLOR_BLUE_BG);
+  display.drawString("Documenting incident details", display.width() / 2, display.height() - 8, &fonts::Font0);
+}
+
+// Screen 6: BFP Responders Dispatched (Mirroring Android "BFP DISPATCHED")
+void drawDeployedScreen() {
+  display.fillScreen(COLOR_BG);
+
+  // Green Dispatch Header Banner
+  display.fillRect(0, 0, display.width(), 24, COLOR_GREEN);
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_BG, COLOR_GREEN);
+  display.drawString("🚒 BFP DISPATCHED", display.width() / 2, 12, &fonts::Font2);
+
+  // Card
+  display.fillRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_GREEN_BG);
+  display.drawRoundRect(6, 28, display.width() - 12, display.height() - 34, 6, COLOR_GREEN);
+
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_GREEN_BG);
+  display.drawString("HELP ON THE WAY!", display.width() / 2, 48, &fonts::Font4);
+
+  display.setTextColor(COLOR_YELLOW, COLOR_GREEN_BG);
+  display.drawString("Fire Responders En Route", display.width() / 2, 76, &fonts::Font2);
+
+  display.setTextColor(COLOR_WHITE, COLOR_GREEN_BG);
+  display.drawString("Live GPS Tracking Active", display.width() / 2, 98, &fonts::Font2);
+
+  display.setTextDatum(textdatum_t::bottom_center);
+  display.setTextColor(COLOR_WHITE, COLOR_GREEN_BG);
+  display.drawString("GPS tracked by Fire Department", display.width() / 2, display.height() - 8, &fonts::Font0);
+}
+
+void drawScreen() {
+  switch (currentState) {
+    case STATE_UNLINKED:
+      drawUnlinkedScreen();
+      break;
+    case STATE_NOT_CONNECTED_WARN:
+      drawNotConnectedWarning();
+      break;
+    case STATE_IDLE:
+      drawIdleScreen();
+      break;
+    case STATE_VICTIM:
+      drawVictimScreen();
+      break;
+    case STATE_BYSTANDER:
+      drawBystanderScreen();
+      break;
+    case STATE_DEPLOYED:
+      drawDeployedScreen();
+      break;
+    default:
+      break;
+  }
 }
 
 // ── Setup ─────────────────────────────────────────────────────────────────────────────
 void setup() {
   Serial.begin(115200);
-  delay(500);
-  Serial.println("\n==================================================");
-  Serial.println("  RESPONDO BFP — ESP32 WEARABLE ACCESSORY");
-  Serial.println("  Device Name: Respondo Wearable");
-  Serial.println("  Mode: Phone Settings Bluetooth Pairing & Bonding");
-  Serial.println("==================================================");
+  delay(150);
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  // Initialize Hardware Buttons
+  pinMode(BUTTON_TOP, INPUT);           // Top Button (GPIO 35)
+  pinMode(BUTTON_BOTTOM, INPUT_PULLUP); // Bottom Button (GPIO 0, BOOT)
 
-  if (BUZZER_PIN >= 0) {
-    pinMode(BUZZER_PIN, OUTPUT);
-  }
+  // Initialize LilyGO T-Display (Rotation 1 = Landscape 240x135, Brightness 220)
+  display.begin(1, 220);
+  display.fillScreen(COLOR_BG);
 
-  // 1. Initialize BLE Device
+  // Splash Screen (Matches Android Splash)
+  display.fillRect(0, 0, display.width(), 3, COLOR_RED);
+  display.setTextDatum(textdatum_t::middle_center);
+  display.setTextColor(COLOR_WHITE, COLOR_BG);
+  display.drawString("RESPONDO", display.width() / 2, display.height() / 2 - 12, &fonts::Font4);
+  display.setTextColor(COLOR_RED, COLOR_BG);
+  display.drawString("Bureau of Fire Protection", display.width() / 2, display.height() / 2 + 14, &fonts::Font2);
+  delay(1000);
+
+  // 1. Initialize BLE Device as "Respondo Device"
   BLEDevice::init(DEVICE_NAME);
 
-  // 2. Configure BLE Security & Bonding for Android Bluetooth Settings
+  // 2. Configure BLE Security & Bonding (Allows Android Settings Pairing)
   BLEDevice::setSecurityCallbacks(new SecurityCallbacks());
 
   BLESecurity *pSecurity = new BLESecurity();
-  pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND); // Request bonding on phone
-  pSecurity->setCapability(ESP_IO_CAP_NONE);                 // "Just Works" (Standard phone pairing prompt)
+  pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND);
+  pSecurity->setCapability(ESP_IO_CAP_NONE);
   pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
   pSecurity->setRespEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
 
@@ -227,169 +456,119 @@ void setup() {
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
 
-  // 4. Create BLE Service & Characteristic
+  // 4. Create BLE Service & Characteristic (Supports Notify & Write for 2-Way Sync)
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_READ   |
-                      BLECharacteristic::PROPERTY_WRITE  |
+                      BLECharacteristic::PROPERTY_READ     |
+                      BLECharacteristic::PROPERTY_WRITE    |
+                      BLECharacteristic::PROPERTY_WRITE_NR |
                       BLECharacteristic::PROPERTY_NOTIFY
                     );
 
+  pCharacteristic->setCallbacks(new CharacteristicCallbacks());
   pCharacteristic->addDescriptor(new BLE2902());
   pCharacteristic->setValue("READY");
   pService->start();
 
-  // 5. Configure Discoverable Advertisement Data
+  // 5. Configure High-Speed Always-Active Advertisement (Like Smartwatch / BT Audio)
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
 
   BLEAdvertisementData advData;
-  advData.setFlags(0x06); // General Discoverable + BR/EDR not supported
+  advData.setFlags(0x06); // General Discoverable + BR_EDR_NOT_SUPPORTED
   advData.setName(DEVICE_NAME);
-  advData.setCompleteServices(BLEUUID(SERVICE_UUID));
+  advData.setAppearance(0x0C00); // Generic Watch (displays wearable icon in Android)
   pAdvertising->setAdvertisementData(advData);
 
   BLEAdvertisementData scanData;
+  scanData.setCompleteServices(BLEUUID(SERVICE_UUID));
   scanData.setName(DEVICE_NAME);
   pAdvertising->setScanResponseData(scanData);
 
-  pAdvertising->setMinPreferred(0x06);
-  pAdvertising->setMinPreferred(0x12);
+  // Fast 20ms - 40ms advertising intervals for instant phone discovery
+  pAdvertising->setMinInterval(0x20); // 20ms
+  pAdvertising->setMaxInterval(0x40); // 40ms
+  pAdvertising->setMinPreferred(0x06); // 7.5ms BLE connection interval
+  pAdvertising->setMinPreferred(0x12); // 22.5ms BLE connection interval
   BLEDevice::startAdvertising();
 
-  Serial.println("[BLE] Ready & Advertising as 'Respondo Wearable'.");
-  Serial.println("[INFO] Open Phone Settings -> Bluetooth -> Tap 'Respondo Wearable' to pair.");
+  Serial.println("[BLE] Ready & Advertising as 'Respondo Device'.");
 
-  // Ready beep
-  playTone(2000, 100);
-}
-
-// ── Action Handlers ───────────────────────────────────────────────────────────────────
-void handleFirstSOSPress() {
-  Serial.println("\n[EVENT] >>> FIRST PRESS: EMERGENCY SOS TRIGGERED <<<");
-  sendBLEMessage("SOS_TRIGGER");
-  feedbackSOSSent();
-
-  currentState = STATE_AWAITING_ROLE;
-  roleWindowStart = millis();
-  Serial.println("[STATE] Awaiting role confirmation: HOLD for VICTIM, DOUBLE-CLICK for BYSTANDER");
-}
-
-void handleConfirmVictim() {
-  Serial.println("\n[EVENT] >>> LONG PRESS DETECTED: USER CONFIRMED AS VICTIM <<<");
-  sendBLEMessage("ROLE_VICTIM");
-  feedbackVictimConfirmed();
-
-  currentState = STATE_SOS_ACTIVE;
-  clickCount = 0;
-}
-
-void handleConfirmBystander() {
-  Serial.println("\n[EVENT] >>> DOUBLE CLICK DETECTED: USER CONFIRMED AS BYSTANDER <<<");
-  sendBLEMessage("ROLE_BYSTANDER");
-  feedbackBystanderConfirmed();
-
-  currentState = STATE_SOS_ACTIVE;
-  clickCount = 0;
+  // Initial Screen
+  currentState = STATE_UNLINKED;
+  drawScreen();
 }
 
 // ── Main Loop ─────────────────────────────────────────────────────────────────────────
 void loop() {
-  // ── Handle BLE Reconnection ──────────────────────────────────────────────────────────
+  unsigned long now = millis();
+
+  // ── Auto Re-advertise when Disconnected (Always Active) ──────────────────────────────
   if (!deviceConnected && oldDeviceConnected) {
-    delay(500);
+    delay(200);
     pServer->startAdvertising();
-    Serial.println("[BLE] Direct advertising restarted.");
+    Serial.println("[BLE] Advertising beacon restarted.");
     oldDeviceConnected = deviceConnected;
   }
   if (deviceConnected && !oldDeviceConnected) {
     oldDeviceConnected = deviceConnected;
   }
 
-  // ── Read Button with Debounce ────────────────────────────────────────────────────────
-  int reading = digitalRead(BUTTON_PIN);
-  unsigned long now = millis();
-
-  if (reading != lastButtonState) {
-    lastDebounceTime = now;
+  // ── Dismiss Temporary Warning Screen ─────────────────────────────────────────────────
+  if (currentState == STATE_NOT_CONNECTED_WARN && (now - warningStartTime > 2500)) {
+    currentState = STATE_UNLINKED;
+    needScreenRedraw = true;
   }
 
-  if ((now - lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (reading != buttonState) {
-      buttonState = reading;
+  // ── Button Edge Detection (Direct 0ms Instant Response) ──────────────────────────────
+  int readTop = digitalRead(BUTTON_TOP);
+  int readBottom = digitalRead(BUTTON_BOTTOM);
 
-      // Button Pressed (Active LOW)
-      if (buttonState == LOW) {
-        pressStartTime = now;
-        isPressing = true;
-        longPressTriggered = false;
-      }
-      // Button Released
-      else {
-        isPressing = false;
-        unsigned long pressDuration = now - pressStartTime;
+  // TOP BUTTON DOWN (GPIO 35) -> VICTIM SOS TRIGGER
+  if (readTop == LOW && lastTopState == HIGH && (now - lastTopPressTime > DEBOUNCE_MS)) {
+    lastTopPressTime = now;
+    Serial.println("\n[TOP BTN] >>> VICTIM SOS PRESSED! <<<");
 
-        if (!longPressTriggered && pressDuration < LONG_PRESS_TIME) {
-          clickCount++;
-          lastReleaseTime = now;
-        }
-      }
-    }
-  }
-
-  lastButtonState = reading;
-
-  // ── LONG-PRESS (Hold >= 1.5s): Confirms VICTIM ──────────────────────────────────────
-  if (isPressing && !longPressTriggered && (now - pressStartTime >= LONG_PRESS_TIME)) {
-    longPressTriggered = true;
-    clickCount = 0;
-
-    if (currentState == STATE_IDLE) {
-      handleFirstSOSPress();
-      delay(300);
-      handleConfirmVictim();
+    if (!deviceConnected) {
+      Serial.println("[WARN] Cannot send SOS: Phone not connected!");
+      currentState = STATE_NOT_CONNECTED_WARN;
+      warningStartTime = now;
+      needScreenRedraw = true;
     } else {
-      handleConfirmVictim();
+      Serial.println("[ACTION] Transmitting 'SOS:VICTIM' to phone...");
+      sendBLEMessage("SOS:VICTIM");
+      currentState = STATE_VICTIM;
+      needScreenRedraw = true;
     }
   }
 
-  // ── SINGLE vs DOUBLE CLICK ──────────────────────────────────────────────────────────
-  if (clickCount > 0 && !isPressing && (now - lastReleaseTime > DOUBLE_CLICK_TIME)) {
-    if (clickCount == 1) {
-      if (currentState == STATE_IDLE) {
-        handleFirstSOSPress();
-      } else if (currentState == STATE_AWAITING_ROLE) {
-        Serial.println("[INFO] Single press in awaiting mode. Hold >= 1.5s for Victim or 2x for Bystander.");
-      }
-    } else if (clickCount >= 2) {
-      if (currentState == STATE_AWAITING_ROLE || currentState == STATE_SOS_ACTIVE) {
-        handleConfirmBystander();
-      } else {
-        handleFirstSOSPress();
-        delay(300);
-        handleConfirmBystander();
-      }
+  // BOTTOM BUTTON DOWN (GPIO 0) -> BYSTANDER SOS TRIGGER
+  if (readBottom == LOW && lastBottomState == HIGH && (now - lastBottomPressTime > DEBOUNCE_MS)) {
+    lastBottomPressTime = now;
+    Serial.println("\n[BOT BTN] >>> BYSTANDER SOS PRESSED! <<<");
+
+    if (!deviceConnected) {
+      Serial.println("[WARN] Cannot send SOS: Phone not connected!");
+      currentState = STATE_NOT_CONNECTED_WARN;
+      warningStartTime = now;
+      needScreenRedraw = true;
+    } else {
+      Serial.println("[ACTION] Transmitting 'SOS:BYSTANDER' to phone...");
+      sendBLEMessage("SOS:BYSTANDER");
+      currentState = STATE_BYSTANDER;
+      needScreenRedraw = true;
     }
-    clickCount = 0;
   }
 
-  // ── LED Status Indication ───────────────────────────────────────────────────────────
-  if (currentState == STATE_AWAITING_ROLE) {
-    int pulsePhase = (now / 200) % 2;
-    digitalWrite(LED_PIN, pulsePhase == 0 ? HIGH : LOW);
+  lastTopState = readTop;
+  lastBottomState = readBottom;
 
-    if (now - roleWindowStart > ROLE_WINDOW_TIME) {
-      Serial.println("[STATE] Role confirmation window expired. Entering SOS_ACTIVE.");
-      currentState = STATE_SOS_ACTIVE;
-      digitalWrite(LED_PIN, LOW);
-    }
-  } else if (currentState == STATE_SOS_ACTIVE) {
-    int slowBlink = (now / 1000) % 2;
-    digitalWrite(LED_PIN, slowBlink == 0 ? HIGH : LOW);
-  } else {
-    digitalWrite(LED_PIN, LOW);
+  // ── Screen Rendering ─────────────────────────────────────────────────────────────────
+  if (needScreenRedraw) {
+    needScreenRedraw = false;
+    drawScreen();
   }
 
   delay(10);

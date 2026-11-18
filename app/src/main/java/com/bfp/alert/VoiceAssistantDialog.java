@@ -41,10 +41,15 @@ public class VoiceAssistantDialog extends Dialog {
         void onOpenFirstAid();
         void onSearchFirstAid(String query);
         default void onOpenFirstAidDetail(FirstAidItem item) {
+            onOpenFirstAidDetail(item, false);
+        }
+        default void onOpenFirstAidDetail(FirstAidItem item, boolean autoPlayVideo) {
             if (item != null && item.title != null) {
                 onSearchFirstAid(item.title);
             }
         }
+        default void onPlayVideo() {}
+        default void onPauseVideo() {}
         default void onOpenProfile() {}
         default void onOpenSOS() {}
         default void onCheckStatus() {}
@@ -478,8 +483,21 @@ public class VoiceAssistantDialog extends Dialog {
                                             : "Tap mic to speak",
                                     0xFF6B7280);
 
-                            // Speak response then
-                            // execute action
+                            // Fallback: if action is NONE or null, check if user speech matches a first aid guide
+                            String effectiveAction = action;
+                            String effectiveData = data;
+                            if (effectiveAction == null || ClaudeVoiceAssistant.ACTION_NONE.equals(effectiveAction)) {
+                                FirstAidItem guide = FirstAidRepository.getInstance().findMatchingItem(lastUserTranscript);
+                                if (guide != null) {
+                                    effectiveAction = ClaudeVoiceAssistant.ACTION_SEARCH_FIRSTAID;
+                                    effectiveData = guide.title + (lastUserTranscript != null && (lastUserTranscript.toLowerCase().contains("video") || lastUserTranscript.toLowerCase().contains("play") || lastUserTranscript.toLowerCase().contains("watch")) ? "|play" : "");
+                                }
+                            }
+
+                            // Execute action IMMEDIATELY so screen updates right away!
+                            executeAction(effectiveAction, effectiveData);
+
+                            // Speak response concurrently
                             assistant.speak(text,
                                     new ClaudeVoiceAssistant
                                             .AssistantCallback() {
@@ -495,11 +513,7 @@ public class VoiceAssistantDialog extends Dialog {
                                         @Override
                                         public void onSpeakingFinished() {
                                             handler.post(() -> {
-                                                executeAction(action, data);
-                                                if (handsFreeMode
-                                                        && (action == null
-                                                        || ClaudeVoiceAssistant
-                                                        .ACTION_NONE.equals(action))) {
+                                                if (handsFreeMode) {
                                                     scheduleListeningRestart(500);
                                                 }
                                             });
@@ -581,25 +595,12 @@ public class VoiceAssistantDialog extends Dialog {
             case ClaudeVoiceAssistant.ACTION_OPEN_FIRSTAID:
                 handler.postDelayed(() -> {
                     if (actionListener != null) {
-                        actionListener.onOpenFirstAid();
-                    }
-                    if (!handsFreeMode) {
-                        dismiss();
-                    } else {
-                        scheduleListeningRestart(800);
-                    }
-                }, 400);
-                break;
-
-            case ClaudeVoiceAssistant.ACTION_SEARCH_FIRSTAID:
-                handler.postDelayed(() -> {
-                    if (actionListener != null) {
-                        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(data);
-                        if (match != null) {
-                            actionListener.onOpenFirstAidDetail(match);
+                        FirstAidItem guide = FirstAidRepository.getInstance().findMatchingItem(lastUserTranscript);
+                        if (guide != null) {
+                            boolean play = lastUserTranscript != null && (lastUserTranscript.toLowerCase().contains("video") || lastUserTranscript.toLowerCase().contains("play") || lastUserTranscript.toLowerCase().contains("watch"));
+                            actionListener.onOpenFirstAidDetail(guide, play);
                         } else {
-                            actionListener.onSearchFirstAid(
-                                    data != null ? data : "");
+                            actionListener.onOpenFirstAid();
                         }
                     }
                     if (!handsFreeMode) {
@@ -607,7 +608,54 @@ public class VoiceAssistantDialog extends Dialog {
                     } else {
                         scheduleListeningRestart(800);
                     }
-                }, 400);
+                }, 50);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_SEARCH_FIRSTAID:
+                boolean autoPlay = false;
+                String guideQuery = data;
+                if (guideQuery != null && guideQuery.contains("|play")) {
+                    autoPlay = true;
+                    guideQuery = guideQuery.replace("|play", "").trim();
+                } else if (lastUserTranscript != null && (lastUserTranscript.toLowerCase().contains("video") || lastUserTranscript.toLowerCase().contains("play") || lastUserTranscript.toLowerCase().contains("watch"))) {
+                    autoPlay = true;
+                }
+
+                final boolean finalAutoPlay = autoPlay;
+                final String finalQuery = guideQuery;
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(finalQuery);
+                        if (match == null && lastUserTranscript != null && !lastUserTranscript.isEmpty()) {
+                            match = FirstAidRepository.getInstance().findMatchingItem(lastUserTranscript);
+                        }
+                        if (match != null) {
+                            actionListener.onOpenFirstAidDetail(match, finalAutoPlay);
+                        } else {
+                            actionListener.onSearchFirstAid(
+                                    finalQuery != null ? finalQuery : "");
+                        }
+                    }
+                    if (!handsFreeMode) {
+                        dismiss();
+                    }
+                }, 50);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_PLAY_VIDEO:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onPlayVideo();
+                    }
+                }, 100);
+                break;
+
+            case ClaudeVoiceAssistant.ACTION_PAUSE_VIDEO:
+                handler.postDelayed(() -> {
+                    if (actionListener != null) {
+                        actionListener.onPauseVideo();
+                    }
+                }, 100);
                 break;
 
             case ClaudeVoiceAssistant.ACTION_OPEN_PROFILE:

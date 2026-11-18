@@ -81,6 +81,8 @@ public class SosFragment extends Fragment {
     // BLE
     private BLEManager bleManager;
     private View       bleBadge;
+    private View       dotBleStatus;
+    private TextView   tvBleBadgeText;
     private RoleSelectionDialog roleSelectionDialog;
 
     private final BroadcastReceiver bleReceiver = new BroadcastReceiver() {
@@ -89,18 +91,22 @@ public class SosFragment extends Fragment {
             if (intent == null || intent.getAction() == null) return;
             String action = intent.getAction();
             if (BLESOSService.ACTION_BLE_STATE_CHANGED.equals(action)) {
-                boolean connected = intent.getBooleanExtra(BLESOSService.EXTRA_CONNECTED, false);
-                if (bleBadge != null) {
-                    bleBadge.setVisibility(connected ? View.VISIBLE : View.GONE);
-                }
+                updateBleBadgeUI(intent);
             } else if (BLESOSService.ACTION_SOS_SENT.equals(action)) {
                 String alertId = intent.getStringExtra(BLESOSService.EXTRA_ALERT_ID);
+                String role = intent.getStringExtra(BLESOSService.EXTRA_ROLE);
+                String source = intent.getStringExtra(BLESOSService.EXTRA_SOURCE);
                 if (alertId != null) {
                     sAlertId = alertId;
                     saveAlertId(alertId);
                     setSOSSentState();
                     attachLiveListener(alertId);
-                    promptRoleSelection(alertId);
+
+                    if ("ESP32_BLE".equals(source) || (role != null && !role.isEmpty())) {
+                        handleWearableRole(role != null ? role : "victim");
+                    } else {
+                        promptRoleSelection(alertId);
+                    }
                 }
             } else if (BLESOSService.ACTION_BLE_ROLE_CONFIRMED.equals(action)) {
                 String role = intent.getStringExtra(BLESOSService.EXTRA_ROLE);
@@ -132,6 +138,13 @@ public class SosFragment extends Fragment {
         tvLiveLabel = view.findViewById(R.id.tvLiveLabel);
         statusCard = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
+        dotBleStatus = view.findViewById(R.id.dotBleStatus);
+        tvBleBadgeText = view.findViewById(R.id.tvBleBadgeText);
+        if (bleBadge != null) {
+            bleBadge.setOnClickListener(v -> {
+                WearableDeviceBottomSheet.newInstance().show(getChildFragmentManager(), WearableDeviceBottomSheet.TAG);
+            });
+        }
         View btnShakeSettings = view.findViewById(R.id.btnShakeSettings);
         if (btnShakeSettings != null) {
             btnShakeSettings.setOnClickListener(v -> showShakeSettingsDialog());
@@ -372,9 +385,7 @@ public class SosFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (bleBadge != null) {
-            bleBadge.setVisibility(BLESOSService.isDeviceConnected() ? View.VISIBLE : View.GONE);
-        }
+        updateBleBadgeUI(null);
         syncWithFirestore();
         if (isHandsFreeEnabled()) {
             if (ContextCompat.checkSelfPermission(
@@ -467,14 +478,17 @@ public class SosFragment extends Fragment {
 
                     if ("deployed".equals(status)) {
                         setDeployedState();
+                        BLESOSService.syncStatusWithWearable("STATUS:DEPLOYED");
                         if (getContext() != null) {
                             Toast.makeText(getContext(), "🚒 BFP Responders are on their way!", Toast.LENGTH_SHORT).show();
                         }
                     } else if ("resolved".equals(status)) {
                         clearAlertState();
                         setResolvedState();
+                        BLESOSService.syncStatusWithWearable("STATUS:RESOLVED");
                     } else if ("active".equals(status)) {
                         setSOSSentState();
+                        BLESOSService.syncStatusWithWearable("STATUS:ACTIVE");
                     }
                 });
     }
@@ -798,8 +812,45 @@ public class SosFragment extends Fragment {
         if (getContext() != null) {
             BLESOSService.start(getContext());
         }
-        if (bleBadge != null) {
-            bleBadge.setVisibility(BLESOSService.isDeviceConnected() ? View.VISIBLE : View.GONE);
+        updateBleBadgeUI(null);
+    }
+
+    private void updateBleBadgeUI(@Nullable Intent intent) {
+        if (bleBadge == null) return;
+        boolean connected = false;
+        boolean connecting = false;
+
+        if (intent != null && intent.hasExtra(BLESOSService.EXTRA_CONNECTED)) {
+            connected = intent.getBooleanExtra(BLESOSService.EXTRA_CONNECTED, false);
+            connecting = intent.getBooleanExtra(BLESOSService.EXTRA_CONNECTING, false);
+        } else {
+            connected = BLESOSService.isDeviceConnected();
+            connecting = BLESOSService.isDeviceConnecting();
+        }
+
+        bleBadge.setVisibility(View.VISIBLE);
+
+        if (connected) {
+            bleBadge.setBackgroundResource(R.drawable.bg_ble_badge_connected);
+            if (dotBleStatus != null) dotBleStatus.setBackgroundResource(R.drawable.circle_dot_green);
+            if (tvBleBadgeText != null) {
+                tvBleBadgeText.setText("Respondo Wearable");
+                tvBleBadgeText.setTextColor(0xFFFFFFFF);
+            }
+        } else if (connecting) {
+            bleBadge.setBackgroundResource(R.drawable.bg_ble_badge_connecting);
+            if (dotBleStatus != null) dotBleStatus.setBackgroundResource(R.drawable.circle_dot_orange);
+            if (tvBleBadgeText != null) {
+                tvBleBadgeText.setText("Connecting...");
+                tvBleBadgeText.setTextColor(0xFFFFB74D);
+            }
+        } else {
+            bleBadge.setBackgroundResource(R.drawable.bg_ble_badge_disconnected);
+            if (dotBleStatus != null) dotBleStatus.setBackgroundResource(R.drawable.circle_dot_gray);
+            if (tvBleBadgeText != null) {
+                tvBleBadgeText.setText("Wearable Off");
+                tvBleBadgeText.setTextColor(0xFFCCCCCC);
+            }
         }
     }
 
@@ -870,11 +921,30 @@ public class SosFragment extends Fragment {
 
                             @Override
                             public void onOpenFirstAidDetail(FirstAidItem item) {
+                                onOpenFirstAidDetail(item, false);
+                            }
+
+                            @Override
+                            public void onOpenFirstAidDetail(FirstAidItem item, boolean autoPlayVideo) {
                                 if (item != null && getActivity() instanceof MainActivity) {
                                     ((MainActivity) getActivity())
-                                            .openFirstAidDetail(item);
+                                            .openFirstAidDetail(item, autoPlayVideo);
                                 } else if (item != null) {
                                     onSearchFirstAid(item.title);
+                                }
+                            }
+
+                            @Override
+                            public void onPlayVideo() {
+                                if (getActivity() instanceof MainActivity) {
+                                    ((MainActivity) getActivity()).playCurrentVideo();
+                                }
+                            }
+
+                            @Override
+                            public void onPauseVideo() {
+                                if (getActivity() instanceof MainActivity) {
+                                    ((MainActivity) getActivity()).pauseCurrentVideo();
                                 }
                             }
 
@@ -1225,12 +1295,15 @@ public class SosFragment extends Fragment {
 
     private void clearAlertState() {
         sAlertId = null;
-        requireContext()
-                .getSharedPreferences(PREFS,
-                        Context.MODE_PRIVATE)
-                .edit()
-                .remove(KEY_ALERT)
-                .apply();
+        if (getContext() != null) {
+            requireContext()
+                    .getSharedPreferences(PREFS,
+                            Context.MODE_PRIVATE)
+                    .edit()
+                    .remove(KEY_ALERT)
+                    .apply();
+        }
+        BLESOSService.syncStatusWithWearable("STATUS:RESOLVED");
 
         if (sListener != null) {
             sListener.remove();

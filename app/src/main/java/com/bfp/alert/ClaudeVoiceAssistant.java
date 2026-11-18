@@ -49,6 +49,8 @@ public class ClaudeVoiceAssistant {
     public static final String ACTION_FLASHLIGHT_OFF    = "FLASHLIGHT_OFF";
     public static final String ACTION_PLAY_SIREN        = "PLAY_SIREN";
     public static final String ACTION_STOP_SIREN        = "STOP_SIREN";
+    public static final String ACTION_PLAY_VIDEO        = "PLAY_VIDEO";
+    public static final String ACTION_PAUSE_VIDEO       = "PAUSE_VIDEO";
     public static final String ACTION_UPDATE_CONDITION  = "UPDATE_CONDITION";
     public static final String ACTION_NONE              = "NONE";
 
@@ -357,6 +359,12 @@ public class ClaudeVoiceAssistant {
             if (ACTION_SEARCH_FIRSTAID.equals(action) && (actionData == null || actionData.trim().isEmpty())) {
                 actionData = (lastDetectedGuideTitle != null) ? lastDetectedGuideTitle : userText;
             }
+            if (ACTION_SEARCH_FIRSTAID.equals(action)) {
+                String lu = userText.toLowerCase();
+                if ((lu.contains("video") || lu.contains("play") || lu.contains("watch")) && actionData != null && !actionData.contains("|play")) {
+                    actionData = actionData + "|play";
+                }
+            }
 
             if (!isValidAction(action)) {
                 action = ACTION_NONE;
@@ -412,6 +420,19 @@ public class ClaudeVoiceAssistant {
             return ACTION_CALL_STATION;
         }
 
+        // 0. Video playback controls
+        if (lowerUser.contains("pause video") || lowerUser.contains("pause the video") || lowerUser.contains("stop video")) {
+            return ACTION_PAUSE_VIDEO;
+        }
+        if (lowerUser.contains("play video") || lowerUser.contains("play the video") || lowerUser.contains("start video") || lowerUser.contains("watch video") || lowerUser.contains("resume video")) {
+            FirstAidItem guideMatch = FirstAidRepository.getInstance().findMatchingItem(lowerUser);
+            if (guideMatch != null) {
+                this.lastDetectedGuideTitle = guideMatch.title + "|play";
+                return ACTION_SEARCH_FIRSTAID;
+            }
+            return ACTION_PLAY_VIDEO;
+        }
+
         // 1. Navigation intents
         if (lowerUser.contains("open first aid") || lowerUser.contains("first aid panel") || lowerUser.equals("first aid") || lowerUser.contains("first aid guides")) {
             return ACTION_OPEN_FIRSTAID;
@@ -423,18 +444,14 @@ public class ClaudeVoiceAssistant {
             return ACTION_OPEN_SOS;
         }
 
-        // 2. Specific First Aid Guides (e.g. "open burn", "cpr", "open cpr", "choking", "snake bite")
-        String strippedGuideQuery = lowerUser
-                .replaceAll("^(open|show|display|search|find|view|read|go to)\\s+", "")
-                .replaceAll("^(first aid for|first aid|guide for|treatment for|how to do|how to treat)\\s+", "")
-                .trim();
-        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(strippedGuideQuery.isEmpty() ? lowerUser : strippedGuideQuery);
-        if (match == null && !strippedGuideQuery.equals(lowerUser)) {
-            match = FirstAidRepository.getInstance().findMatchingItem(lowerUser);
-        }
-
+        // 2. Specific First Aid Guides (e.g. "open burn", "burns", "cpr", "choking", "snake bite")
+        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(lowerUser);
         if (match != null) {
-            this.lastDetectedGuideTitle = match.title;
+            if (lowerUser.contains("video") || lowerUser.contains("play") || lowerUser.contains("watch")) {
+                this.lastDetectedGuideTitle = match.title + "|play";
+            } else {
+                this.lastDetectedGuideTitle = match.title;
+            }
             return ACTION_SEARCH_FIRSTAID;
         }
 
@@ -495,6 +512,8 @@ public class ClaudeVoiceAssistant {
                 || ACTION_FLASHLIGHT_OFF.equals(action)
                 || ACTION_PLAY_SIREN.equals(action)
                 || ACTION_STOP_SIREN.equals(action)
+                || ACTION_PLAY_VIDEO.equals(action)
+                || ACTION_PAUSE_VIDEO.equals(action)
                 || ACTION_UPDATE_CONDITION.equals(action)
                 || ACTION_NONE.equals(action);
     }
@@ -568,6 +587,8 @@ public class ClaudeVoiceAssistant {
                 + "   [ACTION:FLASHLIGHT_OFF]\n"
                 + "   [ACTION:PLAY_SIREN]\n"
                 + "   [ACTION:STOP_SIREN]\n"
+                + "   [ACTION:PLAY_VIDEO]\n"
+                + "   [ACTION:PAUSE_VIDEO]\n"
                 + "   [ACTION:UPDATE_CONDITION|BriefCondition]\n"
                 + "   [ACTION:NONE]\n"
                 + "4. Never skip the action tag.\n\n"
@@ -594,9 +615,11 @@ public class ClaudeVoiceAssistant {
                 + "- Trapped, room status, or hazard update ('I am trapped on the 2nd floor', 'Cannot walk leg broken', 'Heavy smoke outside'):\n"
                 + "  Give 1 immediate life safety instruction, reassure that condition is logged for BFP, and end with [ACTION:UPDATE_CONDITION|SituationOrNotes].\n\n"
 
-                + "- Medical symptom, injury, or first aid question (e.g. 'I'm choking rn', 'treat a burn', 'CPR steps', 'bleeding arm'):\n"
+                + "- Medical symptom, injury, first aid question, or guide request (e.g. 'open burns guide and play the video', 'open CPR', 'choking', 'treat a burn', 'play video'):\n"
                 + "  * FIRST inspect the CURRENT AVAILABLE FIRST AID GUIDES list above.\n"
-                + "  * IF A GUIDE MATCHES: Give 1 immediate crucial life-saving tip, announce you are opening the guide, and end with [ACTION:SEARCH_FIRSTAID|ExactTitle] using the exact title from the list.\n"
+                + "  * IF A GUIDE MATCHES: Give 1 immediate crucial life-saving tip (under 20 words), announce you are opening the guide, and end with [ACTION:SEARCH_FIRSTAID|ExactTitle] or [ACTION:SEARCH_FIRSTAID|ExactTitle|play] if user requested video.\n"
+                + "  * If the user says 'play video' or 'start video' while viewing a guide: reply 'Playing video now. [ACTION:PLAY_VIDEO]'\n"
+                + "  * If the user says 'pause video' or 'stop video': reply 'Video paused. [ACTION:PAUSE_VIDEO]'\n"
                 + "  * IF NO GUIDE MATCHES: You MUST state clearly: 'No corresponding first aid data found for that condition. Please contact emergency services or call the BFP hotline.' and end with [ACTION:NONE] or [ACTION:CALL_STATION]. NEVER invent guides that are not in the list.\n\n"
 
                 + "- BFP Hotline inquiry ('What is the hotline?', 'Emergency number', 'Numero ng bumbero'):\n"

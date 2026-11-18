@@ -14,27 +14,29 @@
         android:layout_width="wrap_content"
         android:layout_height="32dp"
         android:orientation="horizontal"
-        android:background="#1E1E1E"
+        android:background="@drawable/bg_ble_badge_disconnected"
         android:paddingStart="12dp"
         android:paddingEnd="14dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_margin="16dp"
-        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
         android:gravity="center_vertical">
 
         <View
-            android:layout_width="7dp"
-            android:layout_height="7dp"
-            android:background="@drawable/circle_dot_green"
+            android:id="@+id/dotBleStatus"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/circle_dot_gray"
             android:layout_marginEnd="7dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tvBleBadgeText"
-            android:text="Respondo Wearable"
-            android:textColor="#FFFFFF"
+            android:text="Wearable Off"
+            android:textColor="#CCCCCC"
             android:textSize="11sp"
             android:letterSpacing="0.04"/>
 

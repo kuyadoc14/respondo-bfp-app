@@ -46,9 +46,62 @@ public class FirstAidRepository {
     }
 
     private FirstAidRepository() {
+        populateDefaultItemsIfEmpty();
         startListening();
     }
 
+    private void populateDefaultItemsIfEmpty() {
+        mergeWithDefaults(null);
+    }
+
+    private void mergeWithDefaults(List<FirstAidItem> liveItems) {
+        synchronized (cachedItems) {
+            cachedItems.clear();
+            if (liveItems != null) {
+                cachedItems.addAll(liveItems);
+            }
+            ensureDefaultItem("Burns", "Emergency Care", "Immediate cooling and protective care for thermal, electrical, and chemical burns.", "🔥",
+                    java.util.Arrays.asList(
+                            "Cool the burn immediately under cool, gently running water for 10 to 20 minutes. Do not use ice, ice water, or greasy ointments.",
+                            "Remove restrictive items like rings, watches, or tight clothing around the burned area before swelling starts.",
+                            "Cover the burned area loosely with a sterile, non-stick dressing or clean cloth.",
+                            "Do not pop any blisters. Protect the skin from infection.",
+                            "Seek medical care or call BFP immediately for deep, large, chemical, or electrical burns."
+                    ));
+            ensureDefaultItem("CPR", "Life Support", "Cardiopulmonary resuscitation steps for an unresponsive person not breathing normally.", "❤️",
+                    java.util.Arrays.asList(
+                            "Check scene safety and check the victim for responsiveness.",
+                            "Call for emergency help or BFP immediately and get an AED if available.",
+                            "Place hands in the center of the chest and push hard and fast (100 to 120 compressions per minute).",
+                            "Allow the chest to fully recoil between compressions.",
+                            "If trained, deliver 2 rescue breaths after every 30 chest compressions. Continue until medical responders take over."
+                    ));
+            ensureDefaultItem("Choking", "Airway Obstruction", "Heimlich maneuver and back blows for someone who cannot breathe, cough, or speak.", "🫁",
+                    java.util.Arrays.asList(
+                            "Encourage coughing if the victim can still cough or speak.",
+                            "If airway is fully blocked, deliver 5 firm back blows between the shoulder blades.",
+                            "Perform 5 quick abdominal thrusts (Heimlich maneuver) just above the navel.",
+                            "Alternate 5 back blows and 5 abdominal thrusts until the object is expelled.",
+                            "If the victim becomes unconscious, lower to ground and begin CPR immediately."
+                    ));
+        }
+    }
+
+    private void ensureDefaultItem(String title, String category, String desc, String emoji, java.util.List<String> steps) {
+        for (FirstAidItem item : cachedItems) {
+            if (item.title != null && item.title.trim().equalsIgnoreCase(title.trim())) {
+                return;
+            }
+        }
+        FirstAidItem item = new FirstAidItem();
+        item.id = "default_" + title.toLowerCase();
+        item.title = title;
+        item.category = category;
+        item.description = desc;
+        item.iconEmoji = emoji;
+        item.steps = new ArrayList<>(steps);
+        cachedItems.add(item);
+    }
     public synchronized void startListening() {
         if (isListening && registration != null) return;
         isListening = true;
@@ -76,10 +129,7 @@ public class FirstAidRepository {
                         }
                     }
 
-                    synchronized (cachedItems) {
-                        cachedItems.clear();
-                        cachedItems.addAll(newItems);
-                    }
+                    mergeWithDefaults(newItems);
 
                     List<FirstAidItem> snapshotCopy = new ArrayList<>(newItems);
                     mainHandler.post(() -> {
@@ -122,36 +172,92 @@ public class FirstAidRepository {
         }
     }
 
+    private String cleanQuery(String s) {
+        if (s == null) return "";
+        return s.toLowerCase()
+                .replaceAll("['\".,?!;:()\\/\\-]", " ")
+                .replaceAll("\\b(open|show|display|search|find|view|watch|read|go to|the|a|an|please|can you|i want to|guide|guides|tutorial|first aid for|first aid|how to treat|how to do|how to|treatment for|treatment|and|play|video)\\b", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String stemWord(String w) {
+        if (w == null) return "";
+        w = w.toLowerCase().trim();
+        if (w.endsWith("ing") && w.length() > 4) return w.substring(0, w.length() - 3);
+        if (w.endsWith("es") && w.length() > 3) return w.substring(0, w.length() - 2);
+        if (w.endsWith("s") && w.length() > 3) return w.substring(0, w.length() - 1);
+        if (w.endsWith("ed") && w.length() > 3) return w.substring(0, w.length() - 2);
+        return w;
+    }
+
     @Nullable
     public FirstAidItem findMatchingItem(String query) {
         if (query == null || query.trim().isEmpty()) return null;
-        String q = query.trim().toLowerCase();
+        String rawLower = query.trim().toLowerCase();
+        String cleaned = cleanQuery(query);
+        String q = cleaned.isEmpty() ? rawLower : cleaned;
 
         synchronized (cachedItems) {
-            // 1. Exact match on title
-            for (FirstAidItem item : cachedItems) {
-                if (item.title != null && item.title.trim().equalsIgnoreCase(q)) {
-                    return item;
-                }
-            }
-            // 2. Title contains or query contains title
+            // 1. Exact match on title with cleaned or raw query
             for (FirstAidItem item : cachedItems) {
                 if (item.title != null) {
                     String t = item.title.trim().toLowerCase();
-                    if (t.contains(q) || q.contains(t)) {
+                    if (t.equalsIgnoreCase(q) || t.equalsIgnoreCase(rawLower)) {
                         return item;
                     }
                 }
             }
-            // 3. Category match
+
+            // 2. Title contains query or query contains title
             for (FirstAidItem item : cachedItems) {
-                if (item.category != null && item.category.trim().toLowerCase().contains(q)) {
+                if (item.title != null) {
+                    String t = item.title.trim().toLowerCase();
+                    if (t.contains(q) || q.contains(t) || rawLower.contains(t)) {
+                        return item;
+                    }
+                }
+            }
+
+            // 3. Stemming check (e.g. "burns" vs "burn", "choking" vs "choke")
+            String stemQ = stemWord(q);
+            for (FirstAidItem item : cachedItems) {
+                if (item.title != null) {
+                    String t = item.title.trim().toLowerCase();
+                    String stemT = stemWord(t);
+                    if ((!stemT.isEmpty() && (stemT.contains(stemQ) || stemQ.contains(stemT)))
+                            || (t.contains(stemQ) || stemT.contains(q))) {
+                        return item;
+                    }
+                }
+            }
+
+            // 4. Token overlap (match any significant word >= 3 letters from query to title)
+            String[] tokens = q.split("\\s+");
+            for (String token : tokens) {
+                if (token.length() >= 3) {
+                    String stemToken = stemWord(token);
+                    for (FirstAidItem item : cachedItems) {
+                        if (item.title != null) {
+                            String t = item.title.trim().toLowerCase();
+                            if (t.contains(token) || (!stemToken.isEmpty() && t.contains(stemToken))) {
+                                return item;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5. Category match
+            for (FirstAidItem item : cachedItems) {
+                if (item.category != null && (item.category.trim().toLowerCase().contains(q) || item.category.trim().toLowerCase().contains(rawLower))) {
                     return item;
                 }
             }
-            // 4. Description match
+
+            // 6. Description match
             for (FirstAidItem item : cachedItems) {
-                if (item.description != null && item.description.toLowerCase().contains(q)) {
+                if (item.description != null && (item.description.toLowerCase().contains(q) || item.description.toLowerCase().contains(rawLower))) {
                     return item;
                 }
             }

@@ -130,20 +130,6 @@
                         android:textSize="16sp"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔘 Hold Wearable"
-                        android:textColor="#EA580C"
-                        android:textSize="10.5sp"
-                        android:textStyle="bold"
-                        android:layout_marginStart="8dp"
-                        android:paddingStart="6dp"
-                        android:paddingEnd="6dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:background="#20EA580C"/>
-
                 </LinearLayout>
 
                 <TextView
@@ -223,20 +209,6 @@
                         android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔘 2x Wearable"
-                        android:textColor="#3B82F6"
-                        android:textSize="10.5sp"
-                        android:textStyle="bold"
-                        android:layout_marginStart="8dp"
-                        android:paddingStart="6dp"
-                        android:paddingEnd="6dp"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:background="#203B82F6"/>
 
                 </LinearLayout>
 

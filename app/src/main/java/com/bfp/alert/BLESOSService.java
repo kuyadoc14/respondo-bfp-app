@@ -50,9 +50,16 @@ public class BLESOSService extends Service implements SensorEventListener {
     public static final String ACTION_BLE_STATE_CHANGED    = "com.bfp.alert.BLE_STATE_CHANGED";
     public static final String ACTION_SOS_SENT             = "com.bfp.alert.SOS_SENT";
     public static final String ACTION_BLE_ROLE_CONFIRMED   = "com.bfp.alert.BLE_ROLE_CONFIRMED";
+    public static final String ACTION_CONNECT_WEARABLE     = "com.bfp.alert.CONNECT_WEARABLE";
+    public static final String ACTION_DISCONNECT_WEARABLE  = "com.bfp.alert.DISCONNECT_WEARABLE";
+    public static final String ACTION_TEST_SOS             = "com.bfp.alert.TEST_SOS";
     public static final String EXTRA_CONNECTED             = "extra_connected";
+    public static final String EXTRA_CONNECTING            = "extra_connecting";
+    public static final String EXTRA_DEVICE_NAME           = "extra_device_name";
+    public static final String EXTRA_DEVICE_MAC            = "extra_device_mac";
     public static final String EXTRA_ALERT_ID              = "extra_alert_id";
     public static final String EXTRA_ROLE                  = "extra_role";
+    public static final String EXTRA_SOURCE                = "extra_source";
     private static final String ACTION_TRIGGER_SHAKE_SOS = "com.bfp.alert.TRIGGER_SHAKE_SOS";
 
     private static final String PREFS     = "bfp_prefs";
@@ -73,6 +80,84 @@ public class BLESOSService extends Service implements SensorEventListener {
 
     public static boolean isDeviceConnected() {
         return sInstance != null && sInstance.isConnected;
+    }
+
+    public static boolean isDeviceConnecting() {
+        return sInstance != null && sInstance.bleManager != null && sInstance.bleManager.isConnecting();
+    }
+
+    public static String getConnectedDeviceName() {
+        if (sInstance != null && sInstance.bleManager != null) {
+            return sInstance.bleManager.getConnectedDeviceName();
+        }
+        return "Respondo Wearable";
+    }
+
+    public static String getConnectedDeviceAddress() {
+        if (sInstance != null && sInstance.bleManager != null) {
+            return sInstance.bleManager.getConnectedDeviceAddress();
+        }
+        return null;
+    }
+
+    public static void connectWearable(Context context) {
+        connectWearable(context, null);
+    }
+
+    public static void connectWearable(Context context, String mac) {
+        if (context == null) return;
+        if (sInstance != null && sInstance.bleManager != null) {
+            if (mac != null && !mac.trim().isEmpty()) {
+                sInstance.bleManager.connectByMac(mac.trim());
+            } else {
+                sInstance.bleManager.startScan();
+            }
+            return;
+        }
+        Intent intent = new Intent(context, BLESOSService.class);
+        intent.setAction(ACTION_CONNECT_WEARABLE);
+        if (mac != null) intent.putExtra(EXTRA_DEVICE_MAC, mac);
+        startServiceIntent(context, intent);
+    }
+
+    public static void disconnectWearable(Context context) {
+        if (context == null) return;
+        if (sInstance != null && sInstance.bleManager != null) {
+            sInstance.bleManager.disconnect();
+            return;
+        }
+        Intent intent = new Intent(context, BLESOSService.class);
+        intent.setAction(ACTION_DISCONNECT_WEARABLE);
+        startServiceIntent(context, intent);
+    }
+
+    public static void syncStatusWithWearable(String status) {
+        if (sInstance != null && sInstance.bleManager != null && status != null) {
+            sInstance.bleManager.sendCommand(status);
+        }
+    }
+
+    public static void triggerSosTest(Context context) {
+        if (context == null) return;
+        if (sInstance != null) {
+            sInstance.triggerEmergencySOS("TEST");
+            return;
+        }
+        Intent intent = new Intent(context, BLESOSService.class);
+        intent.setAction(ACTION_TEST_SOS);
+        startServiceIntent(context, intent);
+    }
+
+    private static void startServiceIntent(Context context, Intent intent) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(context, intent);
+            } else {
+                context.startService(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to send command to BLESOSService: " + e.getMessage());
+        }
     }
 
     public static void start(Context context) {
@@ -271,11 +356,24 @@ public class BLESOSService extends Service implements SensorEventListener {
                 if (deviceInfo != null && deviceInfo.startsWith("LAT:")) {
                     lastDeviceCoordinates = deviceInfo;
                 }
-                // Debounce rapid multiple triggers within 4 seconds
                 long now = System.currentTimeMillis();
-                if (now - lastTriggerTime > 4000) {
+                if (now - lastTriggerTime > 2000) {
                     lastTriggerTime = now;
-                    triggerEmergencySOS();
+                    String role = null;
+                    if ("VICTIM".equalsIgnoreCase(deviceInfo)) {
+                        role = "victim";
+                    } else if ("BYSTANDER".equalsIgnoreCase(deviceInfo)) {
+                        role = "bystander";
+                    }
+
+                    String existingAlertId = getSavedAlertId();
+                    if (existingAlertId != null && !existingAlertId.isEmpty() && role != null) {
+                        Log.i(TAG, "Active alert exists (" + existingAlertId + "). Updating role to: " + role);
+                        handleRoleConfirmation(role);
+                        syncStatusWithWearable("STATUS:ACTIVE");
+                    } else {
+                        triggerEmergencySOS("ESP32_BLE", role);
+                    }
                 }
             }
 
@@ -286,70 +384,91 @@ public class BLESOSService extends Service implements SensorEventListener {
             }
 
             @Override
+            public void onConnecting(String deviceName, String mac) {
+                Log.d(TAG, "Connecting to Respondo Wearable: " + deviceName + " (" + mac + ")");
+                updateForegroundNotification("Connecting to " + (deviceName != null ? deviceName : "Respondo Wearable") + "...");
+                broadcastState(false, true, deviceName, mac);
+            }
+
+            @Override
             public void onConnected() {
                 Log.d(TAG, "Respondo Wearable Connected to BLESOSService");
                 isConnected = true;
-                updateForegroundNotification("Connected to paired Respondo Wearable");
-                broadcastState(true);
+                String name = bleManager != null ? bleManager.getConnectedDeviceName() : "Respondo Wearable";
+                String mac = bleManager != null ? bleManager.getConnectedDeviceAddress() : null;
+                updateForegroundNotification("Connected to " + name);
+                broadcastState(true, false, name, mac);
+
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    String activeId = getSavedAlertId();
+                    if (activeId != null && !activeId.isEmpty()) {
+                        syncStatusWithWearable("STATUS:ACTIVE");
+                    } else {
+                        syncStatusWithWearable("STATUS:IDLE");
+                    }
+                }, 1000);
             }
 
             @Override
             public void onDisconnected() {
                 Log.d(TAG, "Respondo Wearable Disconnected from BLESOSService");
                 isConnected = false;
-                if (bleManager != null && bleManager.isBonded()) {
-                    updateForegroundNotification("Searching for paired Respondo Wearable...");
-                } else {
-                    updateForegroundNotification("Respondo Wearable: Pair in Phone Bluetooth Settings");
-                }
-                broadcastState(false);
+                String mac = bleManager != null ? bleManager.getSavedDeviceMac() : null;
+                updateForegroundNotification("Respondo Wearable: Disconnected");
+                broadcastState(false, false, null, mac);
             }
 
             @Override
             public void onScanStarted() {
                 Log.d(TAG, "Scanning for Respondo Wearable...");
+                broadcastState(false, true, "Respondo Wearable", bleManager != null ? bleManager.getSavedDeviceMac() : null);
             }
         });
 
         bleManager.startScan();
     }
 
-    private void broadcastState(boolean connected) {
+    private void broadcastState(boolean connected, boolean connecting, String devName, String devMac) {
         Intent intent = new Intent(ACTION_BLE_STATE_CHANGED);
         intent.putExtra(EXTRA_CONNECTED, connected);
+        intent.putExtra(EXTRA_CONNECTING, connecting);
+        if (devName != null) intent.putExtra(EXTRA_DEVICE_NAME, devName);
+        if (devMac != null) intent.putExtra(EXTRA_DEVICE_MAC, devMac);
         intent.setPackage(getPackageName());
         sendBroadcast(intent);
     }
 
     private synchronized void triggerEmergencySOS() {
-        triggerEmergencySOS("ESP32_BLE");
+        triggerEmergencySOS("ESP32_BLE", null);
     }
 
     private synchronized void triggerEmergencySOS(String source) {
-        Log.i(TAG, "Executing Background SOS dispatch to Firestore...");
+        triggerEmergencySOS(source, null);
+    }
+
+    private synchronized void triggerEmergencySOS(String source, String role) {
+        Log.i(TAG, "Executing Background SOS dispatch to Firestore... source=" + source + ", role=" + role);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                    .addOnSuccessListener(loc -> {
-                        if (loc != null) {
-                            uploadAlertToFirestore(loc.getLatitude(), loc.getLongitude(), source);
+            // Immediate location retrieval via getLastLocation (<5ms)
+            locationClient.getLastLocation()
+                    .addOnSuccessListener(lastLoc -> {
+                        if (lastLoc != null) {
+                            uploadAlertToFirestore(lastLoc.getLatitude(), lastLoc.getLongitude(), source, role);
                         } else {
-                            locationClient.getLastLocation().addOnSuccessListener(lastLoc -> {
-                                if (lastLoc != null) {
-                                    uploadAlertToFirestore(lastLoc.getLatitude(), lastLoc.getLongitude(), source);
-                                } else {
-                                    uploadAlertFromFallback(source);
-                                }
-                            }).addOnFailureListener(e -> uploadAlertFromFallback(source));
+                            uploadAlertFromFallback(source, role);
                         }
                     })
-                    .addOnFailureListener(e -> uploadAlertFromFallback(source));
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "getLastLocation failed: " + e.getMessage());
+                        uploadAlertFromFallback(source, role);
+                    });
         } else {
-            uploadAlertFromFallback(source);
+            uploadAlertFromFallback(source, role);
         }
     }
 
-    private void uploadAlertFromFallback(String source) {
+    private void uploadAlertFromFallback(String source, String role) {
         double lat = 0.0;
         double lng = 0.0;
         if (lastDeviceCoordinates != null && lastDeviceCoordinates.startsWith("LAT:")) {
@@ -362,10 +481,10 @@ public class BLESOSService extends Service implements SensorEventListener {
                 }
             } catch (Exception ignored) {}
         }
-        uploadAlertToFirestore(lat, lng, source);
+        uploadAlertToFirestore(lat, lng, source, role);
     }
 
-    private void uploadAlertToFirestore(double lat, double lng, String source) {
+    private void uploadAlertToFirestore(double lat, double lng, String source, String role) {
         String userId = getOrCreateUserId();
 
         Map<String, Object> alert = new HashMap<>();
@@ -377,6 +496,29 @@ public class BLESOSService extends Service implements SensorEventListener {
         alert.put("source", source);
         alert.put("deviceToken", "");
 
+        String effectiveRole = (role != null && !role.isEmpty()) ? role : "victim";
+        alert.put("reporterRole", effectiveRole);
+
+        if ("victim".equalsIgnoreCase(effectiveRole)) {
+            alert.put("countOfVictims", 1);
+            alert.put("reportSubmitted", true);
+            try {
+                UserProfile profile = UserProfileManager.getLocalProfile(this);
+                if (profile != null && !profile.isEmpty()) {
+                    if (!profile.getFullName().isEmpty()) alert.put("reporterName", profile.getFullName());
+                    if (!profile.getPhone().isEmpty()) alert.put("reporterPhone", profile.getPhone());
+                    alert.put("reporterProfile", profile.toMap());
+
+                    Map<String, Object> patientMap = profile.toPatientMap();
+                    List<Map<String, Object>> patients = new ArrayList<>();
+                    patients.add(patientMap);
+                    alert.put("patients", patients);
+                }
+            } catch (Exception err) {
+                Log.e(TAG, "Error attaching profile to victim alert: " + err.getMessage());
+            }
+        }
+
         db.collection("sos_alerts")
                 .add(alert)
                 .addOnSuccessListener(ref -> {
@@ -385,14 +527,22 @@ public class BLESOSService extends Service implements SensorEventListener {
 
                     saveAlertId(alertId);
                     showHighPriorityAlertNotification(alertId, source);
+
+                    // Sync active status back to ESP32 immediately
+                    syncStatusWithWearable("STATUS:ACTIVE");
+
                     if ("PHONE_SHAKE".equals(source)) {
                         speakText("Emergency alert sent by shake gesture.");
+                    } else if ("bystander".equalsIgnoreCase(effectiveRole)) {
+                        speakText("Emergency alert sent. Bystander report submitted.");
                     } else {
-                        speakText("Emergency alert sent. Long press your wearable if you are the victim, or double press if reporting for someone else.");
+                        speakText("Emergency alert sent. Medical profile transmitted.");
                     }
 
                     Intent intent = new Intent(ACTION_SOS_SENT);
                     intent.putExtra(EXTRA_ALERT_ID, alertId);
+                    intent.putExtra(EXTRA_ROLE, effectiveRole);
+                    intent.putExtra(EXTRA_SOURCE, source);
                     intent.setPackage(getPackageName());
                     sendBroadcast(intent);
                 })
@@ -449,11 +599,29 @@ public class BLESOSService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_TRIGGER_SHAKE_SOS.equals(intent.getAction())) {
-            handleShakeDetected();
+        if (intent != null) {
+            String action = intent.getAction();
+            if (ACTION_TRIGGER_SHAKE_SOS.equals(action)) {
+                handleShakeDetected();
+            } else if (ACTION_CONNECT_WEARABLE.equals(action)) {
+                String mac = intent.getStringExtra(EXTRA_DEVICE_MAC);
+                if (bleManager != null) {
+                    if (mac != null && !mac.trim().isEmpty()) {
+                        bleManager.connectByMac(mac.trim());
+                    } else {
+                        bleManager.startScan();
+                    }
+                }
+            } else if (ACTION_DISCONNECT_WEARABLE.equals(action)) {
+                if (bleManager != null) {
+                    bleManager.disconnect();
+                }
+            } else if (ACTION_TEST_SOS.equals(action)) {
+                triggerEmergencySOS("TEST");
+            }
         }
         updateShakeSensorRegistration();
-        if (bleManager != null && !bleManager.isConnected()) {
+        if (bleManager != null && !bleManager.isConnected() && !bleManager.isConnecting()) {
             bleManager.startScan();
         }
         return START_STICKY;
