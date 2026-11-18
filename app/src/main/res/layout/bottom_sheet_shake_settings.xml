@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:animateLayoutChanges="true"
+    android:background="@drawable/bg_bottom_sheet_dark"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="28dp">
+
+    <!-- Drag Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#444444"
+        android:layout_marginBottom="18dp"/>
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <FrameLayout
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="#242424"
+            android:layout_marginEnd="14dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_shake_phone"
+                app:tint="#FF9800"
+                android:contentDescription="Shake SOS Icon"/>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SHAKE SOS GESTURE"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Instant Emergency Trigger by Shaking"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Master Switch Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#222222"
+        android:padding="16dp"
+        android:layout_marginBottom="14dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable Shake Detection"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dispatches emergency SOS upon shaking phone"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchShakeEnabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Enable Shake Detection"/>
+    </LinearLayout>
+
+    <!-- Options Container (collapsed when disabled) -->
+    <LinearLayout
+        android:id="@+id/containerShakeOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- Scope Selection Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1B1B1B"
+            android:padding="16dp"
+            android:layout_marginBottom="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DETECTION SCOPE"
+                android:textColor="#FF9800"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="8dp"/>
+
+            <RadioGroup
+                android:id="@+id/rgShakeScope"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/rbScopeForeground"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Only while Respondo is open"
+                    android:textColor="#E0E0E0"
+                    android:textSize="13sp"/>
+
+                <RadioButton
+                    android:id="@+id/rbScopeBackground"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Always (in background and when locked/screen-off)"
+                    android:textColor="#E0E0E0"
+                    android:textSize="13sp"/>
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/tvWakeUpSensorNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="✓ Hardware wake-up accelerometer available for screen-off detection."
+                android:textColor="#81C784"
+                android:textSize="11sp"
+                android:layout_marginTop="8dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"/>
+        </LinearLayout>
+
+        <!-- Sensitivity Slider Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1B1B1B"
+            android:padding="16dp"
+            android:layout_marginBottom="14dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="SENSITIVITY THRESHOLD"
+                    android:textColor="#FF9800"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"/>
+
+                <TextView
+                    android:id="@+id/tvThresholdDisplay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="8.0 m/s² (Normal)"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/sbShakeThreshold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="Shake threshold"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="High sensitivity (gentle shake)"
+                    android:textColor="#777777"
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Firm shake only"
+                    android:textColor="#777777"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Shake Gesture Guide / Test Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#222222"
+            android:padding="14dp"
+            android:layout_marginBottom="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HOW IT WORKS"
+                android:textColor="#FF9800"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="6dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="• Firmly shake your phone back and forth 3 times.\n• Gentle pocket bumps and walking vibrations are automatically filtered.\n• Dispatches an emergency SOS directly to the BFP station with your GPS coordinates and profile."
+                android:textColor="#CCCCCC"
+                android:textSize="12sp"
+                android:lineSpacingExtra="3dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Save & Apply Button -->
+    <Button
+        android:id="@+id/btnSaveShakeSettings"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="APPLY SETTINGS"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:backgroundTint="#FF6B00"
+        android:stateListAnimator="@animator/btn_press_scale"/>
+
+</LinearLayout>

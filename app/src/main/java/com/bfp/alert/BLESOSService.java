@@ -19,6 +19,9 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -62,9 +65,9 @@ public class BLESOSService extends Service implements SensorEventListener {
     public static final String EXTRA_SOURCE                = "extra_source";
     private static final String ACTION_TRIGGER_SHAKE_SOS = "com.bfp.alert.TRIGGER_SHAKE_SOS";
 
-    private static final String PREFS     = "bfp_prefs";
-    private static final String KEY_ALERT = "activeAlertId";
-    private static final String KEY_USER  = "userId";
+    public static final String PREFS     = "bfp_prefs";
+    public static final String KEY_ALERT = "activeAlertId";
+    public static final String KEY_USER  = "userId";
 
     private static BLESOSService sInstance = null;
     private BLEManager bleManager;
@@ -77,6 +80,7 @@ public class BLESOSService extends Service implements SensorEventListener {
     private TextToSpeech tts = null;
     private SensorManager sensorManager;
     private ShakeGestureDetector shakeGestureDetector;
+    private PowerManager.WakeLock wakeLock;
 
     public static boolean isDeviceConnected() {
         return sInstance != null && sInstance.isConnected;
@@ -189,6 +193,16 @@ public class BLESOSService extends Service implements SensorEventListener {
         db = FirebaseFirestore.getInstance();
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        try {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Respondo:ShakeSOSWakeLock");
+                wakeLock.setReferenceCounted(false);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to create WakeLock: " + e.getMessage());
+        }
 
         createNotificationChannels();
         startForegroundServiceNotification("Searching for Respondo Wearable...");
@@ -450,13 +464,30 @@ public class BLESOSService extends Service implements SensorEventListener {
         Log.i(TAG, "Executing Background SOS dispatch to Firestore... source=" + source + ", role=" + role);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Immediate location retrieval via getLastLocation (<5ms)
+            // First check if a fresh or cached location is readily available
             locationClient.getLastLocation()
                     .addOnSuccessListener(lastLoc -> {
                         if (lastLoc != null) {
                             uploadAlertToFirestore(lastLoc.getLatitude(), lastLoc.getLongitude(), source, role);
                         } else {
-                            uploadAlertFromFallback(source, role);
+                            // If lastLocation is null (e.g. phone was in deep sleep), request a one-shot current location
+                            try {
+                                com.google.android.gms.tasks.CancellationTokenSource cts =
+                                        new com.google.android.gms.tasks.CancellationTokenSource();
+                                locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.getToken())
+                                        .addOnSuccessListener(currLoc -> {
+                                            if (currLoc != null) {
+                                                uploadAlertToFirestore(currLoc.getLatitude(), currLoc.getLongitude(), source, role);
+                                            } else {
+                                                uploadAlertFromFallback(source, role);
+                                            }
+                                        })
+                                        .addOnFailureListener(err -> {
+                                            uploadAlertFromFallback(source, role);
+                                        });
+                            } catch (Exception e) {
+                                uploadAlertFromFallback(source, role);
+                            }
                         }
                     })
                     .addOnFailureListener(e -> {
@@ -674,9 +705,15 @@ public class BLESOSService extends Service implements SensorEventListener {
 
         shakeGestureDetector = new ShakeGestureDetector(
                 prefs.getFloat(ShakeGestureDetector.PREF_THRESHOLD, ShakeGestureDetector.DEFAULT_THRESHOLD));
+        // Register with SENSOR_DELAY_GAME for responsive peak capture
         if (!sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)) {
-            shakeGestureDetector = null;
-            Log.e(TAG, "Unable to register the background shake SOS sensor.");
+            // Fallback to SENSOR_DELAY_UI if delay_game is not supported in low-power state
+            if (!sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI)) {
+                shakeGestureDetector = null;
+                Log.e(TAG, "Unable to register the background shake SOS sensor.");
+            } else {
+                Log.i(TAG, "Background shake sensor registered (fallback UI delay): " + sensor.getName());
+            }
         } else {
             Log.i(TAG, "Background shake sensor registered: " + sensor.getName()
                     + ", wake-up=" + sensor.isWakeUpSensor());
@@ -704,13 +741,52 @@ public class BLESOSService extends Service implements SensorEventListener {
             return;
         }
         lastShakeTriggerTime = now;
+
+        // Acquire wake lock for 15 seconds to ensure CPU remains awake during GPS acquisition & Firestore upload
+        acquireWakeLock(15000);
+
+        // Haptic feedback to immediately confirm trigger even if screen is off
+        vibrateShakeTrigger();
+
         triggerEmergencySOS("PHONE_SHAKE");
+    }
+
+    private void acquireWakeLock(long timeoutMs) {
+        try {
+            if (wakeLock != null && !wakeLock.isHeld()) {
+                wakeLock.acquire(timeoutMs);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to acquire wake lock: " + e.getMessage());
+        }
+    }
+
+    private void vibrateShakeTrigger() {
+        try {
+            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(
+                            new long[]{0, 250, 100, 250, 100, 400}, -1));
+                } else {
+                    vibrator.vibrate(new long[]{0, 250, 100, 250, 100, 400}, -1);
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Vibration failed: " + e.getMessage());
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         sInstance = null;
+        if (wakeLock != null && wakeLock.isHeld()) {
+            try {
+                wakeLock.release();
+            } catch (Exception ignored) {}
+        }
+        wakeLock = null;
         if (sensorManager != null) {
             sensorManager.unregisterListener(this);
         }

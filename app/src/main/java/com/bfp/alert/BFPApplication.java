@@ -19,5 +19,14 @@ public class BFPApplication extends Application {
         config.put("api_key",    "986862986147198");
         config.put("api_secret", "Xx2WgEGLTWMfGk_BlxIl71QKL5A");
         com.cloudinary.android.MediaManager.init(this, config);
+
+        // Ensure background SOS monitor is running if background shake or wearable is enabled
+        android.content.SharedPreferences prefs = getSharedPreferences(BLESOSService.PREFS, MODE_PRIVATE);
+        boolean shakeBg = prefs.getBoolean(ShakeGestureDetector.PREF_ENABLED, false)
+                && prefs.getBoolean(ShakeGestureDetector.PREF_BACKGROUND, false);
+        boolean hasWearable = prefs.getString("ble_device_mac", null) != null;
+        if (shakeBg || hasWearable) {
+            BLESOSService.start(this);
+        }
     }
 }
