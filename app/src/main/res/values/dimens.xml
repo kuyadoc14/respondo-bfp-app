@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- iOS spacing tokens -->
+    <dimen name="ios_margin_screen">20dp</dimen>
+    <dimen name="ios_margin_section">16dp</dimen>
+    <dimen name="ios_margin_cell">12dp</dimen>
+    <dimen name="ios_padding_cell">16dp</dimen>
+    <dimen name="ios_corner_card">12dp</dimen>
+    <dimen name="ios_corner_input">10dp</dimen>
+    <dimen name="ios_corner_button">10dp</dimen>
+    <dimen name="ios_corner_sheet">16dp</dimen>
+    <dimen name="ios_corner_dialog">14dp</dimen>
+    <dimen name="ios_separator">0.5dp</dimen>
+    <dimen name="ios_input_height">44dp</dimen>
+    <dimen name="ios_button_height">50dp</dimen>
+    <dimen name="ios_nav_bar_height">56dp</dimen>
+    <dimen name="ios_large_title">34sp</dimen>
+    <dimen name="ios_title">17sp</dimen>
+    <dimen name="ios_body">15sp</dimen>
+    <dimen name="ios_subhead">13sp</dimen>
+    <dimen name="ios_caption">12sp</dimen>
+    <dimen name="ios_footnote">11sp</dimen>
+</resources>

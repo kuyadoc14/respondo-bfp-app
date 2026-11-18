@@ -197,7 +197,7 @@ public class AdminFirstAidFragment extends Fragment {
 
         static class VH extends RecyclerView.ViewHolder {
             TextView tvAdminIcon, tvAdminTitle, tvAdminCategory;
-            TextView btnEdit;
+            ImageButton btnEdit;
             ImageButton btnAdminDelete;
 
             VH(View v) {

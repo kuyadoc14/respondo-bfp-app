@@ -187,7 +187,7 @@ public class AdminFirstAidActivity extends AppCompatActivity {
         static class VH extends RecyclerView.ViewHolder {
             TextView tvAdminIcon, tvAdminTitle,
                     tvAdminCategory;
-            TextView btnEdit;
+            ImageButton btnEdit;
             ImageButton btnAdminDelete;
 
             VH(View v) {
