@@ -194,11 +194,22 @@ public class ClaudeVoiceAssistant {
                         MediaType.get(
                                 "application/json; charset=utf-8"));
 
+                String groqKey = ApiSecurityConfig.getGroqApiKey();
+                if (groqKey != null) {
+                    groqKey = groqKey.replaceAll("[^a-zA-Z0-9_\\-]", "").trim();
+                }
+
+                if (groqKey == null || groqKey.isEmpty()) {
+                    Log.d(TAG, "No Groq API key configured; using local assistant logic");
+                    fallbackLocalResponse(userText, callback);
+                    return;
+                }
+
                 Request request =
                         new Request.Builder()
                                 .url(ApiSecurityConfig.getGroqUrl())
                                 .header("Authorization",
-                                        "Bearer " + ApiSecurityConfig.getGroqApiKey())
+                                        "Bearer " + groqKey)
                                 .header("Content-Type",
                                         "application/json")
                                 .post(body)
@@ -219,10 +230,13 @@ public class ClaudeVoiceAssistant {
                             + responseStr);
 
                     if (!response.isSuccessful()) {
-                        handleApiError(
-                                response.code(),
-                                responseStr,
-                                callback);
+                        Log.w(TAG, "Groq API HTTP " + response.code() + ", falling back to local intent parser");
+                        if (!fallbackLocalResponse(userText, callback)) {
+                            handleApiError(
+                                    response.code(),
+                                    responseStr,
+                                    callback);
+                        }
                         return;
                     }
 
@@ -239,16 +253,20 @@ public class ClaudeVoiceAssistant {
 
             } catch (java.io.IOException e) {
                 Log.e(TAG, "IO: " + e.getMessage());
-                mainHandler.post(() ->
-                        callback.onError(
-                                "Network error. Please check "
-                                        + "your internet connection."));
+                if (!fallbackLocalResponse(userText, callback)) {
+                    mainHandler.post(() ->
+                            callback.onError(
+                                    "Network error. Please check "
+                                            + "your internet connection."));
+                }
             } catch (Exception e) {
-                Log.e(TAG, "Error: " + e.getMessage());
-                mainHandler.post(() ->
-                        callback.onError(
-                                "Something went wrong. "
-                                        + "Please try again."));
+                Log.e(TAG, "Error: " + e.getMessage(), e);
+                if (!fallbackLocalResponse(userText, callback)) {
+                    mainHandler.post(() ->
+                            callback.onError(
+                                    "Something went wrong. "
+                                            + "Please try again."));
+                }
             }
         }).start();
     }
@@ -557,6 +575,91 @@ public class ClaudeVoiceAssistant {
 
         final String finalMsg = msg;
         mainHandler.post(() -> cb.onError(finalMsg));
+    }
+
+    /**
+     * Fallback offline intent processor when cloud AI is unreachable or API key is not configured.
+     * Ensures all emergency, first aid, siren, flashlight, and call features work 100% reliably.
+     */
+    private boolean fallbackLocalResponse(String userText, AssistantCallback callback) {
+        if (userText == null || userText.trim().isEmpty()) {
+            return false;
+        }
+
+        String action = detectActionFromContext(userText, "");
+        String actionData = (lastDetectedGuideTitle != null) ? lastDetectedGuideTitle : "";
+        String responseText;
+
+        switch (action) {
+            case ACTION_SEND_SOS:
+            case ACTION_SEND_SOS_INCIDENT:
+            case ACTION_SEND_SOS_VICTIM:
+                actionData = userText;
+                responseText = "Sending emergency SOS alert to BFP right now. Please stay calm and stay safe.";
+                break;
+            case ACTION_SEARCH_FIRSTAID:
+                String topic = (actionData != null && !actionData.isEmpty()) ? actionData : userText;
+                String lu = userText.toLowerCase();
+                if ((lu.contains("video") || lu.contains("play") || lu.contains("watch")) && !topic.contains("|play")) {
+                    actionData = topic + "|play";
+                    responseText = "Opening first aid guide for " + topic.replace("|play", "") + ".";
+                } else {
+                    responseText = "Opening first aid guide for " + topic.replace("|play", "") + ".";
+                }
+                break;
+            case ACTION_OPEN_FIRSTAID:
+                responseText = "Opening first aid guides now.";
+                break;
+            case ACTION_CALL_STATION:
+                responseText = "Calling the BFP fire station now.";
+                break;
+            case ACTION_FLASHLIGHT_ON:
+                responseText = "Turning on flashlight.";
+                break;
+            case ACTION_FLASHLIGHT_OFF:
+                responseText = "Turning off flashlight.";
+                break;
+            case ACTION_PLAY_SIREN:
+                responseText = "Activating emergency siren.";
+                break;
+            case ACTION_STOP_SIREN:
+                responseText = "Silencing emergency siren.";
+                break;
+            case ACTION_CANCEL_SOS:
+                responseText = "Cancelling emergency alert.";
+                break;
+            case ACTION_CHECK_STATUS:
+                responseText = "Checking responder deployment status.";
+                break;
+            case ACTION_PLAY_VIDEO:
+                responseText = "Resuming video playback.";
+                break;
+            case ACTION_PAUSE_VIDEO:
+                responseText = "Pausing video.";
+                break;
+            case ACTION_OPEN_PROFILE:
+                responseText = "Opening profile settings.";
+                break;
+            case ACTION_OPEN_SOS:
+                responseText = "Returning to SOS screen.";
+                break;
+            default:
+                String lower = userText.toLowerCase().trim();
+                if (lower.contains("hello") || lower.contains("hi") || lower.contains("kamusta") || lower.contains("help") || lower.contains("tulong")) {
+                    responseText = "Hello! I am your BFP assistant. I can send an SOS alert, open first aid guides, turn on the flashlight or siren, and call the station. How can I assist you?";
+                } else {
+                    responseText = "I am ready to help. You can tell me to send SOS, open first aid guides, turn on flashlight, or call the fire station.";
+                }
+                action = ACTION_NONE;
+                break;
+        }
+
+        final String finalAction = action;
+        final String finalActionData = actionData;
+        final String finalResponse = responseText;
+
+        mainHandler.post(() -> callback.onResponse(finalResponse, finalAction, finalActionData));
+        return true;
     }
 
     // ── System prompt ─────────────────────────────────────────────

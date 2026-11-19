@@ -398,7 +398,7 @@ public class FirstAidEditorActivity extends AppCompatActivity {
 
         MediaManager.get()
                 .upload(uris.get(index))
-                .option("upload_preset", ApiSecurityConfig.getCloudinaryUploadPreset())
+                .unsigned(ApiSecurityConfig.getCloudinaryUploadPreset())
                 .option("folder", "bfp_first_aid/photos")
                 .option("resource_type", "image")
                 .callback(new UploadCallback() {
@@ -453,7 +453,7 @@ public class FirstAidEditorActivity extends AppCompatActivity {
 
         MediaManager.get()
                 .upload(selectedVideoUri)
-                .option("upload_preset", ApiSecurityConfig.getCloudinaryUploadPreset())
+                .unsigned(ApiSecurityConfig.getCloudinaryUploadPreset())
                 .option("folder", "bfp_first_aid/videos")
                 .option("resource_type", "video")
                 .callback(new UploadCallback() {

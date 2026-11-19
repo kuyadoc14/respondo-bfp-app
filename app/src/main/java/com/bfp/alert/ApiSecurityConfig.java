@@ -54,7 +54,8 @@ public final class ApiSecurityConfig {
         if (key != null && !key.trim().isEmpty()) {
             return key.trim();
         }
-        return deobfuscate(OBF_GROQ);
+        String fallback = deobfuscate(OBF_GROQ);
+        return fallback != null ? fallback.replaceAll("[^a-zA-Z0-9_\\-]", "").trim() : "";
     }
 
     /**
@@ -135,11 +136,17 @@ public final class ApiSecurityConfig {
     }
 
     private static String deobfuscate(byte[] input) {
+        if (input == null || input.length == 0) return "";
         byte[] output = new byte[input.length];
         for (int i = 0; i < input.length; i++) {
-            output[i] = (byte) (input[i] ^ MASK);
+            byte b = (byte) (input[i] ^ MASK);
+            if (b >= 32 && b <= 126) {
+                output[i] = b;
+            } else {
+                output[i] = (byte) '_';
+            }
         }
-        String result = new String(output, StandardCharsets.UTF_8);
+        String result = new String(output, StandardCharsets.UTF_8).trim();
         java.util.Arrays.fill(output, (byte) 0);
         return result;
     }
