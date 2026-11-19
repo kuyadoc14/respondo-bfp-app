@@ -25,9 +25,9 @@ public final class ApiSecurityConfig {
 
     // XOR obfuscated byte sequences (no plaintext keys in string pool)
     private static final byte[] OBF_GROQ = new byte[]{
-            60, 40, 48, 4, 47, 11, 31, 41, 25, 110, 53, 26, 22, 45, 42, 25, 50, 17, 28, 61,
-            57, 47, 2, 63, 12, 28, 63, 34, 57, 104, 29, 2, 55, 104, 49, 55, 11, 16, 53, 51,
-            19, 31, 14, 48, 33, 107, 29, 2, 45, 48, 43, 109, 29, 9, 3, 57
+            60, 40, 48, 4, 31, 1, 2, 19, 49, 30, 51, 36, 60, 19, 49, 26, 24, 25, 34, 106,
+            23, 49, 16, 24, 28, 20, 63, 34, 57, 104, 29, 2, 105, 40, 1, 25, 62, 111, 31, 29,
+            25, 54, 25, 58, 36, 36, 51, 46, 1, 26, 16, 23, 29, 106, 51, 108
     };
 
     private static final byte[] OBF_GEMINI = new byte[]{
@@ -55,6 +55,17 @@ public final class ApiSecurityConfig {
             return key.trim();
         }
         return deobfuscate(OBF_GROQ);
+    }
+
+    /**
+     * Resolves Groq API URL
+     */
+    public static String getGroqUrl() {
+        String url = getBuildConfigField("GROQ_URL");
+        if (url != null && !url.trim().isEmpty()) {
+            return url.trim();
+        }
+        return "https://api.groq.com/openai/v1/chat/completions";
     }
 
     /**
@@ -94,6 +105,33 @@ public final class ApiSecurityConfig {
             return cloudName.trim();
         }
         return "ds8c4o8q4";
+    }
+
+    /**
+     * Resolves Cloudinary upload preset for unsigned uploads (defaults to bfp_upload)
+     */
+    public static String getCloudinaryUploadPreset() {
+        String preset = getBuildConfigField("CLOUDINARY_UPLOAD_PRESET");
+        if (preset != null && !preset.trim().isEmpty()) {
+            return preset.trim();
+        }
+        return "bfp_upload";
+    }
+
+    /**
+     * Resolves Cloudinary API Key (optional, if signed upload is used)
+     */
+    public static String getCloudinaryApiKey() {
+        String apiKey = getBuildConfigField("CLOUDINARY_API_KEY");
+        return apiKey != null ? apiKey.trim() : "";
+    }
+
+    /**
+     * Resolves Cloudinary API Secret (optional, if signed upload is used)
+     */
+    public static String getCloudinaryApiSecret() {
+        String secret = getBuildConfigField("CLOUDINARY_API_SECRET");
+        return secret != null ? secret.trim() : "";
     }
 
     private static String deobfuscate(byte[] input) {

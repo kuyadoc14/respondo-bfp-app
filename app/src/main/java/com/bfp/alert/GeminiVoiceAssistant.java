@@ -27,9 +27,11 @@ public class GeminiVoiceAssistant {
     // ── Secured via ApiSecurityConfig ──
     private static final String MODEL =
             "gemini-2.0-flash-lite";
-    private static final String API_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + MODEL + ":generateContent?key=" + ApiSecurityConfig.getGeminiApiKey();
+
+    private String getApiUrl() {
+        return "https://generativelanguage.googleapis.com/v1beta/models/"
+                + MODEL + ":generateContent?key=" + ApiSecurityConfig.getGeminiApiKey();
+    }
 
     // ── Rate-limit / retry config ──────────────────────────────────
     private static final int MAX_RETRIES          = 3;
@@ -230,7 +232,7 @@ public class GeminiVoiceAssistant {
                                 "application/json; charset=utf-8"));
 
                 Request request = new Request.Builder()
-                        .url(API_URL)
+                        .url(getApiUrl())
                         .header("content-type",
                                 "application/json")
                         .post(body)

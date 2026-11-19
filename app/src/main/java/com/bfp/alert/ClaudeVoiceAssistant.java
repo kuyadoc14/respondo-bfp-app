@@ -27,9 +27,6 @@ public class ClaudeVoiceAssistant {
     private static final String TAG = "BFPVoice";
 
     // ── Groq API config (secured via ApiSecurityConfig) ───
-    private static final String API_KEY  = ApiSecurityConfig.getGroqApiKey();
-    private static final String API_URL  =
-            "https://api.groq.com/openai/v1/chat/completions";
     private static final String MODEL    =
             "llama-3.3-70b-versatile";
 
@@ -199,9 +196,9 @@ public class ClaudeVoiceAssistant {
 
                 Request request =
                         new Request.Builder()
-                                .url(API_URL)
+                                .url(ApiSecurityConfig.getGroqUrl())
                                 .header("Authorization",
-                                        "Bearer " + API_KEY)
+                                        "Bearer " + ApiSecurityConfig.getGroqApiKey())
                                 .header("Content-Type",
                                         "application/json")
                                 .post(body)

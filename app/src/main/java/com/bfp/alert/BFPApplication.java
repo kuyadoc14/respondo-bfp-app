@@ -13,9 +13,15 @@ public class BFPApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // Initialize Cloudinary with unsigned configuration (NEVER expose api_secret in client APK)
+        // Initialize Cloudinary: supports unsigned preset or signed credentials via local.properties
         java.util.Map<String, Object> config = new java.util.HashMap<>();
         config.put("cloud_name", ApiSecurityConfig.getCloudinaryCloudName());
+        String cKey = ApiSecurityConfig.getCloudinaryApiKey();
+        String cSecret = ApiSecurityConfig.getCloudinaryApiSecret();
+        if (!cKey.isEmpty() && !cSecret.isEmpty()) {
+            config.put("api_key", cKey);
+            config.put("api_secret", cSecret);
+        }
         com.cloudinary.android.MediaManager.init(this, config);
 
         // Ensure background SOS monitor is running if background shake or wearable is enabled

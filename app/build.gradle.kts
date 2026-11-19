@@ -37,14 +37,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val groqApiKey = localProperties.getProperty("GROQ_API_KEY") ?: ""
+        val groqUrl = localProperties.getProperty("GROQ_URL") ?: "https://api.groq.com/openai/v1/chat/completions"
         val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         val cloudinaryCloudName = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: "ds8c4o8q4"
+        val cloudinaryUploadPreset = localProperties.getProperty("CLOUDINARY_UPLOAD_PRESET") ?: "bfp_upload"
+        val cloudinaryApiKey = localProperties.getProperty("CLOUDINARY_API_KEY") ?: ""
+        val cloudinaryApiSecret = localProperties.getProperty("CLOUDINARY_API_SECRET") ?: ""
 
         buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
+        buildConfigField("String", "GROQ_URL", "\"$groqUrl\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
+        buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"$cloudinaryUploadPreset\"")
+        buildConfigField("String", "CLOUDINARY_API_KEY", "\"$cloudinaryApiKey\"")
+        buildConfigField("String", "CLOUDINARY_API_SECRET", "\"$cloudinaryApiSecret\"")
     }
 
     buildTypes {
@@ -99,5 +107,10 @@ dependencies {
                 output -> output.outputFileName.set("Respondo-${variant.name}.apk")
             }
         }
+    }
+
+    // Ensure BuildConfig regenerates automatically when local.properties changes
+    tasks.matching { it.name.contains("BuildConfig") }.configureEach {
+        inputs.file(localPropertiesFile)
     }
 
