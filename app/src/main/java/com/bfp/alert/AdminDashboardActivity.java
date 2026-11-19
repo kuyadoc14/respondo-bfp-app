@@ -429,7 +429,7 @@ public class AdminDashboardActivity extends AppCompatActivity
 
         // ── Neutral: Route from BFP station on map ───────────────
         builder.setNeutralButton(
-                "🚒 Route from Station",
+                "Route from Station",
                 (dialog, which) ->
                         loadStationAndDrawRoute(alertLat, alertLng));
 
@@ -709,7 +709,7 @@ public class AdminDashboardActivity extends AppCompatActivity
 
                     // Show distance and ETA toast
                     Toast.makeText(this,
-                            "🚒 Distance: " + distance
+                            "Distance: " + distance
                                     + "\n⏱ ETA: " + duration,
                             Toast.LENGTH_LONG).show();
 

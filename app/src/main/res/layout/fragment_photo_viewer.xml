@@ -22,7 +22,8 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
     <TextView
         android:id="@+id/tvPhotoCount"
@@ -45,7 +46,8 @@
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
     <TextView
         android:id="@+id/btnNext"
@@ -58,6 +60,7 @@
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:stateListAnimator="@animator/btn_press_scale"/>
 
 </RelativeLayout>

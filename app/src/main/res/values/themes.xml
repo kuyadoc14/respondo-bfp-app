@@ -7,14 +7,30 @@
         <item name="android:windowBackground">@color/background</item>
         <item name="android:statusBarColor">@color/primary</item>
         <item name="android:navigationBarColor">@color/white</item>
+        <item name="fontFamily">@font/poppins</item>
+        <item name="android:fontFamily">@font/poppins</item>
         <item name="cornerRadius">12dp</item>
-        <item name="materialButtonStyle">
-            @style/Widget.BFP.Button
-        </item>
+        <item name="materialButtonStyle">@style/Widget.BFP.Button</item>
+        <item name="android:buttonStyle">@style/Widget.BFP.Button</item>
+        <item name="borderlessButtonStyle">@style/Widget.BFP.Button.Text</item>
+        <item name="imageButtonStyle">@style/Widget.BFP.ImageButton</item>
+        <item name="materialCardViewStyle">@style/Widget.BFP.CardView</item>
+    </style>
+
+    <style name="Widget.BFP.ImageButton"
+        parent="Widget.AppCompat.ImageButton">
+        <item name="android:stateListAnimator">@animator/btn_press_scale</item>
+    </style>
+
+    <style name="Widget.BFP.CardView"
+        parent="Widget.MaterialComponents.CardView">
+        <item name="android:stateListAnimator">@animator/card_press_scale</item>
     </style>
 
     <style name="Widget.BFP.Button"
         parent="Widget.MaterialComponents.Button">
+        <item name="fontFamily">@font/poppins</item>
+        <item name="android:fontFamily">@font/poppins</item>
         <item name="cornerRadius">14dp</item>
         <item name="android:paddingTop">12dp</item>
         <item name="android:paddingBottom">12dp</item>
@@ -39,6 +55,11 @@
 
     <style name="Theme.Dialog.Custom"
         parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="fontFamily">@font/poppins</item>
+        <item name="android:fontFamily">@font/poppins</item>
+        <item name="materialButtonStyle">@style/Widget.BFP.Button</item>
+        <item name="android:buttonStyle">@style/Widget.BFP.Button</item>
+        <item name="imageButtonStyle">@style/Widget.BFP.ImageButton</item>
         <item name="android:windowBackground">
             @drawable/dialog_rounded_bg
         </item>
@@ -59,6 +80,8 @@
     <!-- Bottom sheet theme with slide-up / slide-down animations -->
     <style name="Theme.BFPAlert.BottomSheet"
         parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="fontFamily">@font/poppins</item>
+        <item name="android:fontFamily">@font/poppins</item>
         <item name="bottomSheetStyle">
             @style/BFPBottomSheet
         </item>

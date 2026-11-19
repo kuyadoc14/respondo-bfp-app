@@ -74,6 +74,8 @@ public class SosFragment extends Fragment {
     private View         ringMid;
     private TextView     tvStatus;
     private TextView     tvLiveLabel;
+    private TextView     tvInstruction;
+    private View         liveIndicatorRow;
     private LinearLayout statusCard;
     private View         btnOpenReport;
     private SwitchMaterial switchHandsFree;
@@ -87,6 +89,12 @@ public class SosFragment extends Fragment {
     private TextView   tvBleBadgeText;
     private TextView   tvShakeBadgeText;
     private RoleSelectionDialog roleSelectionDialog;
+
+    // Animated Top-Left Menu & Popup List
+    private HamburgerTriangleView hamburgerView;
+    private View       btnSosMenu;
+    private View       menuPopupCard;
+    private View       menuDismissOverlay;
 
     private final BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override
@@ -134,41 +142,65 @@ public class SosFragment extends Fragment {
                 .getFusedLocationProviderClient(
                         requireActivity());
 
-        btnSOS     = view.findViewById(R.id.btnSOS);
-        ringOuter  = view.findViewById(R.id.ringOuter);
-        ringMid    = view.findViewById(R.id.ringMid);
-        tvStatus   = view.findViewById(R.id.tvStatus);
-        tvLiveLabel = view.findViewById(R.id.tvLiveLabel);
-        statusCard = view.findViewById(R.id.statusCard);
+        btnSOS           = view.findViewById(R.id.btnSOS);
+        ringOuter        = view.findViewById(R.id.ringOuter);
+        ringMid          = view.findViewById(R.id.ringMid);
+        tvStatus         = view.findViewById(R.id.tvStatus);
+        tvLiveLabel      = view.findViewById(R.id.tvLiveLabel);
+        tvInstruction    = view.findViewById(R.id.tvInstruction);
+        liveIndicatorRow = view.findViewById(R.id.liveIndicatorRow);
+        statusCard       = view.findViewById(R.id.statusCard);
         bleBadge   = view.findViewById(R.id.bleBadge);
         dotBleStatus = view.findViewById(R.id.dotBleStatus);
         tvBleBadgeText = view.findViewById(R.id.tvBleBadgeText);
         tvShakeBadgeText = view.findViewById(R.id.tvShakeBadgeText);
+
+        // Animated Top-Left Menu & Mini List Popup
+        btnSosMenu = view.findViewById(R.id.btnSosMenu);
+        hamburgerView = view.findViewById(R.id.hamburgerView);
+        menuPopupCard = view.findViewById(R.id.menuPopupCard);
+        menuDismissOverlay = view.findViewById(R.id.menuDismissOverlay);
+
+        if (btnSosMenu != null) {
+            btnSosMenu.setOnClickListener(v -> toggleMenuPopup());
+        }
+        if (menuDismissOverlay != null) {
+            menuDismissOverlay.setOnClickListener(v -> closeMenuPopup());
+        }
+
         if (bleBadge != null) {
             bleBadge.setOnClickListener(v -> {
+                closeMenuPopup();
                 WearableDeviceBottomSheet.newInstance().show(getChildFragmentManager(), WearableDeviceBottomSheet.TAG);
             });
         }
         View btnShakeSettings = view.findViewById(R.id.btnShakeSettings);
         if (btnShakeSettings != null) {
-            btnShakeSettings.setOnClickListener(v -> showShakeSettingsDialog());
+            btnShakeSettings.setOnClickListener(v -> {
+                closeMenuPopup();
+                showShakeSettingsDialog();
+            });
         }
         updateShakeBadgeUI();
 
         SystemBarUtils.applyTopInsetPadding(view.findViewById(R.id.topBar));
-        SystemBarUtils.applyTopInsetMargin(bleBadge);
-        SystemBarUtils.applyTopInsetMargin(btnShakeSettings);
+        if (btnSosMenu != null) {
+            SystemBarUtils.applyTopInsetMargin(btnSosMenu);
+        }
+        if (menuPopupCard != null) {
+            SystemBarUtils.applyTopInsetMargin(menuPopupCard);
+        }
 
-        // Tactile press & release spring effect
+        // Tactile 3D press & release spring effect
         btnSOS.setOnTouchListener((v, event) -> {
             if (!btnSOS.isEnabled()) return false;
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    v.animate().scaleX(0.93f).scaleY(0.93f).setDuration(120).start();
+                    v.animate().scaleX(0.95f).scaleY(0.95f).translationY(8f).setDuration(80).start();
                     break;
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
+                    v.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(120).start();
                     break;
             }
             return false;
@@ -230,6 +262,49 @@ public class SosFragment extends Fragment {
         return view;
     }
 
+    private void toggleMenuPopup() {
+        if (menuPopupCard == null || hamburgerView == null) return;
+        boolean opening = menuPopupCard.getVisibility() != View.VISIBLE;
+        hamburgerView.setOpen(opening, true);
+
+        if (opening) {
+            if (menuDismissOverlay != null) menuDismissOverlay.setVisibility(View.VISIBLE);
+            menuPopupCard.setVisibility(View.VISIBLE);
+            menuPopupCard.setAlpha(0f);
+            menuPopupCard.setTranslationY(-24f);
+            menuPopupCard.setScaleX(0.85f);
+            menuPopupCard.setScaleY(0.85f);
+            menuPopupCard.setPivotX(0f);
+            menuPopupCard.setPivotY(0f);
+            menuPopupCard.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(260)
+                    .setInterpolator(new android.view.animation.OvershootInterpolator(1.15f))
+                    .start();
+        } else {
+            closeMenuPopup();
+        }
+    }
+
+    private void closeMenuPopup() {
+        if (menuPopupCard == null) return;
+        if (hamburgerView != null) hamburgerView.setOpen(false, true);
+        if (menuDismissOverlay != null) menuDismissOverlay.setVisibility(View.GONE);
+        if (menuPopupCard.getVisibility() == View.VISIBLE) {
+            menuPopupCard.animate()
+                    .alpha(0f)
+                    .translationY(-18f)
+                    .scaleX(0.9f)
+                    .scaleY(0.9f)
+                    .setDuration(180)
+                    .withEndAction(() -> menuPopupCard.setVisibility(View.GONE))
+                    .start();
+        }
+    }
+
     private void showShakeSettingsDialog() {
         ShakeSettingsBottomSheet bottomSheet = ShakeSettingsBottomSheet.newInstance();
         bottomSheet.setOnSettingsSavedListener((enabled, background, threshold) -> {
@@ -286,6 +361,7 @@ public class SosFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        closeMenuPopup();
         if (getContext() != null) {
             try {
                 getContext().unregisterReceiver(bleReceiver);
@@ -391,7 +467,7 @@ public class SosFragment extends Fragment {
                         setDeployedState();
                         BLESOSService.syncStatusWithWearable("STATUS:DEPLOYED");
                         if (getContext() != null) {
-                            Toast.makeText(getContext(), "🚒 BFP Responders are on their way!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "BFP Responders are on their way!", Toast.LENGTH_SHORT).show();
                         }
                     } else if ("resolved".equals(status)) {
                         clearAlertState();
@@ -579,7 +655,7 @@ public class SosFragment extends Fragment {
                     }
                     String status = doc.getString("status");
                     if ("deployed".equalsIgnoreCase(status)) {
-                        Toast.makeText(getContext(), "🚒 BFP Responders are DEPLOYED and heading to your location!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "BFP Responders are DEPLOYED and heading to your location!", Toast.LENGTH_LONG).show();
                     } else if ("active".equalsIgnoreCase(status)) {
                         Toast.makeText(getContext(), "SOS is active. Dispatchers are processing your alert.", Toast.LENGTH_LONG).show();
                     } else {
@@ -651,8 +727,8 @@ public class SosFragment extends Fragment {
                     markReportSubmitted(alertId);
                     hideReportButton();
                     String msg = (incidentNotes != null && !incidentNotes.trim().isEmpty())
-                            ? "🚒 SOS Dispatched! Incident details ('" + incidentNotes.trim() + "') sent to BFP."
-                            : "🚑 SOS Sent! Your medical & personal details were automatically dispatched to BFP.";
+                            ? "SOS Dispatched! Incident details ('" + incidentNotes.trim() + "') sent to BFP."
+                            : "SOS Sent! Your medical & personal details were automatically dispatched to BFP.";
                     Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
@@ -1017,6 +1093,13 @@ public class SosFragment extends Fragment {
 
         startPulsingAnimation();
 
+        if (tvInstruction != null) {
+            tvInstruction.setVisibility(View.VISIBLE);
+            tvInstruction.setAlpha(1f);
+        }
+        if (liveIndicatorRow != null) {
+            liveIndicatorRow.setVisibility(View.GONE);
+        }
         if (statusCard != null) {
             statusCard.setVisibility(View.GONE);
         }
@@ -1042,44 +1125,81 @@ public class SosFragment extends Fragment {
         return ssb;
     }
 
+    private void startEmergencyRadarPulse() {
+        if (getContext() == null || btnSOS == null) return;
+
+        Animation pulse = AnimationUtils.loadAnimation(
+                requireContext(), R.anim.pulse);
+        btnSOS.startAnimation(pulse);
+
+        if (ringMid != null) {
+            ringMid.setVisibility(View.VISIBLE);
+            Animation ring1 = AnimationUtils.loadAnimation(
+                    requireContext(), R.anim.pulse_ring_1);
+            ringMid.startAnimation(ring1);
+        }
+        if (ringOuter != null) {
+            ringOuter.setVisibility(View.VISIBLE);
+            Animation ring2 = AnimationUtils.loadAnimation(
+                    requireContext(), R.anim.pulse_ring_2);
+            ringOuter.startAnimation(ring2);
+        }
+    }
+
     private void setSOSSentState() {
         if (getView() == null) return;
 
-        stopPulsingAnimation();
+        // Smoothly fade out and hide "Hold to send emergency alert"
+        if (tvInstruction != null) {
+            tvInstruction.animate().alpha(0f).setDuration(250).withEndAction(() -> {
+                if (tvInstruction != null) tvInstruction.setVisibility(View.GONE);
+            }).start();
+        }
+
+        // Remove Alert Active indicator completely
+        if (liveIndicatorRow != null) {
+            liveIndicatorRow.setVisibility(View.GONE);
+        }
+        View pulseDot = getView().findViewById(R.id.pulseDot);
+        if (pulseDot != null) {
+            pulseDot.clearAnimation();
+        }
+
         btnSOS.setEnabled(false);
         btnSOS.setText(formatSOSButtonText("SOS", "SENT"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFF883333));
 
+        // Smooth active dispatch radar rings
+        startEmergencyRadarPulse();
+
         if (statusCard != null) {
-            statusCard.setVisibility(View.VISIBLE);
-        }
-        if (tvLiveLabel != null) {
-            tvLiveLabel.setText("ALERT ACTIVE");
-            tvLiveLabel.setTextColor(0xFFFF6B00);
-        }
-        if (tvStatus != null) {
-            tvStatus.setText("Alert sent. Responders have been notified and dispatch is pending.");
+            if (statusCard.getVisibility() != View.VISIBLE) {
+                statusCard.setVisibility(View.VISIBLE);
+                statusCard.setAlpha(0f);
+                statusCard.setTranslationY(20f);
+                statusCard.animate().alpha(1f).translationY(0f).setDuration(350)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            }
         }
 
+        // Keep "Alert sent. Responders have been notified."
+        if (tvStatus != null) {
+            tvStatus.setText("Alert sent. Responders have been notified.");
+        }
+
+        // Keep accident report with smooth entrance animation
         String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
         if (btnOpenReport != null) {
             if (alertId != null && isReportSubmitted(alertId)) {
                 btnOpenReport.setVisibility(View.GONE);
             } else {
                 btnOpenReport.setVisibility(View.VISIBLE);
+                btnOpenReport.setAlpha(0f);
+                btnOpenReport.setTranslationY(12f);
+                btnOpenReport.animate().alpha(1f).translationY(0f).setDuration(300).start();
             }
-        }
-
-        // Pulse dot
-        View pulseDot = getView().findViewById(
-                R.id.pulseDot);
-        if (pulseDot != null) {
-            Animation dotAnim =
-                    AnimationUtils.loadAnimation(
-                            requireContext(), R.anim.pulse_dot);
-            pulseDot.startAnimation(dotAnim);
         }
     }
 
@@ -1099,62 +1219,79 @@ public class SosFragment extends Fragment {
 
     private void hideReportButton() {
         if (btnOpenReport != null) {
-            btnOpenReport.setVisibility(View.GONE);
+            btnOpenReport.animate().alpha(0f).translationY(10f).setDuration(250).withEndAction(() -> {
+                if (btnOpenReport != null) btnOpenReport.setVisibility(View.GONE);
+            }).start();
         }
     }
 
     private void setDeployedState() {
         if (getView() == null) return;
 
-        stopPulsingAnimation();
+        // Smoothly fade out and hide "Hold to send emergency alert"
+        if (tvInstruction != null) {
+            tvInstruction.animate().alpha(0f).setDuration(250).withEndAction(() -> {
+                if (tvInstruction != null) tvInstruction.setVisibility(View.GONE);
+            }).start();
+        }
+
+        // Remove responder deployed indicator row completely
+        if (liveIndicatorRow != null) {
+            liveIndicatorRow.setVisibility(View.GONE);
+        }
+        View pulseDot = getView().findViewById(R.id.pulseDot);
+        if (pulseDot != null) {
+            pulseDot.clearAnimation();
+        }
+
         btnSOS.setEnabled(false);
         btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        btnSOS.setText(formatSOSButtonText("SOS", "DEPLOYED"));
+        btnSOS.setText(formatSOSButtonText("SOS", "EN ROUTE"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFFEA580C));
 
+        // Smooth active dispatch radar rings
+        startEmergencyRadarPulse();
+
         if (statusCard != null) {
-            statusCard.setVisibility(View.VISIBLE);
-        }
-        if (tvLiveLabel != null) {
-            tvLiveLabel.setText("RESPONDERS DEPLOYED");
-            tvLiveLabel.setTextColor(0xFFFF6B00);
-        }
-        if (tvStatus != null) {
-            tvStatus.setText("🚒 Help is on the way!\nBFP units are deployed and heading to your location.");
+            if (statusCard.getVisibility() != View.VISIBLE) {
+                statusCard.setVisibility(View.VISIBLE);
+                statusCard.setAlpha(0f);
+                statusCard.setTranslationY(20f);
+                statusCard.animate().alpha(1f).translationY(0f).setDuration(350)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            }
         }
 
+        // Keep "Help is on the way!" — REMOVE firetruck emoji completely
+        if (tvStatus != null) {
+            tvStatus.setText("Help is on the way!\nBFP units are deployed and heading to your location.");
+        }
+
+        // Keep accident report with smooth entrance animation
         String alertId = sAlertId != null ? sAlertId : getSavedAlertId();
         if (btnOpenReport != null) {
             if (alertId != null && isReportSubmitted(alertId)) {
                 btnOpenReport.setVisibility(View.GONE);
             } else {
                 btnOpenReport.setVisibility(View.VISIBLE);
+                btnOpenReport.setAlpha(0f);
+                btnOpenReport.setTranslationY(12f);
+                btnOpenReport.animate().alpha(1f).translationY(0f).setDuration(300).start();
             }
-        }
-
-        View pulseDot = getView().findViewById(R.id.pulseDot);
-        if (pulseDot != null) {
-            pulseDot.clearAnimation();
-            pulseDot.setBackgroundResource(R.drawable.circle_dot_orange);
-            android.view.animation.Animation dotAnim =
-                    android.view.animation.AnimationUtils.loadAnimation(
-                            requireContext(), R.anim.pulse_dot);
-            pulseDot.startAnimation(dotAnim);
         }
     }
 
     private void setResolvedState() {
         if (getView() == null) return;
 
-        // Stop pulse dot
-        View pulseDot = getView().findViewById(
-                R.id.pulseDot);
+        if (liveIndicatorRow != null) {
+            liveIndicatorRow.setVisibility(View.GONE);
+        }
+        View pulseDot = getView().findViewById(R.id.pulseDot);
         if (pulseDot != null) {
             pulseDot.clearAnimation();
-            pulseDot.setBackgroundResource(
-                    R.drawable.circle_dot_green);
         }
 
         btnSOS.setEnabled(true);
@@ -1163,22 +1300,35 @@ public class SosFragment extends Fragment {
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
                         .valueOf(0xFFFF3B30));
-        if (tvLiveLabel != null) {
-            tvLiveLabel.setText("RESOLVED");
-            tvLiveLabel.setTextColor(0xFF10B981);
+
+        // Restore instruction smoothly
+        if (tvInstruction != null) {
+            tvInstruction.setVisibility(View.VISIBLE);
+            tvInstruction.setAlpha(0f);
+            tvInstruction.animate().alpha(1f).setDuration(350).start();
         }
 
         startPulsingAnimation();
+
+        if (tvStatus != null) {
+            tvStatus.setText("Alert resolved by BFP.");
+        }
 
         Toast.makeText(requireContext(),
                 "Alert resolved by BFP.",
                 Toast.LENGTH_LONG).show();
 
-        // Hide status card after 6 seconds
-        statusCard.postDelayed(() -> {
-            if (getView() != null)
-                statusCard.setVisibility(View.GONE);
-        }, 6000);
+        // Fade status card out smoothly after 4 seconds
+        if (statusCard != null) {
+            statusCard.postDelayed(() -> {
+                if (getView() != null && statusCard != null) {
+                    statusCard.animate().alpha(0f).translationY(16f).setDuration(400)
+                            .withEndAction(() -> {
+                                if (statusCard != null) statusCard.setVisibility(View.GONE);
+                            }).start();
+                }
+            }, 4000);
+        }
     }
 
     // ─────────────────────────────────────────────────────────

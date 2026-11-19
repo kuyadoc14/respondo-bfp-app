@@ -3,7 +3,7 @@
     <!-- Left accent border -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#FC4D4D" />
+            <solid android:color="@color/primary" />
             <corners android:radius="16dp" />
         </shape>
     </item>

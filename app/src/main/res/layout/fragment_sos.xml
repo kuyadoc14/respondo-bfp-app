@@ -9,77 +9,270 @@
     android:clipToPadding="false"
     android:background="#0A0A0A">
 
-    <!-- BLE badge — top left pill -->
-    <LinearLayout
-        android:id="@+id/bleBadge"
-        android:layout_width="wrap_content"
-        android:layout_height="32dp"
-        android:orientation="horizontal"
-        android:background="@drawable/bg_ble_badge_disconnected"
-        android:stateListAnimator="@animator/btn_press_scale"
-        android:paddingStart="12dp"
-        android:paddingEnd="14dp"
+    <!-- Full-screen tap-to-dismiss overlay for menu popup -->
+    <View
+        android:id="@+id/menuDismissOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <!-- Top Left Menu Button (3 Lines -> Triangle morph) -->
+    <FrameLayout
+        android:id="@+id/btnSosMenu"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_menu_button"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_margin="16dp"
         android:clickable="true"
         android:focusable="true"
-        android:gravity="center_vertical">
-
-        <View
-            android:id="@+id/dotBleStatus"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:background="@drawable/circle_dot_gray"
-            android:layout_marginEnd="7dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/tvBleBadgeText"
-            android:text="Wearable Off"
-            android:textColor="#CCCCCC"
-            android:textSize="11sp"
-            android:letterSpacing="0.04"/>
-
-    </LinearLayout>
-
-    <!-- Shake SOS pill — top right pill -->
-    <LinearLayout
-        android:id="@+id/btnShakeSettings"
-        android:layout_width="wrap_content"
-        android:layout_height="32dp"
-        android:orientation="horizontal"
-        android:background="@drawable/bg_badge_active"
+        android:elevation="10dp"
         android:stateListAnimator="@animator/btn_press_scale"
-        android:paddingStart="10dp"
-        android:paddingEnd="12dp"
+        android:contentDescription="Quick Settings Menu">
+
+        <com.bfp.alert.HamburgerTriangleView
+            android:id="@+id/hamburgerView"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
+
+    <!-- Mini List Popup Container on menu side -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/menuPopupCard"
+        android:layout_width="264dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="16dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:contentDescription="Shake SOS settings"
-        android:gravity="center_vertical">
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="68dp"
+        android:layout_marginStart="16dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="16dp"
+        app:cardBackgroundColor="#1A1A1E"
+        app:cardPreventCornerOverlap="true"
+        android:visibility="gone">
 
-        <ImageView
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:src="@drawable/ic_check"
-            app:tint="#FF9800"
-            android:layout_marginEnd="6dp"
-            android:contentDescription="Shake Icon"/>
-
-        <TextView
-            android:id="@+id/tvShakeBadgeText"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Shake SOS"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:letterSpacing="0.04" />
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="@drawable/bg_menu_popup">
 
-    </LinearLayout>
+            <!-- Header label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="QUICK CONTROLS"
+                android:textColor="#888899"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"/>
+
+            <!-- Item 1: Wearable Device Settings -->
+            <LinearLayout
+                android:id="@+id/bleBadge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_menu_item_ripple"
+                android:padding="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/btn_press_scale">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_bluetooth_signal"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Wearable Device"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="2dp">
+
+                        <View
+                            android:id="@+id/dotBleStatus"
+                            android:layout_width="7dp"
+                            android:layout_height="7dp"
+                            android:background="@drawable/circle_dot_gray"
+                            android:layout_marginEnd="5dp"/>
+
+                        <TextView
+                            android:id="@+id/tvBleBadgeText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Wearable Off"
+                            android:textColor="#AAAAAA"
+                            android:textSize="11sp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="#666666"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#26262E"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"/>
+
+            <!-- Item 2: Shake SOS Settings -->
+            <LinearLayout
+                android:id="@+id/btnShakeSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_menu_item_ripple"
+                android:padding="10dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:stateListAnimator="@animator/btn_press_scale">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_shake_phone"
+                    app:tint="#FF9800"
+                    android:layout_marginEnd="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Shake SOS"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvShakeBadgeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Emergency gesture"
+                        android:textColor="#AAAAAA"
+                        android:textSize="11sp"
+                        android:layout_marginTop="2dp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="#666666"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#26262E"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp"/>
+
+            <!-- Item 3: Hands-Free Mode -->
+            <LinearLayout
+                android:id="@+id/menuItemHandsFree"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_menu_item_ripple"
+                android:padding="10dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_pixel_robot"
+                    app:tint="#4CAF50"
+                    android:layout_marginEnd="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hands-Free Mode"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Auto-listen on screen"
+                        android:textColor="#AAAAAA"
+                        android:textSize="11sp"
+                        android:layout_marginTop="2dp"/>
+
+                </LinearLayout>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchHandsFree"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="Hands-free toggle"
+                    android:scaleX="0.85"
+                    android:scaleY="0.85"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
 
     <!-- Top: Logo + title -->
     <LinearLayout
@@ -161,13 +354,17 @@
                 android:textSize="46sp"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
+                android:shadowColor="#800000"
+                android:shadowDx="0"
+                android:shadowDy="3"
+                android:shadowRadius="4"
                 android:gravity="center"
                 android:padding="0dp"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.02"
                 android:background="@drawable/bg_sos_button"
                 android:stateListAnimator="@null"
-                android:elevation="0dp"/>
+                android:elevation="6dp"/>
 
         </FrameLayout>
 
@@ -203,12 +400,14 @@
 
         <!-- Live indicator row -->
         <LinearLayout
+            android:id="@+id/liveIndicatorRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="6dp">
+            android:layout_marginBottom="6dp"
+            android:visibility="gone">
 
             <View
                 android:id="@+id/pulseDot"
@@ -259,13 +458,14 @@
             android:paddingBottom="6dp">
 
             <TextView
+                android:id="@+id/ivReportExclamation"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:gravity="center"
                 android:text="!"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="#FC4D4D"
+                android:textColor="@color/primary"
                 android:background="@drawable/bg_exclamation_badge"
                 android:layout_marginEnd="7dp"/>
 
@@ -275,7 +475,7 @@
                 android:text="Accident Report"
                 android:textSize="13sp"
                 android:textStyle="bold"
-                android:textColor="#FC4D4D"/>
+                android:textColor="@color/primary"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -283,7 +483,7 @@
                 android:text=" ›"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#FC4D4D"
+                android:textColor="@color/primary"
                 android:alpha="0.8"/>
 
         </LinearLayout>
@@ -311,41 +511,6 @@
             android:layout_height="wrap_content"
             android:text="🎙"
             android:textSize="22sp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="30dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="88dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hands-free mode"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Automatically listens on this screen"
-            android:textColor="#999999"
-            android:textSize="11sp"/>
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchHandsFree"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:contentDescription="Hands-free mode. Automatically open the voice assistant and listen while the SOS screen is open."
-            android:minHeight="48dp"/>
 
     </LinearLayout>
 

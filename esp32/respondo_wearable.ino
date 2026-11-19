@@ -43,7 +43,7 @@ LilyGo_T_Display display;
 #define COLOR_BG          0x0842    // Sleek dark charcoal (#0A0A0A)
 #define COLOR_SURFACE     0x18E3    // Elevated card background
 #define COLOR_BORDER      0x2965    // Card border
-#define COLOR_RED         0xFC4D    // Respondo Primary Red (#FC4D4D)
+#define COLOR_RED         0xC905    // Respondo Fire Engine Red (#CE2029)
 #define COLOR_RED_DARK    0x8800    // Dark Red Glow
 #define COLOR_RED_BG      0x3000    // Red container background
 #define COLOR_GREEN       0x15D0    // Respondo Success Green (#10B981)

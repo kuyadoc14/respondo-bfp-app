@@ -471,7 +471,7 @@ public class AlertDetailActivity extends AppCompatActivity {
                     "deployedAt", FieldValue.serverTimestamp())
             .addOnSuccessListener(u -> {
                 Toast.makeText(this,
-                    "🚒 Responders Deployed! User has been notified.",
+                    "Responders Deployed! User has been notified.",
                     Toast.LENGTH_SHORT).show();
                 loadAlertData();
             })

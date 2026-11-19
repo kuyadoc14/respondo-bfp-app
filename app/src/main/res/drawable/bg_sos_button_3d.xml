@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Pressed / Depressed State (Mechanically pushed down into socket) -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- Outer Socket Ring -->
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="#1A1A1E"/>
+                    <stroke android:width="4dp" android:color="#2D2D35"/>
+                </shape>
+            </item>
+
+            <!-- Bottom 3D Depth (Compressed) -->
+            <item android:top="6dp" android:bottom="2dp" android:left="3dp" android:right="3dp">
+                <shape android:shape="oval">
+                    <solid android:color="#52070A"/>
+                </shape>
+            </item>
+
+            <!-- Depressed Cap Dome -->
+            <item android:top="7dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="oval">
+                    <gradient
+                        android:type="linear"
+                        android:angle="270"
+                        android:startColor="#B81820"
+                        android:centerColor="#A3131B"
+                        android:endColor="#7A0B10"/>
+                    <stroke android:width="2.5dp" android:color="#D6454D"/>
+                </shape>
+            </item>
+
+            <!-- Subtle Inner Shadow -->
+            <item android:top="7dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="oval">
+                    <stroke android:width="2dp" android:color="#30000000"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Normal / Raised State (Realistic 3D tactile emergency mushroom button) -->
+    <item>
+        <layer-list>
+            <!-- 1. Outer Dark Bezel / Socket -->
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="#141416"/>
+                    <stroke android:width="4.5dp" android:color="#28282E"/>
+                </shape>
+            </item>
+
+            <!-- 2. Dark Ambient Shadow below button -->
+            <item android:top="10dp" android:bottom="2dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="oval">
+                    <solid android:color="#380407"/>
+                </shape>
+            </item>
+
+            <!-- 3. Physical 3D Cylinder Wall (Height / Bevel Depth) -->
+            <item android:top="8dp" android:bottom="3dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="oval">
+                    <gradient
+                        android:type="linear"
+                        android:angle="270"
+                        android:startColor="#6B0A0E"
+                        android:endColor="#450508"/>
+                </shape>
+            </item>
+
+            <!-- 4. Main Convex Cap Dome (Elevated above base) -->
+            <item android:top="3dp" android:bottom="11dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="oval">
+                    <gradient
+                        android:type="linear"
+                        android:angle="270"
+                        android:startColor="#E6303A"
+                        android:centerColor="#CE2029"
+                        android:endColor="#9E1219"/>
+                    <stroke android:width="2.5dp" android:color="#FF757C"/>
+                </shape>
+            </item>
+
+            <!-- 5. Top Specular Rim Light / Sheen -->
+            <item android:top="5dp" android:bottom="85dp" android:left="28dp" android:right="28dp">
+                <shape android:shape="oval">
+                    <gradient
+                        android:type="linear"
+                        android:angle="270"
+                        android:startColor="#60FFFFFF"
+                        android:endColor="#00FFFFFF"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+</selector>

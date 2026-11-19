@@ -156,6 +156,7 @@ public class AdminFirstAidActivity extends AppCompatActivity {
         private final List<FirstAidItem> items;
         private final OnEdit   onEdit;
         private final OnDelete onDelete;
+        private int lastAnimatedPosition = -1;
 
         AdminFirstAidAdapter(List<FirstAidItem> items,
                              OnEdit onEdit, OnDelete onDelete) {
@@ -180,6 +181,19 @@ public class AdminFirstAidActivity extends AppCompatActivity {
             h.tvAdminCategory.setText(item.category);
             h.btnEdit.setOnClickListener(v   -> onEdit.onEdit(item));
             h.btnAdminDelete.setOnClickListener(v -> onDelete.onDelete(item));
+
+            if (position > lastAnimatedPosition) {
+                h.itemView.setAlpha(0f);
+                h.itemView.setTranslationY(24f);
+                h.itemView.animate()
+                        .alpha(1f)
+                        .translationY(0f)
+                        .setDuration(280)
+                        .setStartDelay(Math.min(position * 35L, 300L))
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                        .start();
+                lastAnimatedPosition = position;
+            }
         }
 
         @Override public int getItemCount() { return items.size(); }

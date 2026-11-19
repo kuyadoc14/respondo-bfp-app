@@ -19,6 +19,7 @@ public class FirstAidAdapter extends RecyclerView.Adapter<FirstAidAdapter.ViewHo
 
     private List<FirstAidItem> items;
     private final OnItemClickListener listener;
+    private int lastAnimatedPosition = -1;
 
     public FirstAidAdapter(List<FirstAidItem> items, OnItemClickListener listener) {
         this.items    = items;
@@ -27,6 +28,7 @@ public class FirstAidAdapter extends RecyclerView.Adapter<FirstAidAdapter.ViewHo
 
     public void updateList(List<FirstAidItem> newItems) {
         this.items = newItems;
+        this.lastAnimatedPosition = -1;
         notifyDataSetChanged();
     }
 
@@ -51,6 +53,20 @@ public class FirstAidAdapter extends RecyclerView.Adapter<FirstAidAdapter.ViewHo
         // Set click on the inner container not the card
         holder.itemContainer.setOnClickListener(
                 v -> listener.onItemClick(item));
+
+        // Subtle cascade entrance animation
+        if (position > lastAnimatedPosition) {
+            holder.itemView.setAlpha(0f);
+            holder.itemView.setTranslationY(24f);
+            holder.itemView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(280)
+                    .setStartDelay(Math.min(position * 35L, 300L))
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+            lastAnimatedPosition = position;
+        }
     }
 
     @Override

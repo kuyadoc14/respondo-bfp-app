@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Antenna Bulb & Stem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,1h2v2h-2z M11,3h2v3h-2z" />
+
+    <!-- Left & Right Ear Connectors -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2,10h2v4H2z M20,10h2v4h-2z" />
+
+    <!-- Head Outline / Face Shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M4,6h16v13H4z" />
+
+    <!-- Inner Pixel Eyes (Cutout/Accent) -->
+    <path
+        android:fillColor="#CE2029"
+        android:pathData="M7,10h3v3H7z M14,10h3v3h-3z" />
+
+    <!-- Pixel Mouth / Visor -->
+    <path
+        android:fillColor="#CE2029"
+        android:pathData="M8,15h8v2H8z" />
+
+</vector>

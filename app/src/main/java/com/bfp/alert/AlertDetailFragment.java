@@ -393,7 +393,7 @@ public class AlertDetailFragment extends Fragment {
                 .update("status", "deployed",
                         "deployedAt", FieldValue.serverTimestamp())
                 .addOnSuccessListener(u -> {
-                    Toast.makeText(requireContext(), "🚒 Responders Deployed! User has been notified.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Responders Deployed! User has been notified.", Toast.LENGTH_SHORT).show();
                     loadAlertData();
                 })
                 .addOnFailureListener(e ->

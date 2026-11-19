@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         View btnGlobalVoice = findViewById(R.id.btnGlobalVoice);
         if (btnGlobalVoice != null) {
-            btnGlobalVoice.setOnClickListener(v -> showVoiceAssistant());
+            setupMovableChathead(btnGlobalVoice);
         }
     }
 
@@ -391,5 +391,78 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             bottomNav.setSelectedItemId(R.id.sos);
         }
         loadFragment(sosFragment);
+    }
+
+    private void setupMovableChathead(View bubble) {
+        if (bubble == null) return;
+        bubble.setOnTouchListener(new View.OnTouchListener() {
+            private float initialX, initialY;
+            private float initialTouchX, initialTouchY;
+            private boolean isDragging = false;
+            private final int touchSlop = (int) (10 * getResources().getDisplayMetrics().density);
+
+            @Override
+            public boolean onTouch(View v, android.view.MotionEvent event) {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        initialX = v.getX();
+                        initialY = v.getY();
+                        initialTouchX = event.getRawX();
+                        initialTouchY = event.getRawY();
+                        isDragging = false;
+                        v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start();
+                        return true;
+
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        float dx = event.getRawX() - initialTouchX;
+                        float dy = event.getRawY() - initialTouchY;
+                        if (!isDragging && (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop)) {
+                            isDragging = true;
+                        }
+                        if (isDragging) {
+                            View parent = (View) v.getParent();
+                            if (parent != null) {
+                                float newX = initialX + dx;
+                                float newY = initialY + dy;
+                                float minX = 0;
+                                float maxX = parent.getWidth() - v.getWidth();
+                                float minY = 0;
+                                View bottomNav = findViewById(R.id.bottomNav);
+                                float maxY = parent.getHeight() - v.getHeight() - (bottomNav != null ? bottomNav.getHeight() : 0);
+
+                                v.setX(Math.max(minX, Math.min(newX, maxX)));
+                                v.setY(Math.max(minY, Math.min(newY, maxY)));
+                            }
+                        }
+                        return true;
+
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                        if (!isDragging) {
+                            v.performClick();
+                            showVoiceAssistant();
+                        } else {
+                            // Snap smoothly to nearest screen edge (left or right)
+                            View parent = (View) v.getParent();
+                            if (parent != null) {
+                                float parentWidth = parent.getWidth();
+                                float margin = 16 * getResources().getDisplayMetrics().density;
+                                float targetX = (v.getX() + v.getWidth() / 2f < parentWidth / 2f)
+                                        ? margin
+                                        : (parentWidth - v.getWidth() - margin);
+
+                                v.animate()
+                                        .x(targetX)
+                                        .setDuration(280)
+                                        .setInterpolator(new android.view.animation.OvershootInterpolator(1.15f))
+                                        .start();
+                            }
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
     }
 }

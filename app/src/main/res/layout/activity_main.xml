@@ -33,27 +33,27 @@
 
     </LinearLayout>
 
-    <!-- Global Floating AI Assistant Button — accessible on SOS, First Aid, and Profile screens -->
-    <LinearLayout
+    <!-- Global Floating AI Assistant Chathead — Movable, snaps to nearest screen edge -->
+    <FrameLayout
         android:id="@+id/btnGlobalVoice"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:background="@drawable/bg_mic_button"
-        android:gravity="center"
+        android:background="@drawable/bg_ai_bubble"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginBottom="74dp"
-        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="76dp"
+        android:layout_marginEnd="16dp"
         android:clickable="true"
         android:focusable="true"
-        android:elevation="12dp">
+        android:elevation="14dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🎙"
-            android:textSize="24sp"/>
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_pixel_robot"
+            android:contentDescription="BFP AI Assistant"/>
 
-    </LinearLayout>
+    </FrameLayout>
 
 </RelativeLayout>

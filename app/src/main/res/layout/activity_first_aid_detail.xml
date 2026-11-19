@@ -31,7 +31,8 @@
             android:scaleType="centerInside"
             android:src="@drawable/ic_back"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:stateListAnimator="@animator/btn_press_scale"/>
 
         <TextView
             android:id="@+id/tvDetailIcon"
@@ -221,7 +222,7 @@
                 app:backgroundTint="@color/primary"
                 app:cornerRadius="14dp"
                 app:elevation="0dp"
-                android:stateListAnimator="@null"/>
+                android:stateListAnimator="@animator/btn_press_scale"/>
 
         </LinearLayout>
 

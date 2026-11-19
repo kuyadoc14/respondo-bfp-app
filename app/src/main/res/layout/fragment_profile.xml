@@ -123,6 +123,7 @@
                         android:textStyle="bold"
                         app:cornerRadius="8dp"
                         android:elevation="0dp"
+                        android:stateListAnimator="@animator/btn_press_scale"
                         android:layout_marginTop="12dp"/>
 
                 </LinearLayout>
@@ -211,7 +212,8 @@
                             android:textSize="13sp"
                             android:textStyle="bold"
                             app:cornerRadius="10dp"
-                            android:elevation="0dp"/>
+                            android:elevation="0dp"
+                            android:stateListAnimator="@animator/btn_press_scale"/>
 
                     </LinearLayout>
 
@@ -256,7 +258,8 @@
                             android:textStyle="bold"
                             android:padding="4dp"
                             android:clickable="true"
-                            android:focusable="true"/>
+                            android:focusable="true"
+                            android:stateListAnimator="@animator/btn_press_scale"/>
 
                     </LinearLayout>
 
@@ -534,7 +537,8 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         app:cornerRadius="12dp"
-                        android:elevation="0dp"/>
+                        android:elevation="0dp"
+                        android:stateListAnimator="@animator/btn_press_scale"/>
 
                     </LinearLayout>
 
@@ -601,7 +605,8 @@
                         android:textSize="13sp"
                         android:textStyle="bold"
                         app:cornerRadius="10dp"
-                        android:elevation="0dp"/>
+                        android:elevation="0dp"
+                        android:stateListAnimator="@animator/btn_press_scale"/>
 
                 </LinearLayout>
 

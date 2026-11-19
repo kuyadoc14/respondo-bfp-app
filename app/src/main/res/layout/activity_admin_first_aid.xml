@@ -31,7 +31,8 @@
             android:scaleType="centerInside"
             android:src="@drawable/ic_back"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:stateListAnimator="@animator/btn_press_scale"/>
 
         <!-- Title + Subtitle -->
         <LinearLayout
@@ -77,7 +78,8 @@
             android:paddingEnd="18dp"
             android:background="@drawable/bg_header_pill"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:stateListAnimator="@animator/btn_press_scale"/>
 
     </LinearLayout>
 

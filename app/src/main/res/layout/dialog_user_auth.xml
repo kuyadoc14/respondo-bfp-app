@@ -61,7 +61,8 @@
             android:textStyle="bold"
             android:background="@drawable/card_bg"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:stateListAnimator="@animator/btn_press_scale"/>
 
         <TextView
             android:id="@+id/tabRegister"
@@ -73,7 +74,8 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:stateListAnimator="@animator/btn_press_scale"/>
 
     </LinearLayout>
 

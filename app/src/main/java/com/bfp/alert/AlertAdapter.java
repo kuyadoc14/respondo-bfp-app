@@ -26,6 +26,7 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.VH> {
     private final List<Map<String, Object>> items;
     private final List<String>              ids;
     private final FirebaseFirestore         db;
+    private int                             lastAnimatedPosition = -1;
 
     public AlertAdapter(
             List<Map<String, Object>> items,
@@ -155,6 +156,20 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.VH> {
                         .commit();
             }
         });
+
+        // Subtle cascade entrance animation
+        if (pos > lastAnimatedPosition) {
+            h.itemView.setAlpha(0f);
+            h.itemView.setTranslationY(24f);
+            h.itemView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(280)
+                    .setStartDelay(Math.min(pos * 35L, 300L))
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+            lastAnimatedPosition = pos;
+        }
     }
 
     @Override
