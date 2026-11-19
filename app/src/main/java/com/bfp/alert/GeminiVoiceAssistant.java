@@ -24,14 +24,12 @@ public class GeminiVoiceAssistant {
 
     private static final String TAG = "GeminiVoice";
 
-    // ── Paste your API key from https://aistudio.google.com/apikey ──
-    private static final String API_KEY =
-            "AQ.Ab8RN6Lwmdl5HhWX-aPZi6wy_a8xZdWkak3D8G-qg8gu-MM8gw";
+    // ── Secured via ApiSecurityConfig ──
     private static final String MODEL =
             "gemini-2.0-flash-lite";
     private static final String API_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + MODEL + ":generateContent?key=" + API_KEY;
+                    + MODEL + ":generateContent?key=" + ApiSecurityConfig.getGeminiApiKey();
 
     // ── Rate-limit / retry config ──────────────────────────────────
     private static final int MAX_RETRIES          = 3;

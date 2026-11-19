@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://maps.googleapis.com https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com https://firestore.googleapis.com; frame-src 'none'; object-src 'none';" />
 
   <!-- PWA & Favicon -->
   <link rel="manifest" href="manifest.json" />
@@ -15,14 +17,17 @@
   <link rel="shortcut icon" type="image/png" href="icons/icon-96-noBackground.png" />
   <link rel="apple-touch-icon" href="icons/icon-96-noBackground.png" />
   <!-- Data URI fallback to guarantee favicon display across file:// and web servers -->
-  <link rel="icon" type="image/png" href="data:image/png;base64,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" />
+  <link rel="icon" type="image/png"
+    href="data:image/png;base64,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" />
 
   <title>BFP Respondo — Dispatch Console</title>
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
 
   <!-- SheetJS for Multi-Sheet Excel Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -107,7 +112,7 @@
     body {
       font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-base);
-      background-image: 
+      background-image:
         radial-gradient(1200px circle at 50% -100px, rgba(239, 68, 68, 0.04), transparent 60%),
         radial-gradient(900px circle at 90% 10%, rgba(59, 130, 246, 0.025), transparent 50%);
       color: var(--text-primary);
@@ -122,13 +127,16 @@
       width: 5px;
       height: 5px;
     }
+
     ::-webkit-scrollbar-track {
       background: transparent;
     }
+
     ::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.12);
       border-radius: 999px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.22);
     }
@@ -326,6 +334,7 @@
       color: var(--text-dim);
       letter-spacing: 0.02em;
     }
+
     /* ══════════════════════════════════════════════════════════════
        2. MINIMAL APP HEADER & NAVBAR
        ══════════════════════════════════════════════════════════════ */
@@ -417,8 +426,17 @@
     }
 
     @keyframes pulseGreen {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.85);
+      }
     }
 
     .header-titles p {
@@ -479,8 +497,17 @@
     }
 
     @keyframes alertPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(0.97); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.7;
+        transform: scale(0.97);
+      }
     }
 
     #adminEmail {
@@ -886,8 +913,15 @@
     }
 
     @keyframes pulseRed {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
     }
 
     .badge-deployed {
@@ -907,8 +941,15 @@
     }
 
     @keyframes pulseBlue {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.35; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.35;
+      }
     }
 
     .badge-resolved {
@@ -1745,21 +1786,28 @@
       .header {
         padding: 12px 24px;
       }
+
       .tabs {
         padding: 0 24px;
       }
+
       .stats {
         padding: 20px 24px 16px;
       }
+
       .toolbar {
         padding: 0 24px 16px;
       }
+
       .table-wrap {
         padding: 0 24px 40px;
       }
-      #mapPanel, #heatmapPanel {
+
+      #mapPanel,
+      #heatmapPanel {
         padding: 20px 24px;
       }
+
       .map-layout {
         grid-template-columns: 1fr 300px;
         gap: 16px;
@@ -1772,60 +1820,78 @@
         padding: 12px 20px;
         gap: 14px;
       }
+
       .header-titles p {
         display: none;
       }
+
       #adminEmail {
         max-width: 140px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
       .tabs {
         padding: 0 20px;
       }
+
       .stats {
         padding: 16px 20px 14px;
         gap: 12px;
       }
+
       .stat-card {
         padding: 16px 18px;
       }
+
       .stat-card h2 {
         font-size: 28px;
       }
+
       .toolbar {
         padding: 0 20px 14px;
         gap: 10px;
       }
+
       .toolbar-search-wrap {
         flex: 1 1 100%;
         max-width: 100%;
       }
+
       .toolbar select,
       .toolbar input[type="date"],
       .toolbar button {
         flex: 1 1 auto;
       }
+
       .table-wrap {
         padding: 0 20px 32px;
       }
+
       .table-scroll-hint {
         display: flex;
       }
-      #mapPanel, #heatmapPanel {
+
+      #mapPanel,
+      #heatmapPanel {
         padding: 20px;
       }
+
       .map-layout {
         grid-template-columns: 1fr;
         gap: 16px;
       }
-      #map, #heatmap {
+
+      #map,
+      #heatmap {
         height: 440px;
       }
+
       .map-sidebar {
         max-height: 340px;
       }
+
       .report-modal {
         max-width: 660px;
       }
@@ -1836,72 +1902,94 @@
       .header {
         padding: 10px 16px;
       }
+
       .header-left {
         gap: 10px;
       }
+
       .header-logo-wrap {
         width: 34px;
         height: 34px;
         border-radius: 8px;
         padding: 3px;
       }
+
       .header-titles h1 {
         font-size: 14px;
         gap: 6px;
       }
+
       .badge-live-dot {
         font-size: 9px;
         padding: 2px 6px;
       }
+
       #adminEmail {
         display: none;
       }
+
       .tabs {
         padding: 0 16px;
         gap: 4px;
       }
+
       .tab-btn {
         padding: 11px 15px;
         font-size: 12.5px;
         gap: 6px;
       }
+
       .stats {
         padding: 14px 16px 12px;
         gap: 8px;
       }
+
       .stat-card {
         padding: 14px 12px;
       }
+
       .stat-card .stat-label {
         font-size: 10px;
         margin-bottom: 6px;
       }
+
       .stat-card h2 {
         font-size: 24px;
       }
+
       .table-wrap {
         padding: 0 16px 28px;
       }
-      #mapPanel, #heatmapPanel {
+
+      #mapPanel,
+      #heatmapPanel {
         padding: 16px;
       }
-      #map, #heatmap {
+
+      #map,
+      #heatmap {
         height: 380px;
       }
-      .map-legend, .heatmap-legend {
+
+      .map-legend,
+      .heatmap-legend {
         flex-wrap: wrap;
         gap: 8px 14px;
       }
+
       .report-modal {
         max-width: 95vw;
         max-height: 90vh;
       }
+
       .report-modal-header {
         padding: 14px 16px;
       }
+
       .report-modal-body {
         padding: 16px;
       }
+
       .report-modal-footer {
         padding: 12px 16px;
       }
@@ -1912,10 +2000,12 @@
       .header-right {
         gap: 8px;
       }
+
       #alertSoundButton {
         padding: 6px 10px;
         font-size: 11px;
       }
+
       .header-right .btn-logout {
         padding: 6px 10px;
         font-size: 11px;
@@ -1927,10 +2017,12 @@
         gap: 6px;
         padding: 12px 14px 10px;
       }
+
       .stat-card {
         padding: 10px 8px;
         border-radius: var(--radius-sm);
       }
+
       .stat-card .stat-label {
         font-size: 9px;
         margin-bottom: 4px;
@@ -1938,10 +2030,12 @@
         align-items: flex-start;
         gap: 2px;
       }
+
       .stat-card .stat-label span:last-child {
         font-size: 7.5px;
         padding: 1px 3px;
       }
+
       .stat-card h2 {
         font-size: 20px;
       }
@@ -1953,26 +2047,31 @@
         gap: 8px;
         padding: 0 14px 12px;
       }
+
       .toolbar-search-wrap {
         grid-column: span 2;
         width: 100%;
         max-width: 100%;
       }
+
       .toolbar-search-wrap kbd {
         display: none;
       }
+
       .toolbar select {
         grid-column: span 1;
         width: 100%;
         font-size: 12px;
         padding: 8px 10px;
       }
+
       .toolbar input[type="date"] {
         grid-column: span 1;
         width: 100%;
         font-size: 12px;
         padding: 8px 10px;
       }
+
       .btn-export {
         grid-column: span 1;
         width: 100%;
@@ -1980,6 +2079,7 @@
         padding: 9px 8px;
         font-size: 11.5px;
       }
+
       .btn-pdf {
         grid-column: span 1;
         width: 100%;
@@ -1987,43 +2087,54 @@
         padding: 9px 8px;
         font-size: 11.5px;
       }
+
       .toolbar .btn-logout {
-        display: none; /* Already in sticky header */
+        display: none;
+        /* Already in sticky header */
       }
 
       /* Table Spacing */
       .table-wrap {
         padding: 0 14px 24px;
       }
+
       thead th {
         padding: 10px 12px;
         font-size: 10px;
       }
+
       tbody td {
         padding: 10px 12px;
         font-size: 12px;
       }
 
       /* Map and Heatmap Controls */
-      #mapPanel, #heatmapPanel {
+      #mapPanel,
+      #heatmapPanel {
         padding: 12px 14px;
       }
-      #map, #heatmap {
+
+      #map,
+      #heatmap {
         height: 320px;
       }
+
       .map-sidebar {
         max-height: 260px;
         padding: 12px;
       }
+
       .heatmap-controls {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
         padding: 10px 12px;
       }
+
       .heatmap-controls select {
         width: 100%;
       }
+
       .slider-group {
         width: 100%;
         justify-content: space-between;
@@ -2033,53 +2144,66 @@
       #reportModalOverlay {
         padding: 6px;
       }
+
       .report-modal {
         max-width: 100%;
         max-height: 94vh;
         border-radius: var(--radius-md);
       }
+
       .report-modal-header {
         padding: 12px 14px;
       }
+
       .report-modal-title {
         font-size: 14px;
       }
+
       .report-modal-subtitle {
         font-size: 11px;
       }
+
       .report-modal-body {
         padding: 12px;
         gap: 12px;
       }
+
       .report-coords-bar {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
         padding: 10px 12px;
       }
+
       .btn-nav-external {
         width: 100%;
         justify-content: center;
       }
+
       .report-meta-grid {
         grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
         gap: 8px;
       }
+
       .report-meta-card {
         padding: 10px 12px;
       }
+
       .patient-card {
         padding: 12px;
         margin-bottom: 8px;
       }
+
       .patient-details-grid {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 8px 10px;
       }
+
       .report-modal-footer {
         padding: 10px 12px;
         flex-wrap: wrap;
       }
+
       .report-modal-footer button {
         flex: 1 1 calc(50% - 5px);
         justify-content: center;
@@ -2091,25 +2215,31 @@
       .login-wrap {
         padding: 16px 12px;
       }
+
       .login-box {
         padding: 30px 18px;
         border-radius: var(--radius-lg);
       }
+
       .login-logo-wrap {
         width: 58px;
         height: 58px;
         margin-bottom: 14px;
         border-radius: 14px;
       }
+
       .login-box h2 {
         font-size: 19px;
       }
+
       .login-box .login-subtitle {
         font-size: 12px;
         margin-bottom: 20px;
       }
+
       .login-box input {
-        font-size: 16px; /* Prevents auto-zoom on iOS Safari */
+        font-size: 16px;
+        /* Prevents auto-zoom on iOS Safari */
         padding: 11px 12px;
       }
     }
@@ -2119,36 +2249,48 @@
       .header-titles h1 {
         font-size: 12.5px;
       }
+
       #alertSoundButton .btn-text {
-        display: none; /* Show only icon */
+        display: none;
+        /* Show only icon */
       }
+
       .header-right .btn-logout .btn-text {
-        display: none; /* Show only icon */
+        display: none;
+        /* Show only icon */
       }
+
       .header-right .btn-logout {
         padding: 6px 8px;
       }
+
       .tab-btn {
         padding: 10px 12px;
         font-size: 11.5px;
       }
+
       .tab-btn svg {
         width: 14px;
         height: 14px;
       }
+
       .stats {
         gap: 5px;
         padding: 10px 12px 8px;
       }
+
       .stat-card {
         padding: 8px 6px;
       }
+
       .stat-card .stat-label {
         font-size: 8.5px;
       }
+
       .stat-card h2 {
         font-size: 18px;
       }
+
       .btn-export span,
       .btn-pdf span {
         font-size: 11px;
@@ -2161,30 +2303,45 @@
         background: #ffffff !important;
         color: #000000 !important;
       }
-      #loginScreen, .header, .tabs, .toolbar, #mapPanel, #heatmapPanel, #confirmOverlay {
+
+      #loginScreen,
+      .header,
+      .tabs,
+      .toolbar,
+      #mapPanel,
+      #heatmapPanel,
+      #confirmOverlay {
         display: none !important;
       }
-      #mainApp, #tab-alerts {
+
+      #mainApp,
+      #tab-alerts {
         display: block !important;
       }
+
       .table-wrap {
         padding: 0 !important;
       }
+
       table {
         border: 1px solid #ccc !important;
         background: #fff !important;
         color: #000 !important;
       }
+
       thead th {
         background: #f0f0f0 !important;
         color: #333 !important;
         border-bottom: 2px solid #ccc !important;
       }
+
       tbody td {
         border-bottom: 1px solid #eee !important;
         color: #000 !important;
       }
-      .badge, .badge-incident {
+
+      .badge,
+      .badge-incident {
         border: 1px solid #999 !important;
         background: transparent !important;
         color: #000 !important;
@@ -2217,10 +2374,12 @@
       <div class="login-form-group">
         <label for="loginPassword">Passphrase</label>
         <div class="login-input-wrap">
-          <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" required />
+          <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password"
+            required />
           <button type="button" class="btn-pwd-eye" onclick="togglePasswordVisibility()" title="Toggle password view">
             <svg id="pwdEyeIcon" viewBox="0 0 24 24">
-              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+              <path
+                d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
             </svg>
           </button>
         </div>
@@ -2258,7 +2417,8 @@
         <div class="report-modal-header-left">
           <div class="report-modal-icon">
             <svg viewBox="0 0 24 24">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
             </svg>
           </div>
           <div>
@@ -2270,7 +2430,8 @@
           <span id="rmStatusBadge" class="badge"></span>
           <button class="report-modal-close" onclick="closeReportModal()" title="Close (Esc)">
             <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
             </svg>
           </button>
         </div>
@@ -2310,14 +2471,16 @@
       <div class="header-right">
         <button id="alertSoundButton" type="button" onclick="stopAlertSound()" title="Stop sounding alarm">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            <path
+              d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
           </svg>
           <span class="btn-text">Silence Siren</span>
         </button>
         <span id="adminEmail">officer@bfp.gov.ph</span>
         <button class="btn-logout" onclick="doLogout()" title="Sign out of console">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;">
-            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+            <path
+              d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
           </svg>
           <span class="btn-text">Sign Out</span>
         </button>
@@ -2328,7 +2491,8 @@
     <nav class="tabs">
       <button class="tab-btn active" onclick="switchTab('alerts', this)">
         <svg viewBox="0 0 24 24">
-          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+          <path
+            d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
         </svg>
         <span>Alerts</span>
         <span class="tab-badge-num" id="tabAlertCount">0</span>
@@ -2336,14 +2500,16 @@
 
       <button class="tab-btn" onclick="switchTab('map', this)">
         <svg viewBox="0 0 24 24">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+          <path
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
         </svg>
         <span>Live Map</span>
       </button>
 
       <button class="tab-btn" onclick="switchTab('heatmap', this)">
         <svg viewBox="0 0 24 24">
-          <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+          <path
+            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
         </svg>
         <span>Heatmap</span>
       </button>
@@ -2357,21 +2523,24 @@
         <div class="stat-card">
           <div class="stat-label">
             <span>Active Alerts</span>
-            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">LIVE</span>
+            <span
+              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">LIVE</span>
           </div>
           <h2 id="countActive">0</h2>
         </div>
         <div class="stat-card resolved">
           <div class="stat-label">
             <span>Resolved Incidents</span>
-            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">CLEARED</span>
+            <span
+              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">CLEARED</span>
           </div>
           <h2 id="countResolved">0</h2>
         </div>
         <div class="stat-card total">
           <div class="stat-label">
             <span>Total Recorded</span>
-            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">TOTAL</span>
+            <span
+              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">TOTAL</span>
           </div>
           <h2 id="countTotal">0</h2>
         </div>
@@ -2381,10 +2550,14 @@
       <div class="toolbar">
         <div class="toolbar-search-wrap">
           <svg class="toolbar-search-icon" viewBox="0 0 24 24">
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            <path
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
           </svg>
-          <input type="text" id="searchAlerts" class="search-box" placeholder="Search by ID, caller, or injury..." oninput="applyFilter()" />
-          <kbd style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--font-mono);pointer-events:none;">Ctrl K</kbd>
+          <input type="text" id="searchAlerts" class="search-box" placeholder="Search by ID, caller, or injury..."
+            oninput="applyFilter()" />
+          <kbd
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--font-mono);pointer-events:none;">Ctrl
+            K</kbd>
         </div>
 
         <select id="filterStatus" onchange="applyFilter()">
@@ -2405,7 +2578,8 @@
 
         <button class="btn-pdf" onclick="exportPDF()" title="Print or save PDF">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;">
-            <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" />
+            <path
+              d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" />
           </svg>
           <span>Export PDF</span>
         </button>
@@ -2416,7 +2590,9 @@
       <!-- Minimal Table -->
       <div class="table-wrap">
         <div class="table-scroll-hint">
-          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;">
+            <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" />
+          </svg>
           <span>Scroll horizontally for all alert details &amp; actions</span>
         </div>
         <table>
@@ -2434,11 +2610,15 @@
           <tbody id="alertTableBody"></tbody>
         </table>
         <div id="emptyMsg" style="display:none;text-align:center;padding:56px 20px;">
-          <svg viewBox="0 0 24 24" style="width:36px;height:36px;fill:var(--text-muted);opacity:0.6;margin-bottom:12px;">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          <svg viewBox="0 0 24 24"
+            style="width:36px;height:36px;fill:var(--text-muted);opacity:0.6;margin-bottom:12px;">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
           </svg>
-          <p style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">No Emergencies Found</p>
-          <p style="font-size:12px;color:var(--text-muted);">No records match your active search filters or date range.</p>
+          <p style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px;">No Emergencies Found
+          </p>
+          <p style="font-size:12px;color:var(--text-muted);">No records match your active search filters or date range.
+          </p>
         </div>
       </div>
 
@@ -2491,11 +2671,13 @@
 
           <div class="slider-group">
             <span>Opacity</span>
-            <input type="range" id="heatOpacity" min="10" max="100" value="90" oninput="updateHeatmapOpacity(this.value)" />
+            <input type="range" id="heatOpacity" min="10" max="100" value="90"
+              oninput="updateHeatmapOpacity(this.value)" />
             <span id="heatOpacityVal" style="width:28px;text-align:right;">90%</span>
           </div>
 
-          <span id="heatmapCount" style="margin-left:auto;font-size:12px;color:var(--text-muted);">0 areas · 0 alerts</span>
+          <span id="heatmapCount" style="margin-left:auto;font-size:12px;color:var(--text-muted);">0 areas · 0
+            alerts</span>
         </div>
 
         <!-- Heatmap Leaflet Map -->
@@ -2661,6 +2843,7 @@
           mainApp.style.display = "block";
           adminEmail.textContent = user.email || "admin@bfp.gov.ph";
           listenForAlerts();
+          startSessionInactivityMonitor();
         })
         .catch(error => {
           console.error("Admin access verification failed:", error);
@@ -2672,7 +2855,88 @@
         });
     });
 
+    // ── Security: Brute-Force Rate Limiting & Lockout ──
+    let failedLoginAttempts = parseInt(sessionStorage.getItem("bfp_failed_login_attempts") || "0", 10);
+    let lockoutTimer = null;
+
+    function checkLockout() {
+      const lockoutUntil = parseInt(sessionStorage.getItem("bfp_lockout_until") || "0", 10);
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      const btn = document.getElementById("loginBtn");
+      const errEl = document.getElementById("loginError");
+
+      if (remaining > 0) {
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = `Locked (${remaining}s)`;
+        }
+        if (errEl) {
+          errEl.textContent = `Too many failed attempts. Login locked for ${remaining}s.`;
+          errEl.classList.add("show");
+        }
+        if (!lockoutTimer) {
+          lockoutTimer = setInterval(() => {
+            const rem = Math.ceil((lockoutUntil - Date.now()) / 1000);
+            if (rem <= 0) {
+              clearInterval(lockoutTimer);
+              lockoutTimer = null;
+              sessionStorage.removeItem("bfp_lockout_until");
+              failedLoginAttempts = 0;
+              sessionStorage.setItem("bfp_failed_login_attempts", "0");
+              if (btn) {
+                btn.disabled = false;
+                btn.textContent = "Sign In";
+              }
+              if (errEl) {
+                errEl.classList.remove("show");
+              }
+            } else {
+              if (btn) btn.textContent = `Locked (${rem}s)`;
+              if (errEl) errEl.textContent = `Too many failed attempts. Login locked for ${rem}s.`;
+            }
+          }, 1000);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // ── Security: 30-Minute Inactivity Session Timeout ──
+    let lastActivityTime = Date.now();
+    let sessionWarningShown = false;
+    let sessionCheckInterval = null;
+    const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+    const SESSION_WARN_MS = 28 * 60 * 1000;
+
+    function recordUserActivity() {
+      lastActivityTime = Date.now();
+      sessionWarningShown = false;
+    }
+
+    function startSessionInactivityMonitor() {
+      lastActivityTime = Date.now();
+      sessionWarningShown = false;
+      ['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => {
+        window.addEventListener(evt, recordUserActivity, { passive: true });
+      });
+
+      if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+      sessionCheckInterval = setInterval(() => {
+        if (!auth.currentUser) return;
+        const idleTime = Date.now() - lastActivityTime;
+        if (idleTime >= SESSION_TIMEOUT_MS) {
+          alert("Your admin session has expired due to 30 minutes of inactivity for system security.");
+          doLogout();
+        } else if (idleTime >= SESSION_WARN_MS && !sessionWarningShown) {
+          sessionWarningShown = true;
+          console.warn("Security notice: Admin session will expire in 2 minutes due to inactivity.");
+        }
+      }, 15000);
+    }
+
     function doLogin() {
+      if (checkLockout()) return;
+
       unlockAlertAudio();
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value.trim();
@@ -2693,22 +2957,38 @@
 
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
+          failedLoginAttempts = 0;
+          sessionStorage.setItem("bfp_failed_login_attempts", "0");
+          sessionStorage.removeItem("bfp_lockout_until");
           btn.textContent = "Sign In";
           btn.disabled = false;
         })
         .catch(err => {
+          failedLoginAttempts++;
+          sessionStorage.setItem("bfp_failed_login_attempts", String(failedLoginAttempts));
           btn.textContent = "Sign In";
           btn.disabled = false;
           errEl.classList.add("show");
-          if (err.code === "auth/wrong-password" ||
-              err.code === "auth/user-not-found" ||
-              err.code === "auth/invalid-credential") {
-            errEl.textContent = "Incorrect email address or password.";
-          } else if (err.code === "auth/invalid-email") {
-            errEl.textContent = "Invalid email format.";
-          } else {
-            errEl.textContent = err.message;
+
+          if (failedLoginAttempts >= 5) {
+            const lockoutUntil = Date.now() + 30 * 1000; // 30s lockout
+            sessionStorage.setItem("bfp_lockout_until", String(lockoutUntil));
+            checkLockout();
+            return;
           }
+
+          const attemptsRemaining = 5 - failedLoginAttempts;
+          let baseMsg = "Login failed.";
+          if (err.code === "auth/wrong-password" ||
+            err.code === "auth/user-not-found" ||
+            err.code === "auth/invalid-credential") {
+            baseMsg = "Incorrect email address or password.";
+          } else if (err.code === "auth/invalid-email") {
+            baseMsg = "Invalid email format.";
+          } else {
+            baseMsg = err.message;
+          }
+          errEl.textContent = `${baseMsg} (${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} remaining before lockout)`;
         });
     }
 
@@ -2884,8 +3164,8 @@
             (p.name || "").toLowerCase().includes(query) || (p.condition || "").toLowerCase().includes(query)
           );
           const reporterMatch = (a.reporterName || "").toLowerCase().includes(query) ||
-                                (a.reporterPhone || "").toLowerCase().includes(query) ||
-                                (a.reporterRole || "").toLowerCase().includes(query);
+            (a.reporterPhone || "").toLowerCase().includes(query) ||
+            (a.reporterRole || "").toLowerCase().includes(query);
           return idMatch || userMatch || typeMatch || natureMatch || patientMatch || reporterMatch;
         });
       }
@@ -3633,15 +3913,15 @@
               View Accident Report
             </button>
             ${isActive
-              ? `<button onclick="resolveAlertFromMap('${alert.id}')"
+            ? `<button onclick="resolveAlertFromMap('${alert.id}')"
                    style="padding:7px 12px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
                    Mark Resolved
                  </button>`
-              : `<button onclick="deleteAlertFromMap('${alert.id}')"
+            : `<button onclick="deleteAlertFromMap('${alert.id}')"
                    style="padding:7px 12px;background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
                    Delete
                  </button>`
-            }
+          }
           </div>`;
 
         if (markers[alert.id]) {
@@ -3791,13 +4071,13 @@
       });
 
       L.tileLayer(
-  "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg",
-  {
-    attribution: "&copy; Google Maps",
-    subdomains: ["0","1","2","3"],
-    maxZoom: 20
-  }
-).addTo(leafletMap);
+        "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg",
+        {
+          attribution: "&copy; Google Maps",
+          subdomains: ["0", "1", "2", "3"],
+          maxZoom: 20
+        }
+      ).addTo(leafletMap);
 
       heatmapLayer = L.layerGroup().addTo(leafletMap);
 
@@ -3846,8 +4126,8 @@
         const radius = Math.min(28, 8 + Math.sqrt(area.count - 1) * 4);
         const color = area.count >= 10 ? "#b91c1c"
           : area.count >= 5 ? "#ea580c"
-          : area.count >= 2 ? "#f59e0b"
-          : "#ef4444";
+            : area.count >= 2 ? "#f59e0b"
+              : "#ef4444";
 
         L.circleMarker([latitude, longitude], {
           radius,
@@ -3892,7 +4172,7 @@
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg&callback=Function.prototype"
     async defer>
-  </script>
+    </script>
 
   <!-- Service Worker Registration -->
   <script>

@@ -26,13 +26,12 @@ public class ClaudeVoiceAssistant {
 
     private static final String TAG = "BFPVoice";
 
-    // ── Groq API config ────────────────────────────────────
-    private static final String API_KEY  =
-            "gsk_vR1EjkYzHgB59a" + "5PYuu2WGdyb3FYuKi" + "Rc8TqKAy13G4KxWS4w3E4";
+    // ── Groq API config (secured via ApiSecurityConfig) ───
+    private static final String API_KEY  = ApiSecurityConfig.getGroqApiKey();
     private static final String API_URL  =
             "https://api.groq.com/openai/v1/chat/completions";
     private static final String MODEL    =
-            "openai/gpt-oss-120b";
+            "llama-3.3-70b-versatile";
 
     // ── Actions ───────────────────────────────────────────────────
     public static final String ACTION_SEND_SOS          = "SEND_SOS";

@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com https://firestore.googleapis.com; frame-src 'none'; object-src 'none';" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -872,26 +873,39 @@
       document.getElementById("profileModal").classList.remove("active");
     }
 
+    function sanitizeProfileField(val, maxLen) {
+      if (!val) return "";
+      return String(val).replace(/[\r\n\t]/g, " ").replace(/[<>]/g, "").trim().substring(0, maxLen);
+    }
+
     function saveProfileModal() {
       const p = {
-        fullName: document.getElementById("pName").value.trim(),
-        phone: document.getElementById("pPhone").value.trim(),
-        bloodType: document.getElementById("pBlood").value.trim(),
-        age: document.getElementById("pAge").value.trim(),
-        allergies: document.getElementById("pAllergies").value.trim(),
-        medicalConditions: document.getElementById("pConditions").value.trim(),
-        emergencyContact: document.getElementById("pContact").value.trim()
+        fullName: sanitizeProfileField(document.getElementById("pName").value, 60),
+        phone: sanitizeProfileField(document.getElementById("pPhone").value, 25),
+        bloodType: sanitizeProfileField(document.getElementById("pBlood").value, 5),
+        age: sanitizeProfileField(document.getElementById("pAge").value, 3),
+        allergies: sanitizeProfileField(document.getElementById("pAllergies").value, 150),
+        medicalConditions: sanitizeProfileField(document.getElementById("pConditions").value, 250),
+        emergencyContact: sanitizeProfileField(document.getElementById("pContact").value, 80)
       };
       saveStoredProfile(p);
       alert("Emergency profile saved to device!");
       closeProfileModal();
     }
 
-    // ── Get or create stable user ID ──
+    // ── Cryptographically secure stable user ID ──
     function getUserId() {
       let uid = localStorage.getItem("bfp_user_id");
       if (!uid) {
-        uid = "pwa_user_" + Date.now();
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+          uid = "pwa_" + crypto.randomUUID();
+        } else if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+          const arr = new Uint8Array(16);
+          crypto.getRandomValues(arr);
+          uid = "pwa_" + Array.from(arr, b => b.toString(16).padStart(2, "0")).join("");
+        } else {
+          uid = "pwa_" + Math.random().toString(36).substring(2, 12) + "_" + Date.now();
+        }
         localStorage.setItem("bfp_user_id", uid);
       }
       return uid;
@@ -949,8 +963,18 @@
         });
     }
 
-    // ── Send SOS ──
+    // ── Send SOS with Anti-Spam Cooldown ──
+    let lastSosDispatchTime = 0;
+    const SOS_COOLDOWN_MS = 30000; // 30 seconds cooldown between alert dispatches
+
     function sendSOS() {
+      const now = Date.now();
+      if (now - lastSosDispatchTime < SOS_COOLDOWN_MS) {
+        const waitSec = Math.ceil((SOS_COOLDOWN_MS - (now - lastSosDispatchTime)) / 1000);
+        alert(`Please wait ${waitSec} second(s) before sending another emergency request.`);
+        return;
+      }
+
       const btn = document.getElementById("btnSOS");
       btn.disabled = true;
       btn.textContent = "...";
@@ -973,6 +997,7 @@
     }
 
     function saveAlert() {
+      lastSosDispatchTime = Date.now();
       const userId = getUserId();
 
       db.collection("sos_alerts").add({

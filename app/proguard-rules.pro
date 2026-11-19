@@ -1,21 +1,16 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard & R8 Optimization and Obfuscation Rules for Respondo BFP
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Firestore data model classes (needed for serialization/deserialization)
+-keepclassmembers class com.bfp.alert.UserProfile { *; }
+-keepclassmembers class com.bfp.alert.FirstAidItem { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Cloudinary SDK
+-keep class com.cloudinary.** { *; }
+-dontwarn com.cloudinary.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve BuildConfig for ApiSecurityConfig reflection
+-keep class com.bfp.alert.BuildConfig { *; }
+
+# Preserve line numbers for stack traces while obfuscating source file names
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

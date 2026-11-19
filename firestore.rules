@@ -2,51 +2,185 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ──────────────────────────────────────────────
+    // Helper: check if the caller is a provisioned admin
+    // ──────────────────────────────────────────────
     function isAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
 
-    // Admin membership is provisioned by a trusted administrator, never by app clients.
+    // ──────────────────────────────────────────────
+    // Helper: returns true if the incoming data contains ONLY keys in allowedKeys
+    // ──────────────────────────────────────────────
+    function onlyAllowedKeys(allowedKeys) {
+      return request.resource.data.keys().hasOnly(allowedKeys);
+    }
+
+    // ──────────────────────────────────────────────
+    // SOS Alerts — required/optional field lists
+    // ──────────────────────────────────────────────
+    // All fields that may ever appear on a sos_alerts document
+    function sosAllFields() {
+      return [
+        'userId', 'latitude', 'longitude', 'status', 'timestamp',
+        'deviceToken', 'source', 'incidentNotes', 'description',
+        'accidentType', 'reporterRole', 'reporterName', 'reporterPhone',
+        'reporterProfile', 'countOfVictims', 'patients', 'modeOfInjury',
+        'natureOfInjury', 'reportSubmitted', 'lastConditionUpdate',
+        'deployedAt', 'resolvedAt', 'resolvedReason'
+      ];
+    }
+
+    // Fields that MUST be present on creation
+    function sosRequiredFields() {
+      return ['userId', 'latitude', 'longitude', 'status', 'timestamp'];
+    }
+
+    // Fields that must never change after creation (immutable)
+    function sosImmutableFields() {
+      return ['userId', 'latitude', 'longitude', 'timestamp'];
+    }
+
+    // Fields a non-admin may update (report/bystander fields)
+    function sosReportFields() {
+      return [
+        'accidentType', 'countOfVictims', 'natureOfInjury', 'modeOfInjury',
+        'patients', 'reporterRole', 'reporterName', 'reporterPhone',
+        'reporterProfile', 'incidentNotes', 'description', 'reportSubmitted',
+        'lastConditionUpdate', 'resolvedReason'
+      ];
+    }
+
+    // ──────────────────────────────────────────────
+    // SOS Alerts — validation helpers
+    // ──────────────────────────────────────────────
+
+    // Validate required-field types and value ranges on create
+    function validSosCreate() {
+      let d = request.resource.data;
+      return d.userId is string
+        && d.latitude is number  && d.latitude >= -90  && d.latitude <= 90
+        && d.longitude is number && d.longitude >= -180 && d.longitude <= 180
+        && d.status == 'active'
+        && d.timestamp is timestamp;
+    }
+
+    // On update, the immutable fields must be unchanged
+    function immutableFieldsUnchanged() {
+      let before = resource.data;
+      let after  = request.resource.data;
+      return after.userId    == before.userId
+        && after.latitude    == before.latitude
+        && after.longitude   == before.longitude
+        && after.timestamp   == before.timestamp;
+    }
+
+    // Detect which fields actually changed between before and after
+    function changedFields() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ──────────────────────────────────────────────
+    // Admin membership — provisioned out-of-band; clients may only
+    // read their own membership flag.
+    // ──────────────────────────────────────────────
     match /admin_users/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
 
+    // ──────────────────────────────────────────────
+    // SOS Alerts
+    // ──────────────────────────────────────────────
     match /sos_alerts/{id} {
-      // Anyone can create an alert (ESP32 hardware or mobile user)
-      allow create: if true;
 
-      // Anyone can UPDATE accident report details (bystander submitting report)
-      allow update: if true;
+      // CREATE — open to anyone (ESP32 / unauthenticated citizens)
+      // but with strict data validation.
+      allow create: if
+        // 1. All required fields must be present
+        request.resource.data.keys().hasAll(sosRequiredFields())
+        // 2. Only known fields (no junk/injection)
+        && onlyAllowedKeys(sosAllFields())
+        // 3. Max 25 keys (size constraint)
+        && request.resource.data.keys().size() <= 25
+        // 4. Field-level type & range validation
+        && validSosCreate();
 
-      // Anyone can READ (victim app must read status to know it's "active" or "resolved")
+      // UPDATE — different permission tiers
+      allow update: if
+        // Global guard: only allowed fields, max 25 keys, immutables unchanged
+        onlyAllowedKeys(sosAllFields())
+        && request.resource.data.keys().size() <= 25
+        && immutableFieldsUnchanged()
+        && (
+          // Admin can change ANY mutable field (including status transitions)
+          isAdmin()
+          // Non-admin can only touch report fields, never status
+          || changedFields().hasOnly(sosReportFields())
+        );
+
+      // READ — open (victim app needs to poll status)
       allow read: if true;
 
-      // Only provisioned BFP admins can delete alerts
+      // DELETE — admin only
       allow delete: if isAdmin();
     }
 
-    // User profiles — only the owner can read and write their profile
+    // ──────────────────────────────────────────────
+    // User Profiles — owner-only, with field validation
+    // ──────────────────────────────────────────────
     match /user_profiles/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Allowed profile fields matching Android UserProfile & web profile
+      function userProfileAllowedFields() {
+        return [
+          'fullName', 'age', 'birthdate', 'address', 'phone',
+          'emergencyContact', 'emergencyContactName', 'allergies',
+          'bloodType', 'medicalConditions', 'privacyConsentAccepted',
+          'privacyConsentDate', 'updatedAt', 'createdAt',
+          'email', 'displayName', 'phoneNumber', 'photoURL', 'deviceToken'
+        ];
+      }
+
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Write: owner only + field whitelist
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(userProfileAllowedFields())
+        && request.resource.data.keys().size() <= 20;
     }
 
-    // First aid — anyone can read, admin writes
+    // ──────────────────────────────────────────────
+    // First Aid — public read, admin write
+    // ──────────────────────────────────────────────
     match /first_aid/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // BFP stations — anyone can read, admin writes
+    // ──────────────────────────────────────────────
+    // BFP Stations — public read, admin write
+    // ──────────────────────────────────────────────
     match /bfp_stations/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // Admin tokens — owner only
+    // ──────────────────────────────────────────────
+    // Admin Tokens — owner admin only
+    // ──────────────────────────────────────────────
     match /admin_tokens/{uid} {
       allow read, write: if isAdmin() && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // CATCH-ALL DENY — any collection not explicitly matched above
+    // is denied by default. This prevents accidental exposure of
+    // new collections added to the database.
+    // ──────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
 
   }

@@ -66,7 +66,8 @@ public class AdminDashboardFragment extends Fragment implements OnMapReadyCallba
     private TextView tvAlertCount;
     private TextView btnTabList, btnTabMap;
 
-    private static final String MAPS_API_KEY = "AIzaSyA_ga7boLqIPNUI0xWsCrAh4AxoCSTNzPg";
+    // ── Resolved securely via ApiSecurityConfig ─────────────────────
+    private static final String MAPS_API_KEY = ApiSecurityConfig.getMapsApiKey();
 
     @Nullable
     @Override

@@ -63,6 +63,8 @@ public class SosFragment extends Fragment {
     // Static so they survive tab switches (fragment .replace() destroys views)
     private static ListenerRegistration sListener = null;
     private static String               sAlertId  = null;
+    private static long                 sLastSosDispatchTime = 0;
+    private static final long           SOS_COOLDOWN_MS = 15000; // 15s spam cooldown
 
     private FirebaseFirestore          db;
     private FusedLocationProviderClient locationClient;
@@ -436,6 +438,13 @@ public class SosFragment extends Fragment {
             return;
         }
 
+        long now = System.currentTimeMillis();
+        if (now - sLastSosDispatchTime < SOS_COOLDOWN_MS) {
+            long remainingSec = Math.max(1, (SOS_COOLDOWN_MS - (now - sLastSosDispatchTime)) / 1000);
+            Toast.makeText(getContext(), "Please wait " + remainingSec + "s before sending another emergency alert.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -448,6 +457,7 @@ public class SosFragment extends Fragment {
             return;
         }
 
+        sLastSosDispatchTime = now;
         btnSOS.setEnabled(false);
         btnSOS.setText("Sending...");
 
