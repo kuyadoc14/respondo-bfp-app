@@ -1377,6 +1377,271 @@
       border: 1px solid var(--border);
     }
 
+    /* ── Heatmap 2-Column Layout with Statistics Sidebar ── */
+    .heatmap-layout {
+      display: grid;
+      grid-template-columns: 1fr clamp(350px, 28vw, 470px);
+      gap: 20px;
+      align-items: start;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .heatmap-map-col {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .heatmap-stats-sidebar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      height: clamp(580px, calc(100vh - 220px), 880px);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .hstats-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .hstats-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hstats-title-group h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .hstats-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .hstats-year-select {
+      height: 32px;
+      padding: 0 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .hstats-year-select:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hstats-tabs {
+      display: flex;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 12px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .hstats-tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+
+    .hstats-tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .hstats-tab-btn.active {
+      color: #ffffff;
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.35);
+      font-weight: 700;
+    }
+
+    .hstats-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hstats-panel {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hstats-panel.active {
+      display: flex;
+    }
+
+    .hstats-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .hstats-kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .hstats-kpi-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hstats-kpi-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hstats-section-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .hstats-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .hstats-row-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: all var(--transition);
+    }
+
+    .hstats-row-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .hstats-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .hstats-row-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .hstats-row-title span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hstats-row-badge {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .hstats-bar-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .hstats-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .hstats-row-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .hstats-empty-msg {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+    }
+
     /* ══════════════════════════════════════════════════════════════
        9. REPORT MODAL (MINIMAL & READABLE)
        ══════════════════════════════════════════════════════════════ */
@@ -1890,6 +2155,16 @@
 
       .map-sidebar {
         max-height: 340px;
+      }
+
+      .heatmap-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .heatmap-stats-sidebar {
+        height: auto;
+        max-height: 540px;
       }
 
       .report-modal {
@@ -2680,16 +2955,67 @@
             alerts</span>
         </div>
 
-        <!-- Heatmap Leaflet Map -->
-        <div id="heatmap"></div>
+        <!-- 2-Column Heatmap & Statistics Layout -->
+        <div class="heatmap-layout">
 
-        <!-- Heatmap Legend -->
-        <div class="heatmap-legend">
-          <span>Alerts per area:</span>
-          <span class="density-swatch" style="width:10px;height:10px;background:#ef4444;"></span><span>1</span>
-          <span class="density-swatch" style="width:14px;height:14px;background:#f59e0b;"></span><span>2–4</span>
-          <span class="density-swatch" style="width:19px;height:19px;background:#ea580c;"></span><span>5–9</span>
-          <span class="density-swatch" style="width:24px;height:24px;background:#b91c1c;"></span><span>10+</span>
+          <!-- Left Map Column -->
+          <div class="heatmap-map-col">
+            <div id="heatmap"></div>
+
+            <div class="heatmap-legend">
+              <span>Alerts per area:</span>
+              <span class="density-swatch" style="width:10px;height:10px;background:#ef4444;"></span><span>1</span>
+              <span class="density-swatch" style="width:14px;height:14px;background:#f59e0b;"></span><span>2–4</span>
+              <span class="density-swatch" style="width:19px;height:19px;background:#ea580c;"></span><span>5–9</span>
+              <span class="density-swatch" style="width:24px;height:24px;background:#b91c1c;"></span><span>10+</span>
+            </div>
+          </div>
+
+          <!-- Right Sidebar: Statistics Container -->
+          <aside class="heatmap-stats-sidebar" id="heatmapStatsSidebar">
+            <!-- Sidebar Header -->
+            <div class="hstats-header">
+              <div class="hstats-title-group">
+                <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:var(--accent);flex-shrink:0;">
+                  <path
+                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                </svg>
+                <div>
+                  <h3>Incident Analytics</h3>
+                  <div class="hstats-subtitle">Trends &amp; Distribution</div>
+                </div>
+              </div>
+
+              <!-- Year Filter Select -->
+              <select id="hstatsYearFilter" class="hstats-year-select" onchange="updateHeatmapStats()"
+                title="Filter statistics by year">
+                <option value="all">All Years</option>
+              </select>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="hstats-tabs" role="tablist">
+              <button type="button" class="hstats-tab-btn active" id="hstatsTabBtnEvent"
+                onclick="switchStatsTab('event', this)">Per Event</button>
+              <button type="button" class="hstats-tab-btn" id="hstatsTabBtnMonthly"
+                onclick="switchStatsTab('monthly', this)">Monthly</button>
+              <button type="button" class="hstats-tab-btn" id="hstatsTabBtnYearly"
+                onclick="switchStatsTab('yearly', this)">Yearly</button>
+            </div>
+
+            <!-- Scrollable Body with 3 Sub-Panels -->
+            <div class="hstats-body">
+              <!-- Panel 1: Per Event Report -->
+              <div id="hstatsPanelEvent" class="hstats-panel active"></div>
+
+              <!-- Panel 2: Monthly Report -->
+              <div id="hstatsPanelMonthly" class="hstats-panel"></div>
+
+              <!-- Panel 3: Yearly Report -->
+              <div id="hstatsPanelYearly" class="hstats-panel"></div>
+            </div>
+          </aside>
+
         </div>
 
       </div>
@@ -3041,7 +3367,10 @@
           setTimeout(() => {
             leafletMap.invalidateSize();
             updateHeatmap();
+            updateHeatmapStats();
           }, 100);
+        } else {
+          updateHeatmapStats();
         }
       }
     }
@@ -3099,6 +3428,7 @@
 
           if (mapInitialized) updateMapMarkers();
           if (heatmapReady) updateHeatmap();
+          updateHeatmapStats();
           updateMapSidebar();
 
           const updateTime = new Date().toLocaleTimeString();
@@ -4086,6 +4416,7 @@
       setTimeout(() => {
         leafletMap.invalidateSize();
         updateHeatmap();
+        updateHeatmapStats();
       }, 200);
     }
 
@@ -4165,6 +4496,450 @@
     function updateHeatmapOpacity(val) {
       document.getElementById("heatOpacityVal").textContent = val + "%";
       updateHeatmap();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // HEATMAP STATISTICS SUBSYSTEM (YEARLY, MONTHLY & PER-EVENT)
+    // ══════════════════════════════════════════════════════════════
+    let currentStatsTab = "event";
+
+    function switchStatsTab(tabName, btn) {
+      currentStatsTab = tabName;
+      document.querySelectorAll(".hstats-tab-btn").forEach(b => b.classList.remove("active"));
+      if (btn) {
+        btn.classList.add("active");
+      } else {
+        const targetBtn = document.getElementById("hstatsTabBtn" + (tabName.charAt(0).toUpperCase() + tabName.slice(1)));
+        if (targetBtn) targetBtn.classList.add("active");
+      }
+
+      document.querySelectorAll(".hstats-panel").forEach(p => p.classList.remove("active"));
+      const panel = document.getElementById("hstatsPanel" + (tabName.charAt(0).toUpperCase() + tabName.slice(1)));
+      if (panel) panel.classList.add("active");
+    }
+
+    function updateHeatmapStats() {
+      const yearSelect = document.getElementById("hstatsYearFilter");
+      const currentSelectedYear = yearSelect ? yearSelect.value : "all";
+
+      // 1. Gather all distinct years from alert timestamps
+      const yearsSet = new Set();
+      allAlerts.forEach(a => {
+        const d = parseTimestamp(a.timestamp);
+        if (d && !isNaN(d.getFullYear())) {
+          yearsSet.add(d.getFullYear());
+        }
+      });
+      const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+
+      // 2. Populate year selector if needed
+      if (yearSelect) {
+        const existingOpts = Array.from(yearSelect.options).map(o => o.value);
+        const desiredOpts = ["all", ...sortedYears.map(String)];
+        const needsUpdate = existingOpts.length !== desiredOpts.length ||
+          !desiredOpts.every((v, i) => existingOpts[i] === v);
+
+        if (needsUpdate) {
+          yearSelect.innerHTML = `<option value="all">All Years</option>` +
+            sortedYears.map(y => `<option value="${y}">${y}</option>`).join("");
+          if (desiredOpts.includes(currentSelectedYear)) {
+            yearSelect.value = currentSelectedYear;
+          } else {
+            yearSelect.value = "all";
+          }
+        }
+      }
+
+      const activeYear = yearSelect ? yearSelect.value : "all";
+
+      // 3. Filter alerts for selected year
+      let periodAlerts = allAlerts;
+      if (activeYear !== "all") {
+        periodAlerts = allAlerts.filter(a => {
+          const d = parseTimestamp(a.timestamp);
+          return d && String(d.getFullYear()) === activeYear;
+        });
+      }
+
+      // 4. Render the 3 reports
+      renderPerEventReport(periodAlerts, activeYear);
+      renderMonthlyReport(periodAlerts, activeYear);
+      renderYearlyReport(allAlerts);
+    }
+
+    // ── Helper for Incident Type Colors & Icons ──
+    function getIncidentTypeMeta(type) {
+      const t = (type || "").toLowerCase().trim();
+      if (t.includes("fire")) {
+        return { label: "Fire Emergency", icon: "🔥", color: "#ef4444" };
+      }
+      if (t.includes("med") || t.includes("health") || t.includes("cardiac")) {
+        return { label: "Medical Emergency", icon: "🩺", color: "#06b6d4" };
+      }
+      if (t.includes("vehic") || t.includes("traffic") || t.includes("crash") || t.includes("accident")) {
+        return { label: "Vehicular Accident", icon: "🚗", color: "#f59e0b" };
+      }
+      if (t.includes("haz") || t.includes("chem") || t.includes("gas") || t.includes("toxic")) {
+        return { label: "Hazmat / Chemical", icon: "⚠️", color: "#eab308" };
+      }
+      if (t.includes("electr") || t.includes("wire") || t.includes("power")) {
+        return { label: "Electrical Hazard", icon: "⚡", color: "#a855f7" };
+      }
+      if (t.includes("flood") || t.includes("water") || t.includes("typhoon") || t.includes("storm")) {
+        return { label: "Flood / Natural Disaster", icon: "🌊", color: "#3b82f6" };
+      }
+      return { label: type || "Other Incident", icon: "📋", color: "#94a3b8" };
+    }
+
+    // ── 1. Per Event Report ──
+    function renderPerEventReport(alerts, selectedYear) {
+      const container = document.getElementById("hstatsPanelEvent");
+      if (!container) return;
+
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = `
+          <div class="hstats-empty-msg">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:var(--text-muted);opacity:0.6;margin-bottom:8px;display:inline-block;">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+            </svg>
+            <div>No incident records found ${selectedYear !== "all" ? `for ${escapeHtml(selectedYear)}` : ""}.</div>
+          </div>`;
+        return;
+      }
+
+      // Group by incident type
+      const typeMap = new Map();
+      let totalCasualties = 0;
+      let activeCount = 0;
+      let resolvedCount = 0;
+
+      alerts.forEach(a => {
+        const rawType = (a.accidentType || "Other").trim();
+        const typeMeta = getIncidentTypeMeta(rawType);
+        const key = typeMeta.label;
+
+        if (!typeMap.has(key)) {
+          typeMap.set(key, {
+            name: key,
+            icon: typeMeta.icon,
+            color: typeMeta.color,
+            count: 0,
+            active: 0,
+            resolved: 0,
+            deployed: 0,
+            casualties: 0
+          });
+        }
+
+        const item = typeMap.get(key);
+        item.count++;
+
+        if (a.status === "active") {
+          item.active++;
+          activeCount++;
+        } else if (a.status === "resolved") {
+          item.resolved++;
+          resolvedCount++;
+        } else if (a.status === "deployed") {
+          item.deployed++;
+          activeCount++;
+        }
+
+        const casualties = Number(a.casualties) || (Array.isArray(a.patients) ? a.patients.length : 0);
+        item.casualties += casualties;
+        totalCasualties += casualties;
+      });
+
+      const sortedTypes = Array.from(typeMap.values()).sort((a, b) => b.count - a.count);
+      const topType = sortedTypes[0] ? sortedTypes[0].name.split(" ")[0] : "None";
+
+      // Render KPI cards & items
+      let html = `
+        <div class="hstats-kpi-row">
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Total Alerts</span>
+            <span class="hstats-kpi-value">${alerts.length}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Top Event</span>
+            <span class="hstats-kpi-value" style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${topType}">${topType}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Casualties</span>
+            <span class="hstats-kpi-value" style="color:${totalCasualties > 0 ? '#ef4444' : 'var(--text-primary)'}">${totalCasualties}</span>
+          </div>
+        </div>
+
+        <div class="hstats-section-hdr">
+          <span>Event Type Breakdown</span>
+          <span>${sortedTypes.length} Types</span>
+        </div>
+
+        <div class="hstats-items-list">
+      `;
+
+      sortedTypes.forEach(t => {
+        const pct = ((t.count / alerts.length) * 100).toFixed(1);
+        html += `
+          <div class="hstats-row-card">
+            <div class="hstats-row-top">
+              <span class="hstats-row-title">
+                <span>${t.icon}</span>
+                <span>${escapeHtml(t.name)}</span>
+              </span>
+              <span class="hstats-row-badge">${t.count} (${pct}%)</span>
+            </div>
+            <div class="hstats-bar-track">
+              <div class="hstats-bar-fill" style="width:${pct}%;background:${t.color};"></div>
+            </div>
+            <div class="hstats-row-meta">
+              <span>${t.active} Active · ${t.resolved} Resolved</span>
+              <span>${t.casualties > 0 ? `⚠️ ${t.casualties} casualty` + (t.casualties > 1 ? "ies" : "") : "0 reported casualties"}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    // ── 2. Monthly Report ──
+    function renderMonthlyReport(alerts, selectedYear) {
+      const container = document.getElementById("hstatsPanelMonthly");
+      if (!container) return;
+
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = `
+          <div class="hstats-empty-msg">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:var(--text-muted);opacity:0.6;margin-bottom:8px;display:inline-block;">
+              <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+            </svg>
+            <div>No monthly records found ${selectedYear !== "all" ? `for ${escapeHtml(selectedYear)}` : ""}.</div>
+          </div>`;
+        return;
+      }
+
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+      const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+        monthIdx: i,
+        monthName: monthNames[i],
+        shortName: monthShort[i],
+        total: 0,
+        active: 0,
+        resolved: 0
+      }));
+
+      alerts.forEach(a => {
+        const d = parseTimestamp(a.timestamp);
+        if (d && !isNaN(d.getMonth())) {
+          const m = d.getMonth();
+          monthlyData[m].total++;
+          if (a.status === "active") monthlyData[m].active++;
+          else if (a.status === "resolved") monthlyData[m].resolved++;
+        }
+      });
+
+      const maxMonthCount = Math.max(...monthlyData.map(m => m.total), 1);
+      const activeMonths = monthlyData.filter(m => m.total > 0).length || 1;
+      const avgMonthly = (alerts.length / (selectedYear === "all" ? activeMonths : 12)).toFixed(1);
+
+      let peakMonth = monthlyData[0];
+      monthlyData.forEach(m => {
+        if (m.total > peakMonth.total) peakMonth = m;
+      });
+
+      let html = `
+        <div class="hstats-kpi-row">
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Period</span>
+            <span class="hstats-kpi-value" style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${selectedYear === "all" ? "All Time" : selectedYear}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Monthly Avg</span>
+            <span class="hstats-kpi-value">${avgMonthly}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Peak Month</span>
+            <span class="hstats-kpi-value" style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${peakMonth.shortName} (${peakMonth.total})">${peakMonth.total > 0 ? peakMonth.shortName : "—"}</span>
+          </div>
+        </div>
+
+        <div class="hstats-section-hdr">
+          <span>Monthly Activity Distribution</span>
+          <span>${alerts.length} Total</span>
+        </div>
+
+        <div class="hstats-items-list">
+      `;
+
+      monthlyData.forEach(m => {
+        const pctOfTotal = alerts.length > 0 ? ((m.total / alerts.length) * 100).toFixed(1) : 0;
+        const barWidth = Math.round((m.total / maxMonthCount) * 100);
+        const isPeak = m.total === peakMonth.total && m.total > 0;
+        const barColor = isPeak ? "#ef4444" : (m.total > 0 ? "rgba(239, 68, 68, 0.75)" : "transparent");
+
+        html += `
+          <div class="hstats-row-card" style="${isPeak ? 'border-color:rgba(239, 68, 68, 0.3);background:rgba(239, 68, 68, 0.04);' : ''}">
+            <div class="hstats-row-top">
+              <span class="hstats-row-title">
+                <span style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);width:26px;">${m.shortName}</span>
+                <span>${m.monthName}</span>
+                ${isPeak ? '<span style="font-size:9px;text-transform:uppercase;background:rgba(239,68,68,0.2);color:#ef4444;padding:1px 5px;border-radius:4px;font-weight:700;">Peak</span>' : ''}
+              </span>
+              <span class="hstats-row-badge">${m.total} ${m.total === 1 ? 'alert' : 'alerts'}</span>
+            </div>
+            <div class="hstats-bar-track">
+              <div class="hstats-bar-fill" style="width:${barWidth}%;background:${barColor};"></div>
+            </div>
+            <div class="hstats-row-meta">
+              <span>${pctOfTotal}% of total period</span>
+              <span>${m.active} Active · ${m.resolved} Resolved</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    // ── 3. Yearly Report ──
+    function renderYearlyReport(alerts) {
+      const container = document.getElementById("hstatsPanelYearly");
+      if (!container) return;
+
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = `
+          <div class="hstats-empty-msg">
+            <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:var(--text-muted);opacity:0.6;margin-bottom:8px;display:inline-block;">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+            </svg>
+            <div>No yearly incident history recorded yet.</div>
+          </div>`;
+        return;
+      }
+
+      // Group all alerts by year
+      const yearMap = new Map();
+      let totalResolvedAll = 0;
+
+      alerts.forEach(a => {
+        const d = parseTimestamp(a.timestamp);
+        const y = d && !isNaN(d.getFullYear()) ? d.getFullYear() : "Undated";
+
+        if (!yearMap.has(y)) {
+          yearMap.set(y, {
+            year: y,
+            total: 0,
+            active: 0,
+            resolved: 0,
+            deployed: 0,
+            types: {}
+          });
+        }
+
+        const yData = yearMap.get(y);
+        yData.total++;
+        if (a.status === "active") yData.active++;
+        else if (a.status === "resolved") {
+          yData.resolved++;
+          totalResolvedAll++;
+        } else if (a.status === "deployed") yData.deployed++;
+
+        const type = a.accidentType || "Other";
+        yData.types[type] = (yData.types[type] || 0) + 1;
+      });
+
+      const sortedYears = Array.from(yearMap.values()).sort((a, b) => {
+        if (a.year === "Undated") return 1;
+        if (b.year === "Undated") return -1;
+        return Number(b.year) - Number(a.year);
+      });
+
+      const maxYearTotal = Math.max(...sortedYears.map(y => y.total), 1);
+      const overallResRate = alerts.length > 0 ? Math.round((totalResolvedAll / alerts.length) * 100) : 0;
+      const validYearsCount = sortedYears.filter(y => y.year !== "Undated").length;
+
+      let html = `
+        <div class="hstats-kpi-row">
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Recorded Years</span>
+            <span class="hstats-kpi-value">${validYearsCount || 1}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">All-Time Total</span>
+            <span class="hstats-kpi-value">${alerts.length}</span>
+          </div>
+          <div class="hstats-kpi-card">
+            <span class="hstats-kpi-label">Resolution Rate</span>
+            <span class="hstats-kpi-value" style="color:var(--status-resolved);">${overallResRate}%</span>
+          </div>
+        </div>
+
+        <div class="hstats-section-hdr">
+          <span>Year-Over-Year Records</span>
+          <span>${sortedYears.length} Periods</span>
+        </div>
+
+        <div class="hstats-items-list">
+      `;
+
+      sortedYears.forEach((y, idx) => {
+        const pctOfAll = ((y.total / alerts.length) * 100).toFixed(1);
+        const barWidth = Math.round((y.total / maxYearTotal) * 100);
+        const resRate = y.total > 0 ? Math.round((y.resolved / y.total) * 100) : 0;
+
+        // Top accident type for that year
+        let topYearType = "N/A";
+        let topTypeCount = 0;
+        Object.entries(y.types).forEach(([t, count]) => {
+          if (count > topTypeCount) {
+            topTypeCount = count;
+            topYearType = t;
+          }
+        });
+
+        // Year over Year change vs previous year (next in sorted list)
+        const nextYear = sortedYears[idx + 1];
+        let yoyBadge = "";
+        if (nextYear && nextYear.year !== "Undated" && y.year !== "Undated" && nextYear.total > 0) {
+          const diff = y.total - nextYear.total;
+          const diffPct = Math.round((diff / nextYear.total) * 100);
+          if (diff >= 0) {
+            yoyBadge = `<span style="font-size:10px;color:#ef4444;font-family:var(--font-mono);font-weight:700;">+${diffPct}% YoY</span>`;
+          } else {
+            yoyBadge = `<span style="font-size:10px;color:#22c55e;font-family:var(--font-mono);font-weight:700;">${diffPct}% YoY</span>`;
+          }
+        }
+
+        html += `
+          <div class="hstats-row-card">
+            <div class="hstats-row-top">
+              <span class="hstats-row-title">
+                <span style="font-size:13px;font-weight:700;color:var(--text-primary);letter-spacing:-0.01em;">${escapeHtml(String(y.year))}</span>
+                ${yoyBadge}
+              </span>
+              <span class="hstats-row-badge">${y.total} alerts (${pctOfAll}%)</span>
+            </div>
+            <div class="hstats-bar-track">
+              <div class="hstats-bar-fill" style="width:${barWidth}%;background:linear-gradient(90deg, #ef4444, #f97316);"></div>
+            </div>
+            <div class="hstats-row-meta">
+              <span>${y.active} Active · ${y.resolved} Resolved (${resRate}%)</span>
+              <span>Primary: ${escapeHtml(topYearType)}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
     }
   </script>
 
