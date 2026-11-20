@@ -1,17 +1,25 @@
 package com.bfp.alert;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -19,11 +27,21 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
+    private static final int REQUEST_CODE_PERMISSIONS = 300;
+
     private final SosFragment       sosFragment       = new SosFragment();
     private final FirstAidFragment  firstAidFragment  = new FirstAidFragment();
     private final ProfileFragment   profileFragment   = new ProfileFragment();
     private SensorManager sensorManager;
     private ShakeGestureDetector shakeGestureDetector;
+
+    private View splashOverlay;
+    private TextView splashStatusText;
+    private View splashProgress;
+    private View btnGrantPermissions;
+    private View btnContinueAnyway;
+    private boolean isPermissionsFlowActive = false;
+    private boolean isFragmentLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,28 +50,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        // Request BLE and Notification permissions on Android 12+ / 13+
-        if (Build.VERSION.SDK_INT >= 33) {
-            requestPermissions(new String[]{
-                    android.Manifest.permission.BLUETOOTH_SCAN,
-                    android.Manifest.permission.BLUETOOTH_CONNECT,
-                    android.Manifest.permission.POST_NOTIFICATIONS,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION
-            }, 300);
-        } else if (Build.VERSION.SDK_INT >= 31) {
-            requestPermissions(new String[]{
-                    android.Manifest.permission.BLUETOOTH_SCAN,
-                    android.Manifest.permission.BLUETOOTH_CONNECT,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION
-            }, 300);
-        } else {
-            BLESOSService.start(this);
-        }
-
-        // Load SOS as default tab
-        if (savedInstanceState == null) {
-            loadFragment(sosFragment);
-        }
+        splashOverlay = findViewById(R.id.splashOverlay);
+        splashStatusText = findViewById(R.id.splashStatusText);
+        splashProgress = findViewById(R.id.splashProgress);
+        btnGrantPermissions = findViewById(R.id.btnGrantPermissions);
+        btnContinueAnyway = findViewById(R.id.btnContinueAnyway);
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         SystemBarUtils.applyBottomInsetPadding(bottomNav);
@@ -77,21 +78,147 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (btnGlobalVoice != null) {
             setupMovableChathead(btnGlobalVoice);
         }
+
+        if (btnGrantPermissions != null) {
+            btnGrantPermissions.setOnClickListener(v -> requestAppPermissions());
+        }
+        if (btnContinueAnyway != null) {
+            btnContinueAnyway.setOnClickListener(v -> proceedToApp(false));
+        }
+
+        List<String> missing = getMissingPermissions();
+        if (missing.isEmpty()) {
+            proceedToApp(true);
+        } else {
+            holdOnStandbyForPermissions(missing);
+        }
+    }
+
+    private List<String> getMissingPermissions() {
+        List<String> list = new ArrayList<>();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            list.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            list.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            list.add(Manifest.permission.RECORD_AUDIO);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
+                    != PackageManager.PERMISSION_GRANTED) {
+                list.add(Manifest.permission.BLUETOOTH_SCAN);
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED) {
+                list.add(Manifest.permission.BLUETOOTH_CONNECT);
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                list.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
+        return list;
+    }
+
+    private void holdOnStandbyForPermissions(List<String> missing) {
+        isPermissionsFlowActive = true;
+        setBottomNavVisibility(false);
+        if (splashOverlay != null) {
+            splashOverlay.setVisibility(View.VISIBLE);
+            splashOverlay.setAlpha(1.0f);
+        }
+        if (splashProgress != null) splashProgress.setVisibility(View.VISIBLE);
+        if (btnGrantPermissions != null) btnGrantPermissions.setVisibility(View.GONE);
+        if (btnContinueAnyway != null) btnContinueAnyway.setVisibility(View.GONE);
+        if (splashStatusText != null) {
+            splashStatusText.setText("Waiting for permissions...");
+        }
+
+        new Handler(Looper.getMainLooper()).postDelayed(this::requestAppPermissions, 300);
+    }
+
+    private void requestAppPermissions() {
+        List<String> missing = getMissingPermissions();
+        if (!missing.isEmpty()) {
+            if (splashProgress != null) splashProgress.setVisibility(View.VISIBLE);
+            if (btnGrantPermissions != null) btnGrantPermissions.setVisibility(View.GONE);
+            if (btnContinueAnyway != null) btnContinueAnyway.setVisibility(View.GONE);
+            if (splashStatusText != null) {
+                splashStatusText.setText("Please allow permissions to continue...");
+            }
+            requestPermissions(missing.toArray(new String[0]), REQUEST_CODE_PERMISSIONS);
+        } else {
+            proceedToApp(true);
+        }
+    }
+
+    private void proceedToApp(boolean animated) {
+        isPermissionsFlowActive = false;
+        if (!isFragmentLoaded) {
+            loadFragment(sosFragment);
+            isFragmentLoaded = true;
+        }
+        setBottomNavVisibility(true);
+
+        BLESOSService.start(this);
+        refreshShakeDetection();
+
+        if (splashOverlay != null && splashOverlay.getVisibility() == View.VISIBLE) {
+            if (animated) {
+                splashOverlay.animate()
+                        .alpha(0f)
+                        .setDuration(350)
+                        .withEndAction(() -> splashOverlay.setVisibility(View.GONE))
+                        .start();
+            } else {
+                splashOverlay.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 300) {
-            BLESOSService.start(this);
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            List<String> stillMissing = getMissingPermissions();
+            if (stillMissing.isEmpty()) {
+                if (splashStatusText != null) {
+                    splashStatusText.setText("Ready!");
+                }
+                new Handler(Looper.getMainLooper()).postDelayed(() -> proceedToApp(true), 200);
+            } else {
+                if (splashProgress != null) splashProgress.setVisibility(View.GONE);
+                if (splashStatusText != null) {
+                    splashStatusText.setText("Location and Bluetooth permissions allow BFP responders to locate you in emergencies.");
+                }
+                if (btnGrantPermissions != null) btnGrantPermissions.setVisibility(View.VISIBLE);
+                if (btnContinueAnyway != null) btnContinueAnyway.setVisibility(View.VISIBLE);
+            }
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        BLESOSService.start(this);
-        refreshShakeDetection();
+        if (!isPermissionsFlowActive) {
+            BLESOSService.start(this);
+            refreshShakeDetection();
+        } else {
+            if (getMissingPermissions().isEmpty()) {
+                proceedToApp(true);
+            }
+        }
     }
 
     @Override

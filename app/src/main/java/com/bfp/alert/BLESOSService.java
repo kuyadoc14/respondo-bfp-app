@@ -152,20 +152,53 @@ public class BLESOSService extends Service implements SensorEventListener {
         startServiceIntent(context, intent);
     }
 
+    public static boolean hasRequiredPermissions(Context context) {
+        if (context == null) return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        boolean hasFine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarse = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        if (!hasFine && !hasCoarse) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static void startServiceIntent(Context context, Intent intent) {
+        if (context == null || intent == null) return;
+        if (!hasRequiredPermissions(context)) {
+            Log.w(TAG, "Cannot start service intent: required permissions are not yet granted.");
+            return;
+        }
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ContextCompat.startForegroundService(context, intent);
             } else {
                 context.startService(intent);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Failed to send command to BLESOSService: " + e.getMessage());
         }
     }
 
     public static void start(Context context) {
         if (context == null) return;
+        if (!hasRequiredPermissions(context)) {
+            Log.w(TAG, "Cannot start BLESOSService: required runtime permissions are not yet granted.");
+            return;
+        }
         try {
             Intent intent = new Intent(context, BLESOSService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -173,7 +206,7 @@ public class BLESOSService extends Service implements SensorEventListener {
             } else {
                 context.startService(intent);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Failed to start BLESOSService: " + e.getMessage());
         }
     }
@@ -245,21 +278,44 @@ public class BLESOSService extends Service implements SensorEventListener {
     }
 
     private void startForegroundServiceNotification(String statusText) {
-        Notification notification = buildForegroundNotification(statusText);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            int serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                // Android 14+ support both connected device and location
-                serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE | ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
-            }
-            try {
-                startForeground(NOTIFICATION_ID_FOREGROUND, notification, serviceType);
-            } catch (Exception e) {
-                Log.w(TAG, "Fallback to standard startForeground: " + e.getMessage());
+        try {
+            Notification notification = buildForegroundNotification(statusText);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                int serviceType = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        && ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    serviceType |= ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+                }
+                if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    serviceType |= ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
+                }
+
+                if (serviceType != 0) {
+                    startForeground(NOTIFICATION_ID_FOREGROUND, notification, serviceType);
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        try {
+                            startForeground(NOTIFICATION_ID_FOREGROUND, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+                        } catch (Throwable t) {
+                            try {
+                                startForeground(NOTIFICATION_ID_FOREGROUND, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+                            } catch (Throwable t2) {
+                                startForeground(NOTIFICATION_ID_FOREGROUND, notification);
+                            }
+                        }
+                    } else {
+                        startForeground(NOTIFICATION_ID_FOREGROUND, notification);
+                    }
+                }
+            } else {
                 startForeground(NOTIFICATION_ID_FOREGROUND, notification);
             }
-        } else {
-            startForeground(NOTIFICATION_ID_FOREGROUND, notification);
+        } catch (Throwable e) {
+            Log.e(TAG, "Failed to start foreground notification: " + e.getMessage(), e);
+            try {
+                stopSelf();
+            } catch (Throwable ignored) {}
         }
     }
 
