@@ -196,11 +196,11 @@ public class SosFragment extends Fragment {
             if (!btnSOS.isEnabled()) return false;
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    v.animate().scaleX(0.95f).scaleY(0.95f).translationY(8f).setDuration(80).start();
+                    v.animate().scaleX(0.96f).scaleY(0.96f).translationY(4f).setDuration(70).start();
                     break;
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(120).start();
+                    v.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
                     break;
             }
             return false;
@@ -535,7 +535,9 @@ public class SosFragment extends Fragment {
 
         sLastSosDispatchTime = now;
         btnSOS.setEnabled(false);
-        btnSOS.setText("Sending...");
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        btnSOS.setText(formatSOSButtonText("SOS", "SENDING..."));
 
         locationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
@@ -584,6 +586,8 @@ public class SosFragment extends Fragment {
                             .addOnFailureListener(e -> {
                                 if (!isAdded()) return;
                                 btnSOS.setEnabled(true);
+                                btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
+                                btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
                                 btnSOS.setText("SOS");
                                 Toast.makeText(
                                                 requireContext(),
@@ -1085,6 +1089,7 @@ public class SosFragment extends Fragment {
         if (getView() == null) return;
 
         btnSOS.setEnabled(true);
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
         btnSOS.setText("SOS");
         btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
         btnSOS.setBackgroundTintList(
@@ -1166,6 +1171,8 @@ public class SosFragment extends Fragment {
         }
 
         btnSOS.setEnabled(false);
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         btnSOS.setText(formatSOSButtonText("SOS", "SENT"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
@@ -1245,7 +1252,8 @@ public class SosFragment extends Fragment {
         }
 
         btnSOS.setEnabled(false);
-        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         btnSOS.setText(formatSOSButtonText("SOS", "EN ROUTE"));
         btnSOS.setBackgroundTintList(
                 android.content.res.ColorStateList
@@ -1295,6 +1303,7 @@ public class SosFragment extends Fragment {
         }
 
         btnSOS.setEnabled(true);
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
         btnSOS.setText("SOS");
         btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
         btnSOS.setBackgroundTintList(
