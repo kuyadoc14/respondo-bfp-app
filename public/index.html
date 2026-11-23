@@ -22,11 +22,11 @@
 
   <title>BFP Respondo — Dispatch Console</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Google Fonts: Inter & JetBrains Mono (Mission-Critical High-Legibility Typography) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
 
   <!-- SheetJS for Multi-Sheet Excel Export -->
@@ -36,2593 +36,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
-  <style>
-    /* ══════════════════════════════════════════════════════════════
-       MINIMAL MODERN DESIGN SYSTEM — BFP RESPONDO CONSOLE
-       ══════════════════════════════════════════════════════════════ */
-    *,
-    *::before,
-    *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      /* Modern Deep Obsidian Admin Palette */
-      --bg-base: #090c15;
-      --bg-surface: #0e1322;
-      --bg-card: #121829;
-      --bg-card-hover: #172036;
-      --bg-elevated: #1c263f;
-      --bg-input: #0a0e19;
-
-      /* Precision Borders */
-      --border: rgba(255, 255, 255, 0.08);
-      --border-subtle: rgba(255, 255, 255, 0.04);
-      --border-hover: rgba(255, 255, 255, 0.16);
-      --border-focus: rgba(239, 68, 68, 0.5);
-
-      /* Typography Hierarchy */
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --text-dim: #475569;
-
-      /* BFP Fire Crimson & Accents */
-      --accent: #ef4444;
-      --accent-hover: #dc2626;
-      --accent-dim: rgba(239, 68, 68, 0.12);
-      --accent-glow: rgba(239, 68, 68, 0.25);
-
-      --green: #10b981;
-      --green-dim: rgba(16, 185, 129, 0.12);
-      --green-glow: rgba(16, 185, 129, 0.25);
-
-      --blue: #3b82f6;
-      --blue-dim: rgba(59, 130, 246, 0.12);
-
-      --amber: #f59e0b;
-      --amber-dim: rgba(245, 158, 11, 0.12);
-
-      --purple: #8b5cf6;
-      --purple-dim: rgba(139, 92, 246, 0.12);
-
-      /* Geometry & Elevation */
-      --radius-xs: 6px;
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 18px;
-      --radius-xl: 22px;
-
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-      --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
-      --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.65);
-      --shadow-xl: 0 24px 60px -8px rgba(0, 0, 0, 0.85);
-
-      --transition: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    html {
-      overflow-y: scroll;
-      scrollbar-gutter: stable;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-base);
-      background-image:
-        radial-gradient(1200px circle at 50% -100px, rgba(239, 68, 68, 0.04), transparent 60%),
-        radial-gradient(900px circle at 90% 10%, rgba(59, 130, 246, 0.025), transparent 50%);
-      color: var(--text-primary);
-      min-height: 100vh;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* ── High-Precision Scrollbars ── */
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.22);
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       1. MINIMAL LOGIN SCREEN
-       ══════════════════════════════════════════════════════════════ */
-    #loginScreen {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse 90% 70% at 50% 28%, #161e33 0%, var(--bg-base) 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      padding: 24px;
-    }
-
-    .login-box {
-      background: rgba(14, 19, 34, 0.88);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: var(--radius-xl);
-      padding: 44px 38px;
-      width: 100%;
-      max-width: 410px;
-      box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      position: relative;
-    }
-
-    .login-logo-wrap {
-      width: 72px;
-      height: 72px;
-      margin: 0 auto 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 10px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .login-logo-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .login-box h2 {
-      font-size: 21px;
-      font-weight: 700;
-      text-align: center;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
-    }
-
-    .login-box .login-subtitle {
-      font-size: 13px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-top: 4px;
-      margin-bottom: 28px;
-    }
-
-    .login-form-group {
-      margin-bottom: 18px;
-      position: relative;
-    }
-
-    .login-box label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 7px;
-    }
-
-    .login-input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .login-box input {
-      width: 100%;
-      padding: 11px 14px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-size: 13.5px;
-      font-family: inherit;
-      outline: none;
-      transition: all var(--transition);
-    }
-
-    .login-box input::placeholder {
-      color: var(--text-dim);
-    }
-
-    .login-box input:focus {
-      border-color: var(--accent);
-      background: #0d1322;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
-    }
-
-    .btn-pwd-eye {
-      position: absolute;
-      right: 10px;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px;
-      border-radius: 8px;
-      transition: all var(--transition);
-    }
-
-    .btn-pwd-eye:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .btn-pwd-eye svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
-    }
-
-    .login-box button#loginBtn {
-      width: 100%;
-      height: 44px;
-      padding: 0 16px;
-      margin-top: 10px;
-      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      font-size: 13.5px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--transition);
-      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
-    }
-
-    .login-box button#loginBtn:hover {
-      background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
-    }
-
-    .login-box button#loginBtn:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-    }
-
-    .login-box button#loginBtn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    #loginError {
-      color: #f87171;
-      background: var(--accent-dim);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      margin-top: 14px;
-      padding: 9px 14px;
-      text-align: center;
-      display: none;
-    }
-
-    #loginError.show {
-      display: block;
-    }
-
-    .login-footer {
-      margin-top: 26px;
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.02em;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       2. MINIMAL APP HEADER & NAVBAR
-       ══════════════════════════════════════════════════════════════ */
-    #mainApp {
-      width: 100%;
-      max-width: 100%;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      background: rgba(14, 19, 34, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      padding: 12px clamp(20px, 2.5vw, 40px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .header-logo-wrap {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      padding: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .header-logo-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .header-titles h1 {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .badge-live-dot {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--green-dim);
-      color: #34d399;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-
-    .badge-live-dot::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulseGreen 2s infinite;
-    }
-
-    @keyframes pulseGreen {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 0.4;
-        transform: scale(0.85);
-      }
-    }
-
-    .header-titles p {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 1px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .header-right #alertSoundButton,
-    .header-right #adminEmail,
-    .header-right .btn-logout {
-      height: 38px;
-      box-sizing: border-box;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1;
-      margin: 0 !important;
-      transition: all var(--transition);
-    }
-
-    #alertSoundButton {
-      background: var(--accent-dim);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      padding: 0 14px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-
-    #alertSoundButton:hover {
-      background: rgba(239, 68, 68, 0.2);
-      border-color: rgba(239, 68, 68, 0.45);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
-    }
-
-    #alertSoundButton:active {
-      transform: translateY(0);
-    }
-
-    #alertSoundButton.is-playing {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
-      animation: alertPulse 1.2s infinite;
-    }
-
-    @keyframes alertPulse {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 0.7;
-        transform: scale(0.97);
-      }
-    }
-
-    #adminEmail {
-      font-size: 12px;
-      color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.03);
-      padding: 0 14px;
-      border: 1px solid var(--border);
-      font-family: inherit;
-      white-space: nowrap;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       3. MINIMAL TABS
-       ══════════════════════════════════════════════════════════════ */
-    .tabs {
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 clamp(20px, 2.5vw, 40px);
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .tabs::-webkit-scrollbar {
-      display: none;
-    }
-
-    .tab-btn {
-      padding: 13px 20px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 13px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: -1px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .tab-btn svg {
-      width: 15px;
-      height: 15px;
-      fill: currentColor;
-      opacity: 0.65;
-      transition: all var(--transition);
-    }
-
-    .tab-btn:hover {
-      color: var(--text-primary);
-    }
-
-    .tab-btn:hover svg {
-      opacity: 1;
-    }
-
-    .tab-btn.active {
-      color: #ffffff;
-      border-bottom-color: var(--accent);
-      font-weight: 600;
-    }
-
-    .tab-btn.active svg {
-      opacity: 1;
-      fill: var(--accent);
-    }
-
-    .tab-badge-num {
-      background: var(--accent-dim);
-      color: #f87171;
-      font-size: 10.5px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-
-    .tab-panel {
-      display: none;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       4. STATS CARDS (MINIMAL)
-       ══════════════════════════════════════════════════════════════ */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 18px;
-      padding: 24px clamp(20px, 2.5vw, 40px) 18px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border-radius: var(--radius-md);
-      padding: 20px 22px;
-      border: 1px solid var(--border);
-      transition: all var(--transition);
-      position: relative;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .stat-card:hover {
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-      background: var(--bg-card-hover);
-    }
-
-    .stat-card .stat-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .stat-card h2 {
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      color: #f87171;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stat-card.resolved h2 {
-      color: #34d399;
-    }
-
-    .stat-card.total h2 {
-      color: #60a5fa;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       5. MINIMAL TOOLBAR (FILTERS & ACTIONS)
-       ══════════════════════════════════════════════════════════════ */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 clamp(20px, 2.5vw, 40px) 18px;
-      flex-wrap: wrap;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .toolbar-search-wrap {
-      position: relative;
-      flex: 1;
-      min-width: 220px;
-      max-width: 360px;
-    }
-
-    .toolbar-search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 15px;
-      height: 15px;
-      fill: var(--text-muted);
-      pointer-events: none;
-    }
-
-    .toolbar input[type="text"].search-box {
-      width: 100%;
-      height: 38px;
-      box-sizing: border-box;
-      padding: 0 12px 0 36px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      transition: all var(--transition);
-    }
-
-    .toolbar input[type="text"].search-box:focus {
-      border-color: rgba(255, 255, 255, 0.25);
-      background: var(--bg-elevated);
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
-    }
-
-    .toolbar select,
-    .toolbar input[type="date"] {
-      height: 38px;
-      box-sizing: border-box;
-      padding: 0 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-size: 13px;
-      font-family: inherit;
-      transition: all var(--transition);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .toolbar select:hover,
-    .toolbar input[type="date"]:hover {
-      border-color: rgba(255, 255, 255, 0.16);
-      background: var(--bg-card-hover);
-    }
-
-    .toolbar select:focus,
-    .toolbar input[type="date"]:focus {
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    .toolbar button {
-      height: 38px;
-      box-sizing: border-box;
-      padding: 0 15px;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: inherit;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-    }
-
-    .btn-export,
-    .btn-pdf {
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      border: 1px solid var(--border) !important;
-      font-weight: 500;
-    }
-
-    .btn-export:hover,
-    .btn-pdf:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(255, 255, 255, 0.18) !important;
-      color: var(--text-primary);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-    }
-
-    .btn-export:active,
-    .btn-pdf:active {
-      transform: translateY(0);
-    }
-
-    .btn-export svg,
-    .btn-pdf svg {
-      fill: var(--text-muted);
-      transition: fill var(--transition);
-    }
-
-    .btn-export:hover svg,
-    .btn-pdf:hover svg {
-      fill: var(--text-primary);
-    }
-
-    .btn-logout {
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--text-secondary);
-      border: 1px solid var(--border) !important;
-      border-radius: 10px;
-      height: 38px;
-      padding: 0 14px;
-      box-sizing: border-box;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .btn-logout:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-primary);
-      border-color: rgba(255, 255, 255, 0.18) !important;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-    }
-
-    .btn-logout:active {
-      transform: translateY(0);
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       6. MINIMAL DATA TABLE
-       ══════════════════════════════════════════════════════════════ */
-    .table-wrap {
-      padding: 0 clamp(20px, 2.5vw, 40px) 48px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    table {
-      width: 100%;
-      min-width: 800px;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: 13px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-
-    thead th {
-      background: rgba(10, 14, 25, 0.85);
-      padding: 13px 18px;
-      text-align: left;
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    tbody tr {
-      transition: background var(--transition);
-    }
-
-    tbody tr:hover {
-      background: var(--bg-card-hover);
-    }
-
-    tbody tr.tr-active-alert {
-      background: rgba(239, 68, 68, 0.035);
-      border-left: 3px solid var(--accent);
-    }
-
-    tbody td {
-      padding: 14px 18px;
-      vertical-align: middle;
-      color: var(--text-primary);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    /* Precision Status Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-    }
-
-    .badge-active {
-      background: var(--accent-dim);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-
-    .badge-active::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
-      animation: pulseRed 1.8s infinite;
-    }
-
-    @keyframes pulseRed {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.4;
-      }
-    }
-
-    .badge-deployed {
-      background: rgba(2, 132, 199, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(2, 132, 199, 0.35);
-    }
-
-    .badge-deployed::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #0284c7;
-      box-shadow: 0 0 6px #38bdf8;
-      animation: pulseBlue 1.6s infinite;
-    }
-
-    @keyframes pulseBlue {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.35;
-      }
-    }
-
-    .badge-resolved {
-      background: var(--green-dim);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-
-    .badge-resolved::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-    }
-
-    .badge-incident {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .badge-fire {
-      background: rgba(239, 68, 68, 0.14);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-
-    .badge-medical {
-      background: rgba(16, 185, 129, 0.14);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
-    .badge-vehicle {
-      background: rgba(245, 158, 11, 0.14);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-
-    .badge-other {
-      background: rgba(139, 92, 246, 0.14);
-      color: #c084fc;
-      border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-
-    .badge-pending {
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text-muted);
-      border: 1px solid var(--border-subtle);
-    }
-
-    .badge-victims {
-      font-size: 11px;
-      color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 3px 7px;
-      border-radius: 6px;
-      border: 1px solid var(--border-subtle);
-      display: inline-block;
-      font-weight: 500;
-    }
-
-    .btn-view-report {
-      padding: 6px 13px;
-      background: var(--blue-dim);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: inherit;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-view-report:hover {
-      background: rgba(59, 130, 246, 0.22);
-      border-color: rgba(59, 130, 246, 0.45);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25);
-    }
-
-    .btn-view-report:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-deploy {
-      padding: 6px 13px;
-      background: rgba(2, 132, 199, 0.16);
-      color: #38bdf8;
-      border: 1px solid rgba(2, 132, 199, 0.35);
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-deploy:hover {
-      background: rgba(2, 132, 199, 0.28);
-      border-color: rgba(56, 189, 248, 0.55);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3);
-    }
-
-    .btn-deploy:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-resolve {
-      padding: 6px 13px;
-      background: var(--green-dim);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: inherit;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-resolve:hover {
-      background: rgba(16, 185, 129, 0.22);
-      border-color: rgba(16, 185, 129, 0.45);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
-    }
-
-    .btn-resolve:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-delete {
-      padding: 6px 13px;
-      background: var(--accent-dim);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: inherit;
-      transition: all var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .btn-delete:hover {
-      background: rgba(239, 68, 68, 0.22);
-      border-color: rgba(239, 68, 68, 0.45);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
-    }
-
-    .btn-delete:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    #emptyMsg {
-      text-align: center;
-      padding: 56px 20px;
-      color: var(--text-muted);
-      font-size: 13.5px;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       7. MINIMAL LIVE MAP PANEL
-       ══════════════════════════════════════════════════════════════ */
-    #mapPanel {
-      padding: 24px clamp(20px, 2.5vw, 40px) 36px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .map-layout {
-      display: grid;
-      grid-template-columns: 1fr clamp(320px, 22vw, 420px);
-      gap: 20px;
-      align-items: start;
-    }
-
-    #map {
-      width: 100%;
-      height: clamp(580px, calc(100vh - 220px), 880px);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
-    }
-
-    .map-legend {
-      display: flex;
-      gap: 18px;
-      margin-top: 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      align-items: center;
-      background: var(--bg-card);
-      padding: 10px 18px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-    }
-
-    .dot-active {
-      background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
-    }
-
-    .dot-resolved {
-      background: var(--green);
-    }
-
-    .map-sidebar {
-      background: var(--bg-card);
-      border-radius: var(--radius-md);
-      padding: 18px;
-      height: clamp(580px, calc(100vh - 220px), 880px);
-      max-height: clamp(580px, calc(100vh - 220px), 880px);
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .map-sidebar h3 {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .map-alert-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .map-alert-item {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      border-left: 3px solid var(--accent);
-      transition: all var(--transition);
-    }
-
-    .map-alert-item.resolved {
-      border-left-color: var(--green);
-    }
-
-    .map-alert-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: var(--border);
-      transform: translateX(2px);
-    }
-
-    .map-alert-item .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .map-alert-info {
-      flex: 1;
-    }
-
-    .map-alert-info strong {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: block;
-    }
-
-    .map-alert-info span {
-      font-size: 11px;
-      color: var(--text-muted);
-      display: block;
-      margin-top: 2px;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       8. MINIMAL HEATMAP PANEL
-       ══════════════════════════════════════════════════════════════ */
-    #heatmapPanel {
-      padding: 24px clamp(20px, 2.5vw, 40px) 36px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .heatmap-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-      background: var(--bg-card);
-      padding: 12px 18px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-    }
-
-    .heatmap-controls select {
-      height: 36px;
-      padding: 0 14px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-primary);
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .heatmap-controls select:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .slider-group {
-      height: 36px;
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0 14px;
-    }
-
-    .slider-group input[type="range"] {
-      width: 90px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    #heatmap {
-      width: 100%;
-      height: clamp(580px, calc(100vh - 220px), 880px);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
-      z-index: 0;
-    }
-
-    .heatmap-density-label {
-      background: transparent;
-      border: 0;
-      box-shadow: none;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 0;
-      text-align: center;
-    }
-
-    .heatmap-density-label::before {
-      display: none;
-    }
-
-    .heatmap-legend .density-swatch {
-      display: inline-block;
-      flex: 0 0 auto;
-      border: 2px solid #fff;
-      border-radius: 50%;
-    }
-
-    .heatmap-legend {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      background: var(--bg-card);
-      padding: 10px 18px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    /* ── Heatmap 2-Column Layout with Statistics Sidebar ── */
-    .heatmap-layout {
-      display: grid;
-      grid-template-columns: 1fr clamp(350px, 28vw, 470px);
-      gap: 20px;
-      align-items: start;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .heatmap-map-col {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .heatmap-stats-sidebar {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-md);
-      display: flex;
-      flex-direction: column;
-      height: clamp(580px, calc(100vh - 220px), 880px);
-      box-sizing: border-box;
-      overflow: hidden;
-    }
-
-    .hstats-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.02);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-
-    .hstats-title-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .hstats-title-group h3 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.01em;
-      margin: 0;
-    }
-
-    .hstats-subtitle {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .hstats-year-select {
-      height: 32px;
-      padding: 0 10px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .hstats-year-select:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .hstats-tabs {
-      display: flex;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border);
-      padding: 6px 12px;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .hstats-tab-btn {
-      flex: 1;
-      padding: 8px 12px;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all var(--transition);
-      text-align: center;
-    }
-
-    .hstats-tab-btn:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .hstats-tab-btn.active {
-      color: #ffffff;
-      background: rgba(239, 68, 68, 0.16);
-      border-color: rgba(239, 68, 68, 0.35);
-      font-weight: 700;
-    }
-
-    .hstats-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .hstats-panel {
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .hstats-panel.active {
-      display: flex;
-    }
-
-    .hstats-kpi-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .hstats-kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .hstats-kpi-label {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .hstats-kpi-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.15;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .hstats-section-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: 2px;
-    }
-
-    .hstats-items-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .hstats-row-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      transition: all var(--transition);
-    }
-
-    .hstats-row-card:hover {
-      border-color: rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.025);
-    }
-
-    .hstats-row-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .hstats-row-title {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .hstats-row-title span:last-child {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .hstats-row-badge {
-      font-size: 11px;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2px 7px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .hstats-bar-track {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .hstats-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.35s ease;
-    }
-
-    .hstats-row-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .hstats-empty-msg {
-      text-align: center;
-      padding: 36px 16px;
-      color: var(--text-muted);
-      font-size: 12px;
-      background: var(--bg-surface);
-      border: 1px dashed var(--border);
-      border-radius: var(--radius-sm);
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       9. REPORT MODAL (MINIMAL & READABLE)
-       ══════════════════════════════════════════════════════════════ */
-    #reportModalOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9998;
-      padding: 24px;
-    }
-
-    #reportModalOverlay.show {
-      display: flex;
-    }
-
-    .report-modal {
-      background: var(--bg-surface);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-lg);
-      width: 100%;
-      max-width: 740px;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: var(--shadow-xl);
-      overflow: hidden;
-    }
-
-    .report-modal-header {
-      padding: 18px 24px;
-      background: rgba(255, 255, 255, 0.02);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-    }
-
-    .report-modal-header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .report-modal-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--accent-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .report-modal-icon svg {
-      width: 20px;
-      height: 20px;
-      fill: var(--accent);
-    }
-
-    .report-modal-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.01em;
-    }
-
-    .report-modal-subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .report-modal-close {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--transition);
-    }
-
-    .report-modal-close:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-primary);
-    }
-
-    .report-modal-body {
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .report-section-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .report-section-title::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .report-coords-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      flex-wrap: wrap;
-    }
-
-    .report-coords-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12.5px;
-    }
-
-    .report-coords-info svg {
-      width: 16px;
-      height: 16px;
-      fill: var(--accent);
-      flex-shrink: 0;
-    }
-
-    .btn-nav-external {
-      padding: 0 14px;
-      height: 34px;
-      box-sizing: border-box;
-      background: var(--blue-dim);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      border-radius: 10px;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all var(--transition);
-    }
-
-    .btn-nav-external:hover {
-      background: rgba(59, 130, 246, 0.22);
-      border-color: rgba(59, 130, 246, 0.45);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25);
-    }
-
-    .btn-nav-external:active {
-      transform: translateY(0);
-    }
-
-    .report-meta-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-    }
-
-    .report-meta-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
-    }
-
-    .report-meta-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
-
-    .report-meta-val {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    /* Patient Cards */
-    .patient-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px 18px;
-      margin-bottom: 12px;
-    }
-
-    .patient-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-subtle);
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .patient-name-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .patient-badge-num {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-secondary);
-      font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-
-    .patient-details-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px 16px;
-      font-size: 12.5px;
-    }
-
-    .patient-field-label {
-      color: var(--text-muted);
-      font-size: 11px;
-    }
-
-    .patient-field-val {
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-
-    .patient-allergies-box {
-      background: rgba(245, 158, 11, 0.08);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      margin-top: 12px;
-      font-size: 12.5px;
-      color: #fde68a;
-    }
-
-    .patient-condition-box {
-      background: rgba(59, 130, 246, 0.08);
-      border-left: 3px solid var(--blue);
-      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      padding: 10px 14px;
-      margin-top: 12px;
-      font-size: 12.5px;
-      color: var(--text-primary);
-    }
-
-    .report-modal-footer {
-      padding: 16px 24px;
-      background: rgba(255, 255, 255, 0.02);
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       10. CONFIRM DIALOG & RESPONSIVE / PRINT
-       ══════════════════════════════════════════════════════════════ */
-    #confirmOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.72);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-
-    #confirmOverlay.show {
-      display: flex;
-    }
-
-    .confirm-box {
-      background: var(--bg-surface);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-lg);
-      padding: 32px 28px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-      box-shadow: var(--shadow-xl);
-    }
-
-    .confirm-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.01em;
-    }
-
-    .confirm-desc {
-      color: var(--text-secondary);
-      font-size: 13px;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-
-    .confirm-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .confirm-actions button {
-      padding: 0 22px;
-      height: 38px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: inherit;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--transition);
-    }
-
-    #confirmYes {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
-    }
-
-    #confirmYes:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 5px 14px rgba(239, 68, 68, 0.45);
-    }
-
-    #confirmYes:active {
-      transform: translateY(0);
-    }
-
-    #confirmNo {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-    }
-
-    #confirmNo:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--text-primary);
-      transform: translateY(-1px);
-    }
-
-    #confirmNo:active {
-      transform: translateY(0);
-    }
-
-    /* ══════════════════════════════════════════════════════════════
-       10. RESPONSIVE DESIGN SYSTEM (MULTI-TIER BREAKPOINTS)
-       ══════════════════════════════════════════════════════════════ */
-
-    /* Scroll Hint for Mobile/Touch Devices */
-    .table-scroll-hint {
-      display: none;
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      align-items: center;
-      gap: 5px;
-    }
-
-    /* Large Laptops / Desktops (max-width: 1200px) */
-    @media (max-width: 1200px) {
-      .header {
-        padding: 12px 24px;
-      }
-
-      .tabs {
-        padding: 0 24px;
-      }
-
-      .stats {
-        padding: 20px 24px 16px;
-      }
-
-      .toolbar {
-        padding: 0 24px 16px;
-      }
-
-      .table-wrap {
-        padding: 0 24px 40px;
-      }
-
-      #mapPanel,
-      #heatmapPanel {
-        padding: 20px 24px;
-      }
-
-      .map-layout {
-        grid-template-columns: 1fr 300px;
-        gap: 16px;
-      }
-    }
-
-    /* Tablets / Medium Screens (max-width: 960px) */
-    @media (max-width: 960px) {
-      .header {
-        padding: 12px 20px;
-        gap: 14px;
-      }
-
-      .header-titles p {
-        display: none;
-      }
-
-      #adminEmail {
-        max-width: 140px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .tabs {
-        padding: 0 20px;
-      }
-
-      .stats {
-        padding: 16px 20px 14px;
-        gap: 12px;
-      }
-
-      .stat-card {
-        padding: 16px 18px;
-      }
-
-      .stat-card h2 {
-        font-size: 28px;
-      }
-
-      .toolbar {
-        padding: 0 20px 14px;
-        gap: 10px;
-      }
-
-      .toolbar-search-wrap {
-        flex: 1 1 100%;
-        max-width: 100%;
-      }
-
-      .toolbar select,
-      .toolbar input[type="date"],
-      .toolbar button {
-        flex: 1 1 auto;
-      }
-
-      .table-wrap {
-        padding: 0 20px 32px;
-      }
-
-      .table-scroll-hint {
-        display: flex;
-      }
-
-      #mapPanel,
-      #heatmapPanel {
-        padding: 20px;
-      }
-
-      .map-layout {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      #map,
-      #heatmap {
-        height: 440px;
-      }
-
-      .map-sidebar {
-        max-height: 340px;
-      }
-
-      .heatmap-layout {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      .heatmap-stats-sidebar {
-        height: auto;
-        max-height: 540px;
-      }
-
-      .report-modal {
-        max-width: 660px;
-      }
-    }
-
-    /* Mobile Landscape / Small Tablets (max-width: 768px) */
-    @media (max-width: 768px) {
-      .header {
-        padding: 10px 16px;
-      }
-
-      .header-left {
-        gap: 10px;
-      }
-
-      .header-logo-wrap {
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        padding: 3px;
-      }
-
-      .header-titles h1 {
-        font-size: 14px;
-        gap: 6px;
-      }
-
-      .badge-live-dot {
-        font-size: 9px;
-        padding: 2px 6px;
-      }
-
-      #adminEmail {
-        display: none;
-      }
-
-      .tabs {
-        padding: 0 16px;
-        gap: 4px;
-      }
-
-      .tab-btn {
-        padding: 11px 15px;
-        font-size: 12.5px;
-        gap: 6px;
-      }
-
-      .stats {
-        padding: 14px 16px 12px;
-        gap: 8px;
-      }
-
-      .stat-card {
-        padding: 14px 12px;
-      }
-
-      .stat-card .stat-label {
-        font-size: 10px;
-        margin-bottom: 6px;
-      }
-
-      .stat-card h2 {
-        font-size: 24px;
-      }
-
-      .table-wrap {
-        padding: 0 16px 28px;
-      }
-
-      #mapPanel,
-      #heatmapPanel {
-        padding: 16px;
-      }
-
-      #map,
-      #heatmap {
-        height: 380px;
-      }
-
-      .map-legend,
-      .heatmap-legend {
-        flex-wrap: wrap;
-        gap: 8px 14px;
-      }
-
-      .report-modal {
-        max-width: 95vw;
-        max-height: 90vh;
-      }
-
-      .report-modal-header {
-        padding: 14px 16px;
-      }
-
-      .report-modal-body {
-        padding: 16px;
-      }
-
-      .report-modal-footer {
-        padding: 12px 16px;
-      }
-    }
-
-    /* Mobile Phones (max-width: 600px) */
-    @media (max-width: 600px) {
-      .header-right {
-        gap: 8px;
-      }
-
-      #alertSoundButton {
-        padding: 6px 10px;
-        font-size: 11px;
-      }
-
-      .header-right .btn-logout {
-        padding: 6px 10px;
-        font-size: 11px;
-      }
-
-      /* Compact KPI Stats Strip */
-      .stats {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-        padding: 12px 14px 10px;
-      }
-
-      .stat-card {
-        padding: 10px 8px;
-        border-radius: var(--radius-sm);
-      }
-
-      .stat-card .stat-label {
-        font-size: 9px;
-        margin-bottom: 4px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-      }
-
-      .stat-card .stat-label span:last-child {
-        font-size: 7.5px;
-        padding: 1px 3px;
-      }
-
-      .stat-card h2 {
-        font-size: 20px;
-      }
-
-      /* 2-Column Responsive Toolbar */
-      .toolbar {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        padding: 0 14px 12px;
-      }
-
-      .toolbar-search-wrap {
-        grid-column: span 2;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .toolbar-search-wrap kbd {
-        display: none;
-      }
-
-      .toolbar select {
-        grid-column: span 1;
-        width: 100%;
-        font-size: 12px;
-        padding: 8px 10px;
-      }
-
-      .toolbar input[type="date"] {
-        grid-column: span 1;
-        width: 100%;
-        font-size: 12px;
-        padding: 8px 10px;
-      }
-
-      .btn-export {
-        grid-column: span 1;
-        width: 100%;
-        justify-content: center;
-        padding: 9px 8px;
-        font-size: 11.5px;
-      }
-
-      .btn-pdf {
-        grid-column: span 1;
-        width: 100%;
-        justify-content: center;
-        padding: 9px 8px;
-        font-size: 11.5px;
-      }
-
-      .toolbar .btn-logout {
-        display: none;
-        /* Already in sticky header */
-      }
-
-      /* Table Spacing */
-      .table-wrap {
-        padding: 0 14px 24px;
-      }
-
-      thead th {
-        padding: 10px 12px;
-        font-size: 10px;
-      }
-
-      tbody td {
-        padding: 10px 12px;
-        font-size: 12px;
-      }
-
-      /* Map and Heatmap Controls */
-      #mapPanel,
-      #heatmapPanel {
-        padding: 12px 14px;
-      }
-
-      #map,
-      #heatmap {
-        height: 320px;
-      }
-
-      .map-sidebar {
-        max-height: 260px;
-        padding: 12px;
-      }
-
-      .heatmap-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        padding: 10px 12px;
-      }
-
-      .heatmap-controls select {
-        width: 100%;
-      }
-
-      .slider-group {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      /* Report Modal on Mobile */
-      #reportModalOverlay {
-        padding: 6px;
-      }
-
-      .report-modal {
-        max-width: 100%;
-        max-height: 94vh;
-        border-radius: var(--radius-md);
-      }
-
-      .report-modal-header {
-        padding: 12px 14px;
-      }
-
-      .report-modal-title {
-        font-size: 14px;
-      }
-
-      .report-modal-subtitle {
-        font-size: 11px;
-      }
-
-      .report-modal-body {
-        padding: 12px;
-        gap: 12px;
-      }
-
-      .report-coords-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        padding: 10px 12px;
-      }
-
-      .btn-nav-external {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .report-meta-grid {
-        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-        gap: 8px;
-      }
-
-      .report-meta-card {
-        padding: 10px 12px;
-      }
-
-      .patient-card {
-        padding: 12px;
-        margin-bottom: 8px;
-      }
-
-      .patient-details-grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 8px 10px;
-      }
-
-      .report-modal-footer {
-        padding: 10px 12px;
-        flex-wrap: wrap;
-      }
-
-      .report-modal-footer button {
-        flex: 1 1 calc(50% - 5px);
-        justify-content: center;
-        font-size: 12px;
-        padding: 8px 10px;
-      }
-
-      /* Login Screen on Mobile */
-      .login-wrap {
-        padding: 16px 12px;
-      }
-
-      .login-box {
-        padding: 30px 18px;
-        border-radius: var(--radius-lg);
-      }
-
-      .login-logo-wrap {
-        width: 58px;
-        height: 58px;
-        margin-bottom: 14px;
-        border-radius: 14px;
-      }
-
-      .login-box h2 {
-        font-size: 19px;
-      }
-
-      .login-box .login-subtitle {
-        font-size: 12px;
-        margin-bottom: 20px;
-      }
-
-      .login-box input {
-        font-size: 16px;
-        /* Prevents auto-zoom on iOS Safari */
-        padding: 11px 12px;
-      }
-    }
-
-    /* Small / Narrow Mobile Screens (max-width: 420px) */
-    @media (max-width: 420px) {
-      .header-titles h1 {
-        font-size: 12.5px;
-      }
-
-      #alertSoundButton .btn-text {
-        display: none;
-        /* Show only icon */
-      }
-
-      .header-right .btn-logout .btn-text {
-        display: none;
-        /* Show only icon */
-      }
-
-      .header-right .btn-logout {
-        padding: 6px 8px;
-      }
-
-      .tab-btn {
-        padding: 10px 12px;
-        font-size: 11.5px;
-      }
-
-      .tab-btn svg {
-        width: 14px;
-        height: 14px;
-      }
-
-      .stats {
-        gap: 5px;
-        padding: 10px 12px 8px;
-      }
-
-      .stat-card {
-        padding: 8px 6px;
-      }
-
-      .stat-card .stat-label {
-        font-size: 8.5px;
-      }
-
-      .stat-card h2 {
-        font-size: 18px;
-      }
-
-      .btn-export span,
-      .btn-pdf span {
-        font-size: 11px;
-      }
-    }
-
-    /* Print Styles for PDF Export */
-    @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-      }
-
-      #loginScreen,
-      .header,
-      .tabs,
-      .toolbar,
-      #mapPanel,
-      #heatmapPanel,
-      #confirmOverlay {
-        display: none !important;
-      }
-
-      #mainApp,
-      #tab-alerts {
-        display: block !important;
-      }
-
-      .table-wrap {
-        padding: 0 !important;
-      }
-
-      table {
-        border: 1px solid #ccc !important;
-        background: #fff !important;
-        color: #000 !important;
-      }
-
-      thead th {
-        background: #f0f0f0 !important;
-        color: #333 !important;
-        border-bottom: 2px solid #ccc !important;
-      }
-
-      tbody td {
-        border-bottom: 1px solid #eee !important;
-        color: #000 !important;
-      }
-
-      .badge,
-      .badge-incident {
-        border: 1px solid #999 !important;
-        background: transparent !important;
-        color: #000 !important;
-      }
-    }
-  </style>
+  <!-- Respondo BFP Dispatch Console Theme -->
+  <link rel="stylesheet" href="theme.css" />
 </head>
 
 <body>
@@ -2795,27 +210,24 @@
 
       <!-- Minimal KPI Stats -->
       <div class="stats">
-        <div class="stat-card">
+        <div class="stat-card stat-urgent">
           <div class="stat-label">
             <span>Active Alerts</span>
-            <span
-              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">LIVE</span>
+            <span class="stat-tag-active">LIVE</span>
           </div>
           <h2 id="countActive">0</h2>
         </div>
         <div class="stat-card resolved">
           <div class="stat-label">
             <span>Resolved Incidents</span>
-            <span
-              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">CLEARED</span>
+            <span class="stat-tag-cleared">CLEARED</span>
           </div>
           <h2 id="countResolved">0</h2>
         </div>
         <div class="stat-card total">
           <div class="stat-label">
             <span>Total Recorded</span>
-            <span
-              style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.04);color:var(--text-muted);font-weight:600;border:1px solid var(--border-subtle);">TOTAL</span>
+            <span class="stat-tag-total">TOTAL</span>
           </div>
           <h2 id="countTotal">0</h2>
         </div>
@@ -2976,7 +388,7 @@
             <!-- Sidebar Header -->
             <div class="hstats-header">
               <div class="hstats-title-group">
-                <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:var(--accent);flex-shrink:0;">
+                <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:#ffffff;flex-shrink:0;">
                   <path
                     d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
                 </svg>
@@ -3537,7 +949,7 @@
           let userHtml = "";
           if (alert.reporterName) {
             const isVictim = alert.reporterRole === "victim";
-            const roleBadge = `<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px;background:${isVictim ? 'rgba(230,57,70,0.2)' : 'rgba(59,130,246,0.2)'};color:${isVictim ? '#ff6b7a' : '#60a5fa'};">${isVictim ? 'VICTIM' : 'BYSTANDER'}</span>`;
+            const roleBadge = `<span class="${isVictim ? 'badge-role-victim' : 'badge-role-bystander'}" style="margin-left:6px;">${isVictim ? 'VICTIM' : 'BYSTANDER'}</span>`;
             userHtml = `
               <div>
                 <div style="font-size:12px;font-weight:600;color:var(--text-primary);white-space:nowrap;display:flex;align-items:center;">
@@ -3587,11 +999,11 @@
                   ${escapeHtml(type || "Reported")}
                 </span>
                 ${victims != null ? `<span class="badge-victims">${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
-                ${patients.length > 0 ? `<span class="badge-victims" style="color:#60a5fa;border-color:rgba(59,130,246,0.3);">${patients.length} patient${patients.length === 1 ? '' : 's'}</span>` : ''}
+                ${patients.length > 0 ? `<span class="badge-victims badge-patients">${patients.length} patient${patients.length === 1 ? '' : 's'}</span>` : ''}
               </div>
-              ${alert.incidentNotes ? `<div style="font-size:11px;color:#fed7aa;margin-top:4px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(alert.incidentNotes)}">🎙 "${escapeHtml(alert.incidentNotes)}"</div>` : ''}`;
+              ${alert.incidentNotes ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;" title="${escapeHtml(alert.incidentNotes)}"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:var(--text-muted);flex-shrink:0;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg> "${escapeHtml(alert.incidentNotes)}"</div>` : ''}`;
           } else {
-            incidentHtml = `<span class="badge-incident badge-pending">Pending Sheet</span>${alert.incidentNotes ? `<div style="font-size:11px;color:#fed7aa;margin-top:4px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(alert.incidentNotes)}">🎙 "${escapeHtml(alert.incidentNotes)}"</div>` : ""}`;
+            incidentHtml = `<span class="badge-incident badge-pending">Pending Sheet</span>${alert.incidentNotes ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;" title="${escapeHtml(alert.incidentNotes)}"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:var(--text-muted);flex-shrink:0;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg> "${escapeHtml(alert.incidentNotes)}"</div>` : ""}`;
           }
 
           const viewReportBtn = `
@@ -3608,7 +1020,7 @@
               <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
           } else if (isDeployed) {
             actionBtn = `
-              <span style="font-size:11px;font-weight:600;color:#fb923c;margin-right:2px;display:inline-flex;align-items:center;gap:3px;"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>En Route</span>
+              <span style="font-size:11px;font-weight:700;color:var(--color-deployed);margin-right:4px;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);"><svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>EN ROUTE</span>
               <button class="btn-resolve" onclick="resolveAlert('${escapeHtml(alert.id)}')">Resolve</button>`;
           } else {
             actionBtn = `<button class="btn-delete" onclick="askDelete('${escapeHtml(alert.id)}')">Delete</button>`;
@@ -3665,10 +1077,10 @@
       const statusBadge = document.getElementById("rmStatusBadge");
       if (isDeployed) {
         statusBadge.className = "badge badge-deployed";
-        statusBadge.textContent = "RESPONDERS DEPLOYED (EN ROUTE)";
+        statusBadge.textContent = "RESPONDERS DEPLOYED";
       } else if (isActive) {
         statusBadge.className = "badge badge-active";
-        statusBadge.textContent = "ACTIVE (PENDING DISPATCH)";
+        statusBadge.textContent = "ACTIVE (DISPATCH PENDING)";
       } else {
         statusBadge.className = "badge badge-resolved";
         statusBadge.textContent = "RESOLVED";
@@ -3709,8 +1121,7 @@
       if (rName || rRole || alert.userId) {
         const isVictim = rRole === "victim";
         const roleLabel = rRole ? (isVictim ? "Victim / Patient" : "Bystander / Witness") : "Transmitter";
-        const badgeColor = isVictim ? "#ff6b7a" : "#60a5fa";
-        const badgeBg = isVictim ? "rgba(230,57,70,0.15)" : "rgba(59,130,246,0.15)";
+        const roleClass = isVictim ? "badge-role-victim" : "badge-role-bystander";
 
         html += `
           <div style="margin-bottom:18px;">
@@ -3719,12 +1130,12 @@
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span style="font-size:15px;font-weight:700;color:var(--text-primary);">${escapeHtml(rName || alert.userId || "Unknown Caller")}</span>
-                  <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:${badgeBg};color:${badgeColor};text-transform:uppercase;">
+                  <span class="${roleClass}">
                     ${escapeHtml(roleLabel)}
                   </span>
                 </div>
                 ${rPhone ? `
-                  <a href="tel:${escapeHtml(rPhone)}" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#60a5fa;text-decoration:none;background:rgba(59,130,246,0.1);padding:4px 10px;border-radius:6px;border:1px solid rgba(59,130,246,0.2);">
+                  <a href="tel:${escapeHtml(rPhone)}" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-primary);text-decoration:none;background:var(--bg-elevated);padding:5px 11px;border-radius:var(--radius-xs);border:1px solid var(--border);">
                     <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
                     ${escapeHtml(rPhone)}
                   </a>` : ''}
@@ -3733,12 +1144,12 @@
         if (rProfile && (rProfile.bloodType || rProfile.allergies || rProfile.emergencyContact || rProfile.medicalConditions)) {
           html += `
               <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-subtle);font-size:11.5px;">
-                ${rProfile.bloodType ? `<div><span style="color:var(--text-muted);">Blood Type:</span> <strong style="color:#ff6b7a;padding:1px 6px;border-radius:3px;background:rgba(230,57,70,0.15);">${escapeHtml(rProfile.bloodType)}</strong></div>` : ''}
+                ${rProfile.bloodType ? `<div><span style="color:var(--text-muted);">Blood Type:</span> <strong style="color:var(--text-primary);padding:1px 6px;border-radius:3px;border:1px solid var(--border);font-family:var(--font-mono);">${escapeHtml(rProfile.bloodType)}</strong></div>` : ''}
                 ${rProfile.age ? `<div><span style="color:var(--text-muted);">Age:</span> <strong>${escapeHtml(rProfile.age)} yrs</strong></div>` : ''}
-                ${rProfile.allergies ? `<div><span style="color:var(--text-muted);">Allergies:</span> <strong style="color:#f59e0b;">${escapeHtml(rProfile.allergies)}</strong></div>` : ''}
+                ${rProfile.allergies ? `<div><span style="color:var(--text-muted);">Allergies:</span> <strong>${escapeHtml(rProfile.allergies)}</strong></div>` : ''}
                 ${rProfile.emergencyContact ? `<div><span style="color:var(--text-muted);">Emergency Contact:</span> <strong>${escapeHtml(rProfile.emergencyContact)}</strong></div>` : ''}
               </div>
-              ${rProfile.medicalConditions ? `<div style="font-size:11.5px;margin-top:8px;color:var(--text-muted);"><span style="color:var(--text-muted);">Conditions / History:</span> <strong>${escapeHtml(rProfile.medicalConditions)}</strong></div>` : ''}
+              ${rProfile.medicalConditions ? `<div style="font-size:11.5px;margin-top:8px;color:var(--text-secondary);"><span style="color:var(--text-muted);">Conditions / History:</span> <strong>${escapeHtml(rProfile.medicalConditions)}</strong></div>` : ''}
           `;
         }
 
@@ -3750,33 +1161,33 @@
       if (!hasReport) {
         if (alert.incidentNotes) {
           html += `
-            <div style="margin-bottom:14px;padding:12px 14px;background:rgba(234,88,12,0.14);border:1px solid rgba(234,88,12,0.35);border-radius:var(--radius-sm);display:flex;align-items:flex-start;gap:10px;">
-              <span style="font-size:16px;line-height:1;">🎙</span>
+            <div class="callout-voice-notes">
+              <svg viewBox="0 0 24 24" class="callout-voice-notes-icon"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">
-                  Spoken Incident / Voice Notes
+                <div class="callout-voice-notes-title">
+                  Spoken Incident Transmission
                 </div>
-                <div style="font-size:13px;color:#ffedd5;line-height:1.45;">
-                  ${escapeHtml(alert.incidentNotes)}
+                <div class="callout-voice-notes-text">
+                  "${escapeHtml(alert.incidentNotes)}"
                 </div>
               </div>
             </div>`;
         }
         html += `
           <div style="text-align:center;padding:36px 20px;color:var(--text-muted);font-size:13px;">
-            The caller transmitted an SOS signal from User ID: <code style="color:#60a5fa;">${escapeHtml(alert.userId || "Unknown")}</code>, but has not completed the supplementary incident sheet yet.
+            The caller transmitted an SOS signal from User ID: <code style="color:var(--text-primary);font-family:var(--font-mono);background:var(--bg-card);padding:2px 6px;border:1px solid var(--border);border-radius:3px;">${escapeHtml(alert.userId || "Unknown")}</code>, but has not completed the supplementary incident sheet yet.
           </div>`;
       } else {
         if (alert.incidentNotes) {
           html += `
-            <div style="margin-bottom:14px;padding:12px 14px;background:rgba(234,88,12,0.14);border:1px solid rgba(234,88,12,0.35);border-radius:var(--radius-sm);display:flex;align-items:flex-start;gap:10px;">
-              <span style="font-size:16px;line-height:1;">🎙</span>
+            <div class="callout-voice-notes">
+              <svg viewBox="0 0 24 24" class="callout-voice-notes-icon"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;font-weight:700;color:#fb923c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">
-                  Spoken Incident / Voice Notes
+                <div class="callout-voice-notes-title">
+                  Spoken Incident Transmission
                 </div>
-                <div style="font-size:13px;color:#ffedd5;line-height:1.45;">
-                  ${escapeHtml(alert.incidentNotes)}
+                <div class="callout-voice-notes-text">
+                  "${escapeHtml(alert.incidentNotes)}"
                 </div>
               </div>
             </div>`;
@@ -3789,11 +1200,11 @@
             <div class="report-meta-grid">
               <div class="report-meta-card">
                 <div class="report-meta-label">Accident Type</div>
-                <div class="report-meta-val" style="color:#ff6b7a;">${escapeHtml(type || "Not specified")}</div>
+                <div class="report-meta-val">${escapeHtml(type || "Not specified")}</div>
               </div>
               <div class="report-meta-card">
                 <div class="report-meta-label">Casualties Count</div>
-                <div class="report-meta-val" style="color:#60a5fa;">${victims != null ? victims : "Not specified"}</div>
+                <div class="report-meta-val">${victims != null ? victims : "Not specified"}</div>
               </div>
               <div class="report-meta-card">
                 <div class="report-meta-label">Nature of Injury</div>
@@ -3825,7 +1236,7 @@
             }
 
             const seizureTag = p.seizure === true
-              ? `<span class="badge-incident badge-fire">⚠️ Seizure</span>`
+              ? `<span class="badge-seizure">SEIZURE REPORTED</span>`
               : `<span style="font-size:11px;color:var(--text-muted);padding:2px 6px;">No Seizure</span>`;
 
             html += `
@@ -3856,21 +1267,21 @@
                   </div>
                   <div>
                     <span class="patient-field-label">Emergency Contact:</span>
-                    <span class="patient-field-val" style="color:#60a5fa;">${escapeHtml(p.emergencyContact || "—")}</span>
+                    <span class="patient-field-val">${escapeHtml(p.emergencyContact || "—")}</span>
                   </div>
                 </div>`;
 
             if (p.allergies && p.allergies.trim()) {
               html += `
                 <div class="patient-allergies-box">
-                  <strong>⚠️ Known Allergies:</strong> ${escapeHtml(p.allergies)}
+                  <strong>Known Allergies:</strong> ${escapeHtml(p.allergies)}
                 </div>`;
             }
 
             if (p.condition && p.condition.trim()) {
               html += `
                 <div class="patient-condition-box">
-                  <strong style="color:#60a5fa;">Symptoms / Condition:</strong> ${escapeHtml(p.condition)}
+                  <strong>Symptoms / Condition:</strong> ${escapeHtml(p.condition)}
                 </div>`;
             }
 
@@ -4194,8 +1605,8 @@
       return {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 9,
-        fillColor: isDeployed ? "#0284c7" : (isActive ? "#e63946" : "#10b981"),
-        fillOpacity: 0.95,
+        fillColor: isDeployed ? "#f59e0b" : (isActive ? "#ef4444" : "#10b981"),
+        fillOpacity: 1,
         strokeColor: "#ffffff",
         strokeWeight: 2
       };
@@ -4219,36 +1630,40 @@
         let incidentSnippet = "";
         if (type || victims != null) {
           incidentSnippet = `
-            <div style="font-size:12px;font-weight:600;color:#ff6b7a;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <div style="font-size:12px;font-weight:700;color:#ffffff;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
               <span>${escapeHtml(type || "Incident")}</span>
-              ${victims != null ? `<span style="font-size:11px;color:#8b8fa8;font-weight:normal;">• ${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
+              ${victims != null ? `<span style="font-size:11px;color:var(--text-muted);font-weight:normal;">• ${victims} victim${victims === 1 ? '' : 's'}</span>` : ''}
             </div>`;
         }
 
+        const isDeployed = alert.status === "deployed";
+        const statusColor = isActive ? "#ef4444" : (isDeployed ? "#f59e0b" : "#10b981");
+        const statusLabel = isActive ? "Active Emergency" : (isDeployed ? "Responders En Route" : "Resolved Scene");
+
         const infoContent = `
-          <div style="background:#161929;padding:14px 16px;border-radius:10px;min-width:220px;color:#e8eaf0;font-family:Inter,sans-serif;">
-            <div style="font-weight:600;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-              <span style="width:7px;height:7px;border-radius:50%;background:${isActive ? '#e63946' : '#10b981'};display:inline-block;"></span>
-              ${isActive ? '<span style="color:#ff6b7a;">Active Alert</span>' : '<span style="color:#34d399;">Resolved</span>'}
+          <div style="background:#141721;padding:14px 16px;border-radius:8px;min-width:230px;color:#ffffff;font-family:Inter,sans-serif;border:1px solid rgba(255,255,255,0.15);">
+            <div style="font-weight:700;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.04em;">
+              <span style="width:7px;height:7px;border-radius:50%;background:${statusColor};box-shadow:0 0 6px ${statusColor};display:inline-block;"></span>
+              <span style="color:${statusColor};">${statusLabel}</span>
             </div>
             ${incidentSnippet}
-            <div style="font-size:12px;color:#8b8fa8;margin-bottom:4px;">
+            <div style="font-size:11.5px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:4px;">
               ${alert.latitude.toFixed(5)}, ${alert.longitude.toFixed(5)}
             </div>
-            <div style="font-size:11px;color:#8b8fa8;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
               ${time}
             </div>
-            <button onclick="openReportModal('${alert.id}')"
-              style="padding:7px 12px;background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;margin-bottom:6px;">
-              View Accident Report
+            <button class="btn-view-report" onclick="openReportModal('${alert.id}')"
+              style="width:100%;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+              View Details Sheet
             </button>
             ${isActive
-            ? `<button onclick="resolveAlertFromMap('${alert.id}')"
-                   style="padding:7px 12px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+            ? `<button class="btn-resolve" onclick="resolveAlertFromMap('${alert.id}')"
+                   style="width:100%;">
                    Mark Resolved
                  </button>`
-            : `<button onclick="deleteAlertFromMap('${alert.id}')"
-                   style="padding:7px 12px;background:rgba(230,57,70,0.15);color:#ff6b7a;border:1px solid rgba(230,57,70,0.3);border-radius:9px;cursor:pointer;font-size:12px;width:100%;font-family:Inter,sans-serif;font-weight:500;">
+            : `<button class="btn-delete" onclick="deleteAlertFromMap('${alert.id}')"
+                   style="width:100%;">
                    Delete
                  </button>`
           }
@@ -4322,16 +1737,20 @@
           ? `<span class="badge-incident ${type.toLowerCase().includes('fire') ? 'badge-fire' : type.toLowerCase().includes('medic') ? 'badge-medical' : type.toLowerCase().includes('vehic') ? 'badge-vehicle' : 'badge-other'}" style="font-size:10px;padding:1px 6px;">${escapeHtml(type)}</span>`
           : '';
 
+        const isDeployed = alert.status === "deployed";
         const item = document.createElement("div");
-        item.className = "map-alert-item" + (isActive ? "" : " resolved");
+        item.className = "map-alert-item" + (isActive ? "" : (isDeployed ? " deployed" : " resolved"));
+        const dotColor = isActive ? "var(--color-urgent)" : (isDeployed ? "var(--color-deployed)" : "var(--color-resolved)");
+        const titleColor = isActive ? "#f87171" : (isDeployed ? "#fbbf24" : "var(--text-primary)");
+        const titleText = isActive ? "Active Emergency" : (isDeployed ? "En Route (Deployed)" : "Resolved Scene");
         item.innerHTML = `
-          <div class="dot" style="background:${isActive ? "var(--accent)" : "var(--green)"};box-shadow:${isActive ? "0 0 6px var(--accent)" : "none"}"></div>
+          <div class="dot" style="background:${dotColor};box-shadow:${isActive ? '0 0 6px var(--color-urgent)' : 'none'}"></div>
           <div class="map-alert-info">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;">
-              <strong>${isActive ? "Active Alert" : "Resolved Scene"}</strong>
+              <strong style="color:${titleColor};">${titleText}</strong>
               ${typeBadge}
             </div>
-            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);">📍 ${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);">${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}</span>
             <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">${time}</span>
           </div>`;
 
@@ -4571,24 +1990,24 @@
     function getIncidentTypeMeta(type) {
       const t = (type || "").toLowerCase().trim();
       if (t.includes("fire")) {
-        return { label: "Fire Emergency", icon: "🔥", color: "#ef4444" };
+        return { label: "Fire Emergency", icon: "FIRE", color: "#ef4444" };
       }
       if (t.includes("med") || t.includes("health") || t.includes("cardiac")) {
-        return { label: "Medical Emergency", icon: "🩺", color: "#06b6d4" };
+        return { label: "Medical Emergency", icon: "MED", color: "#06b6d4" };
       }
       if (t.includes("vehic") || t.includes("traffic") || t.includes("crash") || t.includes("accident")) {
-        return { label: "Vehicular Accident", icon: "🚗", color: "#f59e0b" };
+        return { label: "Vehicular Accident", icon: "VEH", color: "#f59e0b" };
       }
       if (t.includes("haz") || t.includes("chem") || t.includes("gas") || t.includes("toxic")) {
-        return { label: "Hazmat / Chemical", icon: "⚠️", color: "#eab308" };
+        return { label: "Hazmat / Chemical", icon: "HAZ", color: "#eab308" };
       }
       if (t.includes("electr") || t.includes("wire") || t.includes("power")) {
-        return { label: "Electrical Hazard", icon: "⚡", color: "#a855f7" };
+        return { label: "Electrical Hazard", icon: "ELEC", color: "#a855f7" };
       }
       if (t.includes("flood") || t.includes("water") || t.includes("typhoon") || t.includes("storm")) {
-        return { label: "Flood / Natural Disaster", icon: "🌊", color: "#3b82f6" };
+        return { label: "Flood / Disaster", icon: "FLD", color: "#3b82f6" };
       }
-      return { label: type || "Other Incident", icon: "📋", color: "#94a3b8" };
+      return { label: type || "Other Incident", icon: "RPT", color: "#94a3b8" };
     }
 
     // ── 1. Per Event Report ──
@@ -4666,7 +2085,7 @@
           </div>
           <div class="hstats-kpi-card">
             <span class="hstats-kpi-label">Casualties</span>
-            <span class="hstats-kpi-value" style="color:${totalCasualties > 0 ? '#ef4444' : 'var(--text-primary)'}">${totalCasualties}</span>
+            <span class="hstats-kpi-value" style="color:var(--text-primary);font-weight:700;">${totalCasualties}</span>
           </div>
         </div>
 
@@ -4684,7 +2103,7 @@
           <div class="hstats-row-card">
             <div class="hstats-row-top">
               <span class="hstats-row-title">
-                <span>${t.icon}</span>
+                <span class="badge-incident" style="font-size:10px;padding:1px 5px;font-family:var(--font-mono);">${t.icon}</span>
                 <span>${escapeHtml(t.name)}</span>
               </span>
               <span class="hstats-row-badge">${t.count} (${pct}%)</span>
@@ -4694,7 +2113,7 @@
             </div>
             <div class="hstats-row-meta">
               <span>${t.active} Active · ${t.resolved} Resolved</span>
-              <span>${t.casualties > 0 ? `⚠️ ${t.casualties} casualty` + (t.casualties > 1 ? "ies" : "") : "0 reported casualties"}</span>
+              <span>${t.casualties > 0 ? `${t.casualties} casualty` + (t.casualties > 1 ? "ies" : "") : "0 reported casualties"}</span>
             </div>
           </div>
         `;
@@ -4782,15 +2201,15 @@
         const pctOfTotal = alerts.length > 0 ? ((m.total / alerts.length) * 100).toFixed(1) : 0;
         const barWidth = Math.round((m.total / maxMonthCount) * 100);
         const isPeak = m.total === peakMonth.total && m.total > 0;
-        const barColor = isPeak ? "#ef4444" : (m.total > 0 ? "rgba(239, 68, 68, 0.75)" : "transparent");
+        const barColor = isPeak ? "#ffffff" : (m.total > 0 ? "rgba(255, 255, 255, 0.55)" : "transparent");
 
         html += `
-          <div class="hstats-row-card" style="${isPeak ? 'border-color:rgba(239, 68, 68, 0.3);background:rgba(239, 68, 68, 0.04);' : ''}">
+          <div class="hstats-row-card" style="${isPeak ? 'border-color:rgba(255, 255, 255, 0.4);background:rgba(255, 255, 255, 0.04);' : ''}">
             <div class="hstats-row-top">
               <span class="hstats-row-title">
                 <span style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);width:26px;">${m.shortName}</span>
                 <span>${m.monthName}</span>
-                ${isPeak ? '<span style="font-size:9px;text-transform:uppercase;background:rgba(239,68,68,0.2);color:#ef4444;padding:1px 5px;border-radius:4px;font-weight:700;">Peak</span>' : ''}
+                ${isPeak ? '<span style="font-size:9px;text-transform:uppercase;background:#ffffff;color:#0c0e14;padding:1px 5px;border-radius:3px;font-weight:800;font-family:var(--font-mono);">Peak</span>' : ''}
               </span>
               <span class="hstats-row-badge">${m.total} ${m.total === 1 ? 'alert' : 'alerts'}</span>
             </div>
