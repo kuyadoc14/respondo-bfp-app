@@ -4,810 +4,1454 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com https://firestore.googleapis.com; frame-src 'none'; object-src 'none';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com https://firestore.googleapis.com; frame-src 'none'; object-src 'none';" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="BFP Respondo" />
+  <meta name="apple-mobile-web-app-title" content="ResponDo BFP" />
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <title>BFP Respondo • Emergency SOS</title>
+  <title>ResponDo • Bureau of Fire Protection</title>
+
+  <!-- Google Font: Poppins matching native Android app typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0A0A0A;
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000000;
       color: #ffffff;
-      min-height: 100vh;
-      min-height: 100dvh;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── Android Device Viewport Frame ── */
+    .app-viewport {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0 auto;
+      background: #0A0A0A;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.85);
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+    }
+
+    /* ── Full-screen Tap-to-dismiss Overlay ── */
+    .menu-dismiss-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 40;
+    }
+    .menu-dismiss-overlay.active {
+      display: block;
+    }
+
+    /* ── Top Bar Container (Matches Android fragment_sos.xml) ── */
+    .top-header {
+      position: relative;
+      width: 100%;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+      padding-bottom: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px 24px;
-      position: relative;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
+      z-index: 30;
     }
 
-    /* ── Top Header Bar ── */
-    .top-bar {
-      width: 100%;
-      max-width: 440px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      z-index: 10;
-    }
-
-    .brand-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #9CA3AF;
-      letter-spacing: 0.04em;
-    }
-
-    .brand-dot {
-      width: 6px;
-      height: 6px;
+    /* Top Left Menu Button (Matches Android bg_menu_button & hamburger) */
+    .btn-sos-menu {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 0px) + 18px);
+      left: 18px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: #10B981;
-      box-shadow: 0 0 6px #10B981;
-    }
-
-    .btn-profile-top {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #E5E7EB;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-
-    .btn-profile-top:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-    }
-
-    /* ── Main SOS Container ── */
-    .sos-main {
-      width: 100%;
-      max-width: 440px;
+      background: #222226;
+      border: 1px solid #363640;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex: 1;
-      margin: 10px 0 20px;
+      gap: 4px;
+      cursor: pointer;
+      z-index: 50;
+      transition: transform 0.1s ease, background 0.2s;
+    }
+    .btn-sos-menu:active {
+      transform: scale(0.92);
+      background: #2a2a30;
+    }
+    .hamburger-bar {
+      width: 20px;
+      height: 2.4px;
+      background: #FFFFFF;
+      border-radius: 3px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-origin: center;
+    }
+    .btn-sos-menu.open .bar-top {
+      transform: translateY(6.4px) rotate(45deg);
+    }
+    .btn-sos-menu.open .bar-mid {
+      opacity: 0;
+      transform: scale(0.2);
+    }
+    .btn-sos-menu.open .bar-bot {
+      transform: translateY(-6.4px) rotate(-45deg);
     }
 
-    /* ── Header Title & Official Logo (Android Match) ── */
-    .sos-header {
+    /* Top Right Profile Avatar Button */
+    .btn-top-profile {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 0px) + 18px);
+      right: 18px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #222226;
+      border: 1px solid #363640;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 50;
+      color: #FFFFFF;
+      transition: transform 0.1s ease, background 0.2s;
+    }
+    .btn-top-profile:active {
+      transform: scale(0.92);
+      background: #2a2a30;
+    }
+    .btn-top-profile svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    /* Top Center: Official Logo + Title */
+    .brand-center {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 24px;
+      cursor: default;
     }
-
-    .header-logo-wrap {
-      width: 58px;
-      height: 58px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 6px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    }
-
-    .header-logo-img {
-      width: 100%;
-      height: 100%;
+    .brand-logo-img {
+      width: 56px;
+      height: 56px;
       object-fit: contain;
+      filter: drop-shadow(0 4px 14px rgba(206, 32, 41, 0.35));
     }
-
-    .header-title {
-      font-size: 18px;
+    .brand-title {
+      font-size: 17px;
       font-weight: 800;
       letter-spacing: 0.18em;
       color: #FFFFFF;
       text-transform: uppercase;
+      margin-top: 8px;
       line-height: 1.2;
     }
-
-    .header-subtitle {
-      font-size: 11.5px;
-      color: #6B7280;
-      margin-top: 3px;
+    .brand-subtitle {
+      font-size: 11px;
+      color: #444444;
+      font-weight: 500;
       letter-spacing: 0.02em;
+      margin-top: 2px;
     }
 
-    /* ── Center SOS Area with Radar Wave Ripples ── */
-    .sos-center-wrap {
+    /* ── Quick Controls Popup Card ── */
+    .menu-popup-card {
+      display: none;
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 0px) + 70px);
+      left: 18px;
+      width: 264px;
+      background: #1A1A1E;
+      border: 1px solid #26262E;
+      border-radius: 18px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
+      padding: 10px 8px;
+      z-index: 45;
+      animation: popupSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .menu-popup-card.active {
+      display: block;
+    }
+    @keyframes popupSlideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .popup-header-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #888899;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 4px 0 6px 10px;
+    }
+    .menu-item-row {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .menu-item-row:hover, .menu-item-row:active {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .menu-item-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .menu-item-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+    .menu-item-sub {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #AAAAAA;
+      margin-top: 2px;
+    }
+    .status-dot-mini {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #777777;
+    }
+    .status-dot-mini.active {
+      background: #10B981;
+      box-shadow: 0 0 6px #10B981;
+    }
+    .menu-item-chevron {
+      color: #666666;
+      font-size: 16px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .menu-divider {
+      height: 1px;
+      background: #26262E;
+      margin: 3px 8px;
+    }
+
+    /* ── Center: SOS Radar Ripples & Hero Button ── */
+    .sos-center-container {
+      position: relative;
       width: 100%;
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      margin-top: -24px;
     }
 
-    .radar-container {
+    .radar-frame {
       position: relative;
-      width: 270px;
-      height: 270px;
+      width: 280px;
+      height: 280px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto;
     }
 
-    .radar-ring {
+    /* Outer Ripple (Matches circle_ring_outer & pulse_ring_2) */
+    .ring-outer {
       position: absolute;
+      width: 280px;
+      height: 280px;
       border-radius: 50%;
+      background: rgba(206, 32, 41, 0.10);
+      border: 1.5px solid rgba(206, 32, 41, 0.25);
+      animation: animPulseRing2 2.2s cubic-bezier(0.1, 0.85, 0.2, 1) infinite;
+      animation-delay: 0.65s;
       pointer-events: none;
-      box-sizing: border-box;
     }
 
-    .outer-ring {
-      width: 270px;
-      height: 270px;
-      border: 1.5px solid rgba(239, 68, 68, 0.16);
-      background: radial-gradient(circle, transparent 55%, rgba(239, 68, 68, 0.04) 100%);
-      animation: pulseOuterRing 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-    }
-
-    .mid-ring {
-      width: 226px;
-      height: 226px;
-      border: 1.5px solid rgba(239, 68, 68, 0.25);
-      background: radial-gradient(circle, transparent 50%, rgba(239, 68, 68, 0.06) 100%);
-      animation: pulseMidRing 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-      animation-delay: 0.35s;
-    }
-
-    @keyframes pulseOuterRing {
-      0% {
-        transform: scale(0.88);
-        opacity: 0.7;
-      }
-      50% {
-        transform: scale(1.06);
-        opacity: 0.25;
-      }
-      100% {
-        transform: scale(0.88);
-        opacity: 0.7;
-      }
-    }
-
-    @keyframes pulseMidRing {
-      0% {
-        transform: scale(0.9);
-        opacity: 0.85;
-      }
-      50% {
-        transform: scale(1.04);
-        opacity: 0.35;
-      }
-      100% {
-        transform: scale(0.9);
-        opacity: 0.85;
-      }
-    }
-
-    /* ── SOS Button ── */
-    #btnSOS {
-      position: relative;
-      z-index: 2;
-      width: 184px;
-      height: 184px;
+    /* Mid Ripple (Matches circle_ring_mid & pulse_ring_1) */
+    .ring-mid {
+      position: absolute;
+      width: 230px;
+      height: 230px;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #ff4d4d 0%, #e63946 60%, #b91c1c 100%);
+      background: rgba(206, 32, 41, 0.18);
+      border: 2px solid rgba(206, 32, 41, 0.38);
+      animation: animPulseRing1 2.2s cubic-bezier(0.1, 0.85, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+
+    @keyframes animPulseRing1 {
+      0% {
+        transform: scale(0.88);
+        opacity: 0.65;
+      }
+      100% {
+        transform: scale(1.18);
+        opacity: 0;
+      }
+    }
+
+    @keyframes animPulseRing2 {
+      0% {
+        transform: scale(0.88);
+        opacity: 0.50;
+      }
+      100% {
+        transform: scale(1.20);
+        opacity: 0;
+      }
+    }
+
+    /* ── SOS Tactile 3D Push Button (Matches bg_sos_button.xml) ── */
+    .btn-sos-hero {
+      position: relative;
+      z-index: 5;
+      width: 186px;
+      height: 186px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #E6303A 0%, #CE2029 60%, #9E1219 100%);
       border: 3px solid rgba(255, 255, 255, 0.35);
-      color: #ffffff;
-      font-size: 46px;
-      font-weight: 900;
-      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-family: inherit;
+      box-shadow:
+        0 10px 28px rgba(206, 32, 41, 0.55),
+        inset 0 2.5px 5px rgba(255, 255, 255, 0.55),
+        inset 0 -6px 12px rgba(0, 0, 0, 0.45);
       cursor: pointer;
       outline: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      box-shadow:
-        0 8px 30px rgba(230, 57, 70, 0.5),
-        inset 0 2px 4px rgba(255, 255, 255, 0.5),
-        inset 0 -6px 12px rgba(0, 0, 0, 0.35);
-      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, background 0.3s;
-      font-family: inherit;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      user-select: none;
+      transition: transform 0.08s ease, filter 0.15s ease, background 0.25s ease, box-shadow 0.25s ease;
+      animation: heroHeartbeat 1.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroHeartbeat {
+      0% { transform: scale(1.0); }
+      100% { transform: scale(1.035); }
+    }
+
+    /* 3D Press Down Effect (Matches Android OnTouchListener 0.96 scale + 4px Y) */
+    .btn-sos-hero:active:not(:disabled),
+    .btn-sos-hero.is-pressed:not(:disabled) {
+      transform: scale(0.96) translateY(4px) !important;
+      filter: brightness(0.94);
+      box-shadow:
+        0 4px 14px rgba(206, 32, 41, 0.4),
+        inset 0 4px 8px rgba(0, 0, 0, 0.55);
+      animation: none !important;
+    }
+
+    .btn-sos-hero:disabled {
+      cursor: default;
+      animation: none !important;
+    }
+
+    .btn-sos-hero.state-sent {
+      background: radial-gradient(circle at 35% 30%, #883333 0%, #662222 65%, #441111 100%) !important;
+      border-color: rgba(255, 255, 255, 0.25) !important;
+      box-shadow: 0 8px 24px rgba(100, 30, 30, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .btn-sos-hero.state-enroute {
+      background: radial-gradient(circle at 35% 30%, #f97316 0%, #ea580c 60%, #c2410c 100%) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 10px 28px rgba(234, 88, 12, 0.6), inset 0 2.5px 5px rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .sos-text-main {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       line-height: 1;
+      text-shadow: 0 3px 4px rgba(128, 0, 0, 0.6);
+    }
+    .sos-text-sub {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      margin-top: 3px;
+      text-transform: uppercase;
+      opacity: 0.95;
     }
 
-    #btnSOS:hover:not(:disabled) {
-      transform: scale(1.03);
-      box-shadow:
-        0 12px 38px rgba(230, 57, 70, 0.65),
-        inset 0 2px 6px rgba(255, 255, 255, 0.6),
-        inset 0 -6px 12px rgba(0, 0, 0, 0.35);
-    }
-
-    #btnSOS:active:not(:disabled) {
-      transform: scale(0.94);
-      filter: brightness(0.92);
-      box-shadow:
-        0 4px 14px rgba(230, 57, 70, 0.4),
-        inset 0 4px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    #btnSOS:disabled {
-      background: radial-gradient(circle at 35% 30%, #4a2123 0%, #301416 65%, #1c0a0b 100%);
-      border-color: rgba(255, 255, 255, 0.12);
-      color: #8f6568;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .instruction {
+    /* Instruction text (Matches tvInstruction) */
+    .tv-instruction {
       font-size: 13px;
-      color: #6B7280;
-      margin-top: 22px;
-      text-align: center;
+      color: #3A3A3A;
       letter-spacing: 0.01em;
+      margin-top: 28px;
+      text-align: center;
+      transition: opacity 0.25s ease;
     }
 
-    /* ── UNBOXED TRANSPARENT STATUS CARD (No Yellow Box!) ── */
-    #statusCard {
+    /* ── Status Display (Clean, Unboxed, Transparent, No Yellow!) ── */
+    .status-card-unboxed {
       display: none;
       width: 100%;
-      max-width: 340px;
-      margin-top: 14px;
+      max-width: 320px;
+      margin-top: 16px;
       text-align: center;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 10px;
+      background: transparent;
+      padding: 0 12px;
+      animation: fadeInStatus 0.35s ease;
+    }
+    @keyframes fadeInStatus {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .live-indicator {
+    .tv-status {
+      font-size: 13px;
+      color: #CCCCCC;
+      line-height: 1.45;
+      margin-bottom: 8px;
+      white-space: pre-line;
+      text-align: center;
+    }
+
+    /* Clickable Accident Report link with exclamation icon (Matches btnOpenReport) */
+    .btn-open-report {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 7px;
-      margin-bottom: 6px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #FF6B00;
-      box-shadow: 0 0 10px rgba(255, 107, 0, 0.7);
-      animation: blinkDot 0.8s infinite alternate;
-    }
-
-    .dot.green {
-      background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-      animation: none;
-    }
-
-    .dot.orange,
-    .dot.blue {
-      background: #EA580C;
-      box-shadow: 0 0 12px rgba(234, 88, 12, 0.85);
-      animation: blinkDot 0.8s infinite alternate;
-    }
-
-    @keyframes blinkDot {
-      from { opacity: 1; transform: scale(1); }
-      to { opacity: 0.3; transform: scale(0.85); }
-    }
-
-    .live-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #FF6B00;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .live-label.green {
-      color: #10b981;
-    }
-
-    .live-label.orange,
-    .live-label.blue {
-      color: #FF6B00;
-    }
-
-    #statusText {
-      font-size: 13.5px;
-      color: #D1D5DB;
-      line-height: 1.5;
-      margin-bottom: 8px;
-      white-space: pre-line;
-    }
-
-    /* Clickable accident report link matching Android app */
-    .btn-open-report-link {
       background: transparent;
       border: none;
-      color: #ff6b7a;
-      font-size: 12.5px;
-      font-weight: 600;
+      padding: 6px 10px;
       cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      margin: 0 auto;
-      transition: all 0.2s;
       font-family: inherit;
+      transition: opacity 0.2s;
     }
-
-    .btn-open-report-link:hover {
-      background: rgba(239, 68, 68, 0.12);
-      color: #ff8591;
+    .btn-open-report:active {
+      opacity: 0.75;
     }
-
-    .warn-icon {
-      display: inline-flex;
+    .report-exclamation-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(206, 32, 41, 0.15);
+      border: 1px solid rgba(206, 32, 41, 0.35);
+      color: #CE2029;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 17px;
-      height: 17px;
-      border-radius: 50%;
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #ff4d4d;
-      font-size: 11px;
-      font-weight: 800;
     }
-
-    /* ── Bottom Section: Location & Portal Link ── */
-    .sos-footer {
-      width: 100%;
-      max-width: 440px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      padding-top: 10px;
+    .report-link-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #CE2029;
     }
-
-    .location-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
-      color: #6B7280;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      text-align: center;
-    }
-
-    .admin-link {
-      font-size: 11px;
-      color: #4B5563;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .admin-link:hover {
-      color: #9CA3AF;
+    .report-link-chevron {
+      font-size: 14px;
+      font-weight: 700;
+      color: #CE2029;
+      opacity: 0.8;
     }
 
     /* ══════════════════════════════════════════════════════════════
-       MODAL OVERLAY SYSTEM (Role Selection & Profile)
+       BOTTOM SHEET MODAL (Exact match of dialog_role_selection.xml)
        ══════════════════════════════════════════════════════════════ */
-    .modal-overlay {
+    .modal-backdrop {
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 999;
-      align-items: center;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: flex-end;
       justify-content: center;
-      padding: 18px;
     }
-
-    .modal-overlay.active {
+    .modal-backdrop.active {
       display: flex;
     }
 
-    .modal-card {
-      background: #141722;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 18px;
+    .bottom-sheet-card {
       width: 100%;
-      max-width: 410px;
-      max-height: 88vh;
-      overflow-y: auto;
-      padding: 24px;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.75);
-      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 440px;
+      background: #FFFFFF;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 12px 24px 28px;
+      color: #1A1A2E;
+      box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
+      animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
     }
 
-    @keyframes modalSlideUp {
-      from { transform: translateY(16px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    .drag-handle-bar {
+      width: 36px;
+      height: 5px;
+      background: #D1D5DB;
+      border-radius: 999px;
+      margin: 0 auto 16px;
     }
 
-    .modal-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
-
-    .modal-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.01em;
-    }
-
-    .modal-subtitle {
-      font-size: 12px;
-      color: #9CA3AF;
-      margin-top: 4px;
-      line-height: 1.4;
-    }
-
-    .btn-close {
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      color: #9CA3AF;
-      font-size: 16px;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .btn-close:hover {
-      background: rgba(255, 255, 255, 0.16);
-      color: #ffffff;
-    }
-
-    /* Form Styles */
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #9CA3AF;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .form-group input {
-      width: 100%;
-      height: 42px;
-      background: #0D0F18;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      padding: 0 12px;
-      font-size: 13px;
-      color: #ffffff;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      font-family: inherit;
-    }
-
-    .form-group input:focus {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-    }
-
-    .form-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-primary {
-      width: 100%;
-      height: 44px;
-      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      color: #ffffff;
-      font-size: 13.5px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 14px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
-      font-family: inherit;
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      width: 100%;
-      height: 40px;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      color: #9CA3AF;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: #ffffff;
-    }
-
-    /* Role selection cards */
-    .role-option-card {
-      background: #0D0F18;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .sheet-header-row {
       display: flex;
       align-items: center;
       gap: 14px;
-      text-align: left;
+      margin-bottom: 12px;
+    }
+    .sheet-header-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: #FDE8E9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #CE2029;
+    }
+    .sheet-header-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.2;
+    }
+    .sheet-subtitle {
+      font-size: 13px;
+      color: #6B7280;
+      margin-top: 2px;
     }
 
-    .role-option-card:hover {
-      border-color: rgba(239, 68, 68, 0.5);
-      transform: translateY(-1px);
-      background: #141724;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    .sheet-divider {
+      height: 1px;
+      background: #EEEEEE;
+      margin: 8px 0 14px;
     }
 
-    .role-icon {
-      font-size: 26px;
+    /* Role Choice Cards */
+    .role-selection-card {
+      background: #FFFFFF;
+      border: 1px solid #EEEEEE;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .role-selection-card:active {
+      transform: scale(0.98);
+      background: #FAFAFA;
+    }
+    .role-card-victim {
+      border: 1.5px solid #FEE2E2;
+      background: #FFFBFB;
+    }
+    .role-badge-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #FDE8E9;
+      color: #CE2029;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
       flex-shrink: 0;
     }
-
-    .role-text-title {
-      font-size: 14.5px;
+    .role-badge-icon.gray {
+      background: #F3F4F6;
+      color: #4B5563;
+    }
+    .role-card-info {
+      flex: 1;
+    }
+    .role-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .role-card-title.red {
+      color: #CE2029;
+    }
+    .role-card-title.dark {
+      color: #1A1A2E;
+    }
+    .role-card-sub {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+    .role-card-chevron {
+      font-size: 20px;
       font-weight: 700;
-      color: #ffffff;
+      color: #CE2029;
+      margin-left: 8px;
+    }
+    .role-card-chevron.gray {
+      color: #9CA3AF;
     }
 
-    .role-text-desc {
+    .btn-skip-sheet {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #6B7280;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 8px 0;
+      text-align: center;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ACCIDENT REPORT BOTTOM SHEET (Exact match of layout_accident_report.xml)
+       ══════════════════════════════════════════════════════════════ */
+    .accident-sheet-backdrop {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 105;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .accident-sheet-backdrop.active {
+      display: flex;
+    }
+    .accident-sheet-card {
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #FFFFFF;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 12px 22px 32px;
+      color: #1A1A2E;
+      box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
+      animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-status-banner {
+      background: #ECFDF5;
+      border: 1px solid #D1FAE5;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .sheet-status-banner-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #10B981;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .sheet-status-banner-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #059669;
+      line-height: 1.3;
+    }
+    .section-label-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .section-accent-line {
+      width: 3px;
+      height: 12px;
+      background: #CE2029;
+      border-radius: 2px;
+    }
+    .section-title-tag {
+      font-size: 11px;
+      font-weight: 800;
+      color: #6B7280;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .field-label-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1A1A2E;
+      margin-bottom: 8px;
+    }
+    .field-label-row svg {
+      width: 16px;
+      height: 16px;
+      fill: #CE2029;
+    }
+
+    /* Choice Chips */
+    .chip-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .choice-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .choice-chip.active {
+      background: #CE2029;
+      border-color: #CE2029;
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(206, 32, 41, 0.3);
+    }
+    .victim-count-input {
+      width: 120px;
+      height: 44px;
+      background: #F9FAFB;
+      border: 1px solid #D1D5DB;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1A1A2E;
+      text-align: center;
+      font-family: inherit;
+      margin-bottom: 18px;
+      outline: none;
+    }
+    .victim-count-input:focus {
+      border-color: #CE2029;
+    }
+
+    /* Bystander Card Section */
+    .bystander-sheet-box {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+    }
+    .bystander-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .bystander-title-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1A1A2E;
+    }
+    .bystander-sub-desc {
+      font-size: 12px;
+      color: #6B7280;
+      margin-bottom: 12px;
+      line-height: 1.35;
+    }
+    .report-input-field {
+      width: 100%;
+      height: 42px;
+      background: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: #1A1A2E;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    .report-input-field:focus {
+      border-color: #CE2029;
+    }
+    .btn-submit-accident-report {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(180deg, #E6303A 0%, #CE2029 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(206, 32, 41, 0.35);
+      margin-bottom: 8px;
+      transition: filter 0.15s;
+    }
+    .btn-submit-accident-report:active {
+      filter: brightness(0.92);
+    }
+    .btn-skip-accident-report {
+      width: 100%;
+      height: 42px;
+      background: transparent;
+      border: none;
+      color: #6B7280;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* ── Patient Cards ─────────────────────────── */
+    .patient-card {
+      background: #F9FAFB;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 16px 14px 14px;
+      margin-bottom: 14px;
+      animation: slideInCard 0.22s ease;
+    }
+    @keyframes slideInCard {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .patient-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .patient-number-badge {
+      background: #CE2029;
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-remove-patient {
+      background: none;
+      border: 1.5px solid #EF4444;
+      color: #EF4444;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-remove-patient:hover { background: #FEE2E2; }
+    .patient-field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .patient-field {
+      margin-bottom: 10px !important;
+    }
+    .patient-condition-textarea {
+      resize: none;
+      min-height: 72px;
+      line-height: 1.5;
+    }
+    .patient-consciousness-chips {
+      margin-bottom: 10px;
+    }
+    .patient-card-divider {
+      height: 1px;
+      background: #E5E7EB;
+      margin: 12px 0;
+    }
+    .patient-seizure-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #F3F4F6;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 2px;
+    }
+    .patient-seizure-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+    }
+    .btn-add-patient {
+      width: 100%;
+      height: 44px;
+      background: #EFF6FF;
+      border: 1.5px dashed #93C5FD;
+      border-radius: 12px;
+      color: #1D4ED8;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 14px;
+      transition: background 0.15s;
+    }
+    .btn-add-patient:hover { background: #DBEAFE; }
+
+    /* ══════════════════════════════════════════════════════════════
+       EMERGENCY MEDICAL PROFILE MODAL (Matches fragment_profile.xml)
+       ══════════════════════════════════════════════════════════════ */
+    .profile-modal-backdrop {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 110;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .profile-modal-backdrop.active {
+      display: flex;
+    }
+    .profile-modal-card {
+      width: 100%;
+      max-width: 400px;
+      background: #141722;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 22px;
+      color: #FFFFFF;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+      max-height: 88vh;
+      overflow-y: auto;
+      animation: popupSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .profile-header-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .profile-header-sub {
       font-size: 12px;
       color: #9CA3AF;
       margin-top: 3px;
       line-height: 1.35;
     }
-
-    .bystander-opt-box {
+    .profile-input-group {
       margin-top: 12px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .profile-input-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #9CA3AF;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .profile-input-group input {
+      width: 100%;
+      height: 40px;
+      background: #0D0F18;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 13px;
+      color: #FFFFFF;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .profile-input-group input:focus {
+      border-color: #CE2029;
+    }
+    .btn-profile-save {
+      width: 100%;
+      height: 44px;
+      background: #CE2029;
+      color: #FFFFFF;
+      border: none;
       border-radius: 10px;
-      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 18px;
+      box-shadow: 0 4px 14px rgba(206, 32, 41, 0.35);
+      transition: background 0.2s;
+    }
+    .btn-profile-save:hover {
+      background: #e6303a;
+    }
+    .btn-profile-cancel {
+      width: 100%;
+      height: 38px;
+      background: transparent;
+      color: #9CA3AF;
+      border: none;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    /* iOS/Android style toggle switch */
+    .switch-wrap {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .switch-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #D1D5DB;
+      transition: .25s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #CE2029;
+    }
+    input:checked + .slider:before {
+      transform: translateX(16px);
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="brand-badge">
-      <span class="brand-dot"></span>
-      <span class="brand-text">BFP Respondo</span>
-    </div>
-    <button class="btn-profile-top" onclick="openProfileModal()" title="View and edit emergency profile">
-      <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-      <span id="topProfileLabel">My Profile</span>
-    </button>
-  </header>
+  <div class="app-viewport">
 
-  <!-- Main Content Wrap -->
-  <main class="sos-main">
+    <!-- Dismiss overlay for top-left popup menu -->
+    <div id="menuDismissOverlay" class="menu-dismiss-overlay" onclick="closeMenuPopup()"></div>
 
-    <!-- Header: Official Logo + Title (Android App Match) -->
-    <div class="sos-header">
-      <div class="header-logo-wrap">
-        <img src="icons/icon-96.png" alt="BFP Logo" class="header-logo-img" />
-      </div>
-      <h1 class="header-title">RESPONDO</h1>
-      <p class="header-subtitle">Bureau of Fire Protection</p>
-    </div>
+    <!-- ── Top Header Bar (Matches Android fragment_sos.xml) ── -->
+    <header class="top-header">
 
-    <!-- Center: Radar Ripple Waves + SOS Button -->
-    <div class="sos-center-wrap">
-      <div class="radar-container">
-        <div class="radar-ring outer-ring" id="ringOuter"></div>
-        <div class="radar-ring mid-ring" id="ringMid"></div>
-        <button id="btnSOS" onclick="sendSOS()" aria-label="Send Emergency SOS">SOS</button>
+      <!-- Top Left Animated Menu Button (3 Lines -> Triangle morph) -->
+      <button id="btnSosMenu" class="btn-sos-menu" onclick="toggleMenuPopup()" aria-label="Quick Settings Menu" title="Quick Settings">
+        <span class="hamburger-bar bar-top"></span>
+        <span class="hamburger-bar bar-mid"></span>
+        <span class="hamburger-bar bar-bot"></span>
+      </button>
+
+      <!-- Top Right Profile Avatar Button -->
+      <button class="btn-top-profile" onclick="openProfileModal()" aria-label="Emergency Profile" title="Emergency Medical Profile">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </button>
+
+      <!-- Center Logo & Title -->
+      <div class="brand-center">
+        <img src="icons/logo.png" alt="ResponDo Logo" class="brand-logo-img" />
+        <h1 class="brand-title">RESPONDO</h1>
+        <p class="brand-subtitle">Bureau of Fire Protection</p>
       </div>
 
-      <p class="instruction" id="instructionText">Press to alert BFP immediately</p>
+    </header>
 
-      <!-- UNBOXED TRANSPARENT STATUS (No Yellow Box!) -->
-      <div id="statusCard">
-        <div class="live-indicator">
-          <div class="dot" id="liveDot"></div>
-          <span class="live-label" id="liveLabel">ALERT ACTIVE</span>
+    <!-- ── Quick Controls Popup Card ── -->
+    <div id="menuPopupCard" class="menu-popup-card">
+      <div class="popup-header-label">QUICK CONTROLS</div>
+
+      <!-- Item 1: Wearable Device -->
+      <div class="menu-item-row" onclick="handleWearableClick()">
+        <div class="menu-item-icon">
+          <!-- Bluetooth icon in primary red -->
+          <svg viewBox="0 0 24 24" fill="#CE2029" style="width:18px;height:18px;"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
         </div>
-        <p id="statusText">Alert sent. Responders have been notified.</p>
-        <button id="btnOpenReportLink" class="btn-open-report-link" onclick="promptRoleSelection()">
-          <span class="warn-icon">!</span>
-          <span>Fill In Accident Report (Optional)</span>
+        <div class="menu-item-text">
+          <div class="menu-item-title">Wearable Device</div>
+          <div class="menu-item-sub">
+            <span id="dotBleStatus" class="status-dot-mini"></span>
+            <span id="tvBleBadgeText">Wearable Off</span>
+          </div>
+        </div>
+        <span class="menu-item-chevron">›</span>
+      </div>
+
+      <div class="menu-divider"></div>
+
+      <!-- Item 2: Shake SOS -->
+      <div class="menu-item-row" onclick="handleShakeSettingsClick()">
+        <div class="menu-item-icon">
+          <!-- Phone shake icon in orange -->
+          <svg viewBox="0 0 24 24" fill="#FF9800" style="width:18px;height:18px;"><path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14zm-4-1c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zM3.5 10H1v4h2.5v-4zm19.5 0h-2.5v4H23v-4z"/></svg>
+        </div>
+        <div class="menu-item-text">
+          <div class="menu-item-title">Shake SOS</div>
+          <div class="menu-item-sub">Emergency gesture</div>
+        </div>
+        <span class="menu-item-chevron">›</span>
+      </div>
+
+      <div class="menu-divider"></div>
+
+      <!-- Item 3: Emergency Profile -->
+      <div class="menu-item-row" onclick="closeMenuPopup(); openProfileModal();">
+        <div class="menu-item-icon">
+          <!-- User Profile Icon in Blue -->
+          <svg viewBox="0 0 24 24" fill="#60A5FA" style="width:18px;height:18px;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="menu-item-text">
+          <div class="menu-item-title">Emergency Profile</div>
+          <div id="menuProfileSub" class="menu-item-sub">Personal &amp; Medical Details</div>
+        </div>
+        <span class="menu-item-chevron">›</span>
+      </div>
+    </div>
+
+    <!-- ── Center: Radar Ripples & Hero 3D SOS Button ── -->
+    <main class="sos-center-container">
+
+      <div class="radar-frame">
+        <!-- Concentric Expanding Radar Waves -->
+        <div id="ringOuter" class="ring-outer"></div>
+        <div id="ringMid" class="ring-mid"></div>
+
+        <!-- 3D Convex Hero Push Button -->
+        <button id="btnSOS" class="btn-sos-hero" onclick="sendSOSAlert()" aria-label="Send Emergency SOS">
+          <span id="sosMainText" class="sos-text-main">SOS</span>
+          <span id="sosSubText" class="sos-text-sub" style="display:none;"></span>
         </button>
       </div>
-    </div>
 
-    <!-- Bottom: Location Pill & Portal Link -->
-    <div class="sos-footer">
-      <div class="location-pill" id="locationStatus">
-        <span>📍</span>
-        <span id="locationStatusText">Acquiring GPS location...</span>
-      </div>
-      <a class="admin-link" href="/index.html">Operations Portal</a>
-    </div>
+      <!-- Instruction: "Hold to send emergency alert" (Smoothly hides when active) -->
+      <p id="tvInstruction" class="tv-instruction">Hold to send emergency alert</p>
 
-  </main>
+      <!-- Transparent Unboxed Status Card (No yellow box, no alert active banner, no emojis) -->
+      <div id="statusCard" class="status-card-unboxed">
+        <p id="tvStatus" class="tv-status">Alert sent. Responders have been notified.</p>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       ROLE SELECTION MODAL (Prompted after SOS is sent)
-       ══════════════════════════════════════════════════════════════ -->
-  <div id="roleModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">🚨 SOS Alert Dispatched</div>
-          <div class="modal-subtitle">GPS coordinates sent. Are you involved in this emergency?</div>
-        </div>
+        <!-- Clickable accident report link matching Android btnOpenReport -->
+        <button id="btnOpenReport" class="btn-open-report" onclick="openAccidentReportSheet()">
+          <span class="report-exclamation-badge">!</span>
+          <span class="report-link-text">Accident Report</span>
+          <span class="report-link-chevron">›</span>
+        </button>
       </div>
 
-      <!-- Option 1: Victim -->
-      <div class="role-option-card" onclick="selectRoleVictim()">
-        <div class="role-icon">🙋</div>
-        <div>
-          <div class="role-text-title" style="color:#ff6b7a;">I AM the Victim</div>
-          <div class="role-text-desc" id="roleVictimDesc">I am injured or directly involved. Attaches my saved medical profile for BFP responders.</div>
-        </div>
-      </div>
+    </main>
 
-      <!-- Option 2: Bystander -->
-      <div class="role-option-card" onclick="selectRoleBystander()">
-        <div class="role-icon">👥</div>
-        <div>
-          <div class="role-text-title">I am a Bystander</div>
-          <div class="role-text-desc">Reporting for someone else. You can choose whether to include your contact details.</div>
-        </div>
-      </div>
+    <!-- ══════════════════════════════════════════════════════════════
+         ROLE SELECTION BOTTOM SHEET (Exact match of dialog_role_selection.xml)
+         ══════════════════════════════════════════════════════════════ -->
+    <div id="roleModal" class="modal-backdrop">
+      <div class="bottom-sheet-card">
+        <div class="drag-handle-bar"></div>
 
-      <!-- Bystander follow-up form -->
-      <div id="bystanderOptBox" class="bystander-opt-box" style="display:none;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#ffffff;cursor:pointer;margin-bottom:10px;">
-          <input type="checkbox" id="chkShareBystander" checked style="accent-color:#ef4444;width:16px;height:16px;" onchange="toggleBystanderInputs()" />
-          <span>Share my contact info with BFP for follow-up</span>
-        </label>
-        <div id="bystanderInputs">
-          <div class="form-group">
-            <input type="text" id="pwaBystanderName" placeholder="Your Name" />
+        <!-- Header row -->
+        <div class="sheet-header-row">
+          <div class="sheet-header-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
           </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <input type="tel" id="pwaBystanderPhone" placeholder="Your Phone Number" />
+          <div>
+            <div class="sheet-title">SOS Dispatched to BFP</div>
+            <div class="sheet-subtitle">GPS sent. Are you involved in this emergency?</div>
           </div>
         </div>
-        <button class="btn-primary" style="margin-top:12px;" onclick="confirmBystanderAlert()">Confirm &amp; Notify BFP</button>
-      </div>
 
-      <!-- Skip Button -->
-      <button class="btn-secondary" onclick="closeRoleModal()">Skip for now</button>
+        <div class="sheet-divider"></div>
+
+        <!-- Option 1: Victim (Auto-submits details & profile to BFP) -->
+        <div class="role-selection-card role-card-victim" onclick="selectRoleVictim()">
+          <div class="role-badge-icon">
+            <!-- 2-people victim icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </div>
+          <div class="role-card-info">
+            <div class="role-card-title red">I AM the Victim</div>
+            <div id="tvVictimSubtext" class="role-card-sub">I am injured or in immediate danger. Auto-fills my saved profile to responders.</div>
+          </div>
+          <span class="role-card-chevron">›</span>
+        </div>
+
+        <!-- Option 2: Bystander (Opens Accident Report Sheet) -->
+        <div class="role-selection-card" onclick="selectRoleBystander()">
+          <div class="role-badge-icon gray">
+            <!-- Info icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          </div>
+          <div class="role-card-info">
+            <div class="role-card-title dark">I am a Bystander</div>
+            <div class="role-card-sub">Reporting on behalf of others. Fill in accident report to assist responders.</div>
+          </div>
+          <span class="role-card-chevron gray">›</span>
+        </div>
+
+        <!-- Skip Button (Matches btnSkipRole) -->
+        <button class="btn-skip-sheet" onclick="closeRoleModal()">Skip Report for Now</button>
+      </div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       EMERGENCY PROFILE & ACCOUNT MODAL
-       ══════════════════════════════════════════════════════════════ -->
-  <div id="profileModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">Emergency Medical Profile</div>
-          <div class="modal-subtitle">Auto-filled when you trigger SOS as a victim.</div>
+    <!-- ══════════════════════════════════════════════════════════════
+         ACCIDENT REPORT BOTTOM SHEET (Exact match of layout_accident_report.xml)
+         ══════════════════════════════════════════════════════════════ -->
+    <div id="accidentReportModal" class="accident-sheet-backdrop">
+      <div class="accident-sheet-card">
+        <div class="drag-handle-bar"></div>
+
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="sheet-header-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
+            </div>
+            <div>
+              <div class="sheet-title" style="font-size:19px;">Accident Report</div>
+              <div class="sheet-subtitle">SOS sent. Fill in details to help responders prepare.</div>
+            </div>
+          </div>
+          <button onclick="closeAccidentReportSheet()" style="background:none; border:none; font-size:20px; color:#6B7280; cursor:pointer; padding:6px;">✕</button>
         </div>
-        <button class="btn-close" onclick="closeProfileModal()">&times;</button>
-      </div>
 
-      <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="pName" placeholder="Juan Dela Cruz" />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group" style="flex:1;">
-          <label>Mobile Phone</label>
-          <input type="tel" id="pPhone" placeholder="+63 9XX XXX XXXX" />
+        <!-- Green SOS Status Banner -->
+        <div class="sheet-status-banner">
+          <div class="sheet-status-banner-icon">✓</div>
+          <div class="sheet-status-banner-text">SOS alert sent to BFP</div>
         </div>
-        <div class="form-group" style="width:95px;">
-          <label>Blood Type</label>
-          <input type="text" id="pBlood" placeholder="e.g. O+" />
+
+        <!-- Incident Section -->
+        <div class="section-label-bar">
+          <div class="section-accent-line"></div>
+          <div class="section-title-tag">INCIDENT</div>
         </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group" style="width:80px;">
-          <label>Age</label>
-          <input type="number" id="pAge" placeholder="28" />
+        <!-- Type of Accident -->
+        <div class="field-label-row">
+          <svg viewBox="0 0 24 24"><path d="M12 2c1.1 0 2 .9 2 2 0 .74-.4 1.38-1 1.72v2.34c3.08.73 5.4 3.39 5.86 6.64.08.57-.31 1.1-.88 1.18-.57.08-1.1-.31-1.18-.88-.38-2.67-2.35-4.85-4.9-5.46v9.42c.6.34 1 .98 1 1.72 0 1.1-.9 2-2 2s-2-.9-2-2c0-.74.4-1.38 1-1.72V9.54C7.45 10.15 5.48 12.33 5.1 15c-.08.57-.61.96-1.18.88-.57-.08-.96-.61-.88-1.18.46-3.25 2.78-5.91 5.86-6.64V5.72C8.4 5.38 8 4.74 8 4c0-1.1.9-2 2-2h2z"/></svg>
+          <span>Type of Accident</span>
         </div>
-        <div class="form-group" style="flex:1;">
-          <label>Known Allergies</label>
-          <input type="text" id="pAllergies" placeholder="Penicillin, Seafood" />
+        <div class="chip-container" id="chipsAccidentType">
+          <div class="choice-chip active" onclick="selectChip(this, 'chipsAccidentType')">Fire</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsAccidentType')">Medical</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsAccidentType')">Vehicle</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsAccidentType')">Other</div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label>Medical Conditions</label>
-        <input type="text" id="pConditions" placeholder="Asthma, Hypertension, etc." />
-      </div>
+        <!-- Count of Victims -->
+        <div class="field-label-row">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span>Count of Victims *</span>
+        </div>
+        <input type="number" id="etVictimCount" class="victim-count-input" value="1" min="1" max="99" />
 
-      <div class="form-group">
-        <label>Emergency Contact Person &amp; Phone</label>
-        <input type="text" id="pContact" placeholder="Maria Dela Cruz (+63 918 987 6543)" />
-      </div>
+        <!-- Nature of Injury (optional) -->
+        <div class="field-label-row">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <span>Nature of Injury (optional)</span>
+        </div>
+        <div class="chip-container" id="chipsNatureOfInjury">
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Burns</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Laceration</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Fracture</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Head Trauma</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Cardiac Arrest</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Smoke Inhalation</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Sprain / Strain</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Drowning</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Poisoning</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsNatureOfInjury')">Other</div>
+        </div>
 
-      <button class="btn-primary" onclick="saveProfileModal()">Save Emergency Profile</button>
-      <button class="btn-secondary" onclick="closeProfileModal()">Done</button>
+        <!-- Mode of Injury (optional) -->
+        <div class="field-label-row">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span>Mode of Injury (optional)</span>
+        </div>
+        <div class="chip-container" id="chipsModeOfInjury">
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Fire / Explosion</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Fall</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Vehicle Accident</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Physical Assault</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Electrocution</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Natural Cause</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Unknown</div>
+          <div class="choice-chip" onclick="selectChip(this, 'chipsModeOfInjury')">Other</div>
+        </div>
+
+        <!-- ══ PATIENT INFORMATION SECTION ══ -->
+        <div class="section-label-bar" style="margin-top:10px;">
+          <div class="section-accent-line" style="background:#EF4444;"></div>
+          <div class="section-title-tag" style="color:#EF4444;">PATIENT INFORMATION</div>
+        </div>
+
+        <!-- Dynamic patient cards -->
+        <div id="patientContainer"></div>
+
+        <!-- Add Patient Button -->
+        <button class="btn-add-patient" id="btnAddPatient" onclick="addPatientCard()">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#1D4ED8;vertical-align:middle;margin-right:6px;">
+            <path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"/>
+          </svg>
+          Add Another Patient
+        </button>
+
+        <!-- Bystander Contact Info Card -->
+        <div class="bystander-sheet-box">
+          <div class="bystander-switch-row">
+            <span class="bystander-title-text">Bystander Information</span>
+            <label class="switch-wrap">
+              <input type="checkbox" id="switchIncludeBystanderInfo" checked onchange="toggleBystanderInputs(this.checked)" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="bystander-sub-desc">Share your contact info with BFP for verification and follow-up.</p>
+
+          <div id="containerBystanderFields">
+            <input type="text" id="etBystanderName" class="report-input-field" placeholder="Your Full Name" />
+            <input type="tel" id="etBystanderPhone" class="report-input-field" placeholder="Your Phone Number" />
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <button class="btn-submit-accident-report" onclick="submitAccidentReport()">Send Report to BFP</button>
+        <button class="btn-skip-accident-report" onclick="closeAccidentReportSheet()">Skip for now</button>
+      </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         EMERGENCY MEDICAL PROFILE MODAL (Matches fragment_profile.xml)
+         ══════════════════════════════════════════════════════════════ -->
+    <div id="profileModal" class="profile-modal-backdrop">
+      <div class="profile-modal-card">
+        <div class="profile-header-title">
+          <svg viewBox="0 0 24 24" fill="#CE2029" style="width:20px;height:20px;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>Emergency Medical Profile</span>
+        </div>
+        <div class="profile-header-sub">Auto-transmits your vital medical information to BFP responders when you trigger SOS as a victim.</div>
+
+        <div class="profile-input-group">
+          <label>Full Name</label>
+          <input type="text" id="pName" placeholder="Juan Dela Cruz" />
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="profile-input-group" style="flex:1;">
+            <label>Mobile Phone</label>
+            <input type="tel" id="pPhone" placeholder="+63 9XX XXX XXXX" />
+          </div>
+          <div class="profile-input-group" style="width:90px;">
+            <label>Blood Type</label>
+            <input type="text" id="pBlood" placeholder="e.g. O+" />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="profile-input-group" style="width:80px;">
+            <label>Age</label>
+            <input type="number" id="pAge" placeholder="28" />
+          </div>
+          <div class="profile-input-group" style="flex:1;">
+            <label>Known Allergies</label>
+            <input type="text" id="pAllergies" placeholder="Penicillin, Seafood, None" />
+          </div>
+        </div>
+
+        <div class="profile-input-group">
+          <label>Medical Conditions</label>
+          <input type="text" id="pConditions" placeholder="Asthma, Hypertension, Diabetes, etc." />
+        </div>
+
+        <div class="profile-input-group">
+          <label>Emergency Contact Person &amp; Phone</label>
+          <input type="text" id="pContact" placeholder="Maria Dela Cruz (+63 918 987 6543)" />
+        </div>
+
+        <button class="btn-profile-save" onclick="saveProfileModal()">Save Profile</button>
+        <button class="btn-profile-cancel" onclick="closeProfileModal()">Done</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Firebase Scripts -->
@@ -816,7 +1460,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // ── Paste your Firebase config here ──
+    // ── Official Firebase Configuration (bfp-alert) ──
     const firebaseConfig = {
       apiKey: "AIzaSyBQdY2D4bS9nAC9q9piNo9qETiYDdSBONk",
       authDomain: "bfp-alert.firebaseapp.com",
@@ -833,8 +1477,20 @@
     let activeAlertId = null;
     let alertListener = null;
     let userCoords = null;
+    let isReportSent = false;
 
-    // ── Profile Management ──
+    // ── Tactile Button Feedback ──
+    const btnSOS = document.getElementById("btnSOS");
+    btnSOS.addEventListener("pointerdown", () => {
+      if (!btnSOS.disabled) {
+        btnSOS.classList.add("is-pressed");
+        if (navigator.vibrate) navigator.vibrate(60);
+      }
+    });
+    window.addEventListener("pointerup", () => btnSOS.classList.remove("is-pressed"));
+    window.addEventListener("pointercancel", () => btnSOS.classList.remove("is-pressed"));
+
+    // ── Profile Storage & Management ──
     function getStoredProfile() {
       try {
         const raw = localStorage.getItem("pwa_user_profile");
@@ -846,14 +1502,24 @@
 
     function saveStoredProfile(p) {
       localStorage.setItem("pwa_user_profile", JSON.stringify(p));
-      updateTopProfileLabel();
+      updateProfileDisplay();
     }
 
-    function updateTopProfileLabel() {
+    function updateProfileDisplay() {
       const p = getStoredProfile();
-      const label = document.getElementById("topProfileLabel");
-      if (label) {
-        label.textContent = p.fullName ? p.fullName.split(" ")[0] : "My Profile";
+      const victimSub = document.getElementById("tvVictimSubtext");
+      const menuSub = document.getElementById("menuProfileSub");
+
+      if (victimSub) {
+        if (p.fullName) {
+          victimSub.textContent = `Auto-fills profile for ${p.fullName} into Patient 1.`;
+        } else {
+          victimSub.textContent = "I am injured or in immediate danger. Auto-fills my saved profile to responders.";
+        }
+      }
+
+      if (menuSub) {
+        menuSub.textContent = p.fullName ? p.fullName : "Personal & Medical Details";
       }
     }
 
@@ -873,36 +1539,26 @@
       document.getElementById("profileModal").classList.remove("active");
     }
 
-    function sanitizeProfileField(val, maxLen) {
-      if (!val) return "";
-      return String(val).replace(/[\r\n\t]/g, " ").replace(/[<>]/g, "").trim().substring(0, maxLen);
-    }
-
     function saveProfileModal() {
       const p = {
-        fullName: sanitizeProfileField(document.getElementById("pName").value, 60),
-        phone: sanitizeProfileField(document.getElementById("pPhone").value, 25),
-        bloodType: sanitizeProfileField(document.getElementById("pBlood").value, 5),
-        age: sanitizeProfileField(document.getElementById("pAge").value, 3),
-        allergies: sanitizeProfileField(document.getElementById("pAllergies").value, 150),
-        medicalConditions: sanitizeProfileField(document.getElementById("pConditions").value, 250),
-        emergencyContact: sanitizeProfileField(document.getElementById("pContact").value, 80)
+        fullName: document.getElementById("pName").value.trim(),
+        phone: document.getElementById("pPhone").value.trim(),
+        bloodType: document.getElementById("pBlood").value.trim(),
+        age: document.getElementById("pAge").value.trim(),
+        allergies: document.getElementById("pAllergies").value.trim(),
+        medicalConditions: document.getElementById("pConditions").value.trim(),
+        emergencyContact: document.getElementById("pContact").value.trim()
       };
       saveStoredProfile(p);
-      alert("Emergency profile saved to device!");
       closeProfileModal();
     }
 
-    // ── Cryptographically secure stable user ID ──
+    // ── Stable Secure Device UID ──
     function getUserId() {
       let uid = localStorage.getItem("bfp_user_id");
       if (!uid) {
         if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
           uid = "pwa_" + crypto.randomUUID();
-        } else if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
-          const arr = new Uint8Array(16);
-          crypto.getRandomValues(arr);
-          uid = "pwa_" + Array.from(arr, b => b.toString(16).padStart(2, "0")).join("");
         } else {
           uid = "pwa_" + Math.random().toString(36).substring(2, 12) + "_" + Date.now();
         }
@@ -911,36 +1567,19 @@
       return uid;
     }
 
-    // ── Location ──
-    function setLocationStatus(text) {
-      const el = document.getElementById("locationStatusText");
-      if (el) el.textContent = text;
-    }
-
+    // ── Geolocation ──
     function initLocation() {
-      if (!navigator.geolocation) {
-        setLocationStatus("Location not supported on this browser");
-        return;
-      }
-
-      setLocationStatus("Getting GPS location...");
-
+      if (!navigator.geolocation) return;
       navigator.geolocation.getCurrentPosition(
         pos => {
-          userCoords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          setLocationStatus("GPS Location ready (" + pos.coords.latitude.toFixed(4) + ", " + pos.coords.longitude.toFixed(4) + ")");
+          userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         },
-        err => {
-          setLocationStatus("Location unavailable — alert will be sent without coordinates");
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     }
 
-    // ── Check for existing active or deployed alert on load ──
+    // ── Check Existing Alert on Launch ──
     function checkExistingAlert() {
       const userId = getUserId();
       db.collection("sos_alerts")
@@ -952,7 +1591,9 @@
           if (!snap.empty) {
             const doc = snap.docs[0];
             activeAlertId = doc.id;
-            const status = doc.data().status;
+            const data = doc.data();
+            isReportSent = !!data.reportSubmitted;
+            const status = data.status;
             if (status === "deployed") {
               setDeployedState();
             } else {
@@ -965,9 +1606,9 @@
 
     // ── Send SOS with Anti-Spam Cooldown ──
     let lastSosDispatchTime = 0;
-    const SOS_COOLDOWN_MS = 30000; // 30 seconds cooldown between alert dispatches
+    const SOS_COOLDOWN_MS = 15000;
 
-    function sendSOS() {
+    function sendSOSAlert() {
       const now = Date.now();
       if (now - lastSosDispatchTime < SOS_COOLDOWN_MS) {
         const waitSec = Math.ceil((SOS_COOLDOWN_MS - (now - lastSosDispatchTime)) / 1000);
@@ -975,28 +1616,23 @@
         return;
       }
 
-      const btn = document.getElementById("btnSOS");
-      btn.disabled = true;
-      btn.textContent = "...";
+      setSendingState();
 
       if (!userCoords) {
         navigator.geolocation.getCurrentPosition(
           pos => {
-            userCoords = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            };
-            saveAlert();
+            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            saveAlertToFirestore();
           },
-          () => saveAlert(),
-          { enableHighAccuracy: true, timeout: 8000 }
+          () => saveAlertToFirestore(),
+          { enableHighAccuracy: true, timeout: 6000 }
         );
       } else {
-        saveAlert();
+        saveAlertToFirestore();
       }
     }
 
-    function saveAlert() {
+    function saveAlertToFirestore() {
       lastSosDispatchTime = Date.now();
       const userId = getUserId();
 
@@ -1011,100 +1647,130 @@
       })
         .then(ref => {
           activeAlertId = ref.id;
+          isReportSent = false;
           setSOSSentState();
           listenForResolution(activeAlertId);
           promptRoleSelection();
         })
         .catch(err => {
-          const btn = document.getElementById("btnSOS");
-          btn.disabled = false;
-          btn.textContent = "SOS";
+          setIdleState();
           alert("Failed to send: " + err.message);
         });
     }
 
-    // ── Role Selection Handling ──
-    function promptRoleSelection() {
-      const p = getStoredProfile();
-      const desc = document.getElementById("roleVictimDesc");
-      if (p.fullName && desc) {
-        desc.textContent = `Auto-fills emergency profile for ${p.fullName} to responders.`;
+    // ── UI State Updates (Matches Android SosFragment.java exact logic) ──
+
+    function setIdleState() {
+      btnSOS.disabled = false;
+      btnSOS.className = "btn-sos-hero";
+      document.getElementById("sosMainText").textContent = "SOS";
+      document.getElementById("sosMainText").style.fontSize = "46px";
+      document.getElementById("sosSubText").style.display = "none";
+
+      const instruction = document.getElementById("tvInstruction");
+      instruction.style.display = "block";
+      instruction.style.opacity = "1";
+
+      document.getElementById("statusCard").style.display = "none";
+      document.getElementById("btnOpenReport").style.display = "none";
+
+      // Resume waves
+      document.getElementById("ringOuter").style.animationPlayState = "running";
+      document.getElementById("ringMid").style.animationPlayState = "running";
+    }
+
+    function setSendingState() {
+      btnSOS.disabled = true;
+      btnSOS.className = "btn-sos-hero";
+      document.getElementById("sosMainText").textContent = "SOS";
+      document.getElementById("sosMainText").style.fontSize = "22px";
+      const sub = document.getElementById("sosSubText");
+      sub.textContent = "SENDING...";
+      sub.style.display = "block";
+    }
+
+    function setSOSSentState() {
+      btnSOS.disabled = true;
+      btnSOS.className = "btn-sos-hero state-sent";
+      document.getElementById("sosMainText").textContent = "SOS";
+      document.getElementById("sosMainText").style.fontSize = "22px";
+      const sub = document.getElementById("sosSubText");
+      sub.textContent = "SENT";
+      sub.style.display = "block";
+
+      // Fade out and hide instruction
+      const instruction = document.getElementById("tvInstruction");
+      instruction.style.opacity = "0";
+      setTimeout(() => { instruction.style.display = "none"; }, 250);
+
+      // Status card: unboxed, transparent
+      const card = document.getElementById("statusCard");
+      const tvStatus = document.getElementById("tvStatus");
+      const reportBtn = document.getElementById("btnOpenReport");
+
+      card.style.display = "block";
+      tvStatus.textContent = "Alert sent. Responders have been notified.";
+
+      if (!isReportSent) {
+        reportBtn.style.display = "inline-flex";
+      } else {
+        reportBtn.style.display = "none";
       }
-      document.getElementById("roleModal").classList.add("active");
     }
 
-    function closeRoleModal() {
-      document.getElementById("roleModal").classList.remove("active");
-      document.getElementById("bystanderOptBox").style.display = "none";
-    }
+    function setDeployedState() {
+      btnSOS.disabled = true;
+      btnSOS.className = "btn-sos-hero state-enroute";
+      document.getElementById("sosMainText").textContent = "SOS";
+      document.getElementById("sosMainText").style.fontSize = "22px";
+      const sub = document.getElementById("sosSubText");
+      sub.textContent = "EN ROUTE";
+      sub.style.display = "block";
 
-    function selectRoleVictim() {
-      if (!activeAlertId) return;
-      const p = getStoredProfile();
-      const updateData = {
-        reporterRole: "victim"
-      };
-      if (p.fullName) updateData.reporterName = p.fullName;
-      if (p.phone) updateData.reporterPhone = p.phone;
-      if (Object.keys(p).length > 0) updateData.reporterProfile = p;
+      const instruction = document.getElementById("tvInstruction");
+      instruction.style.display = "none";
 
-      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
-        .then(() => {
-          closeRoleModal();
-          const text = document.getElementById("statusText");
-          if (text) {
-            text.textContent = "Help is on the way! Your medical profile was attached to the alert.";
-          }
-        })
-        .catch(e => {
-          console.error("Failed to update role:", e);
-          closeRoleModal();
-        });
-    }
+      const card = document.getElementById("statusCard");
+      const tvStatus = document.getElementById("tvStatus");
+      const reportBtn = document.getElementById("btnOpenReport");
 
-    function selectRoleBystander() {
-      const p = getStoredProfile();
-      const box = document.getElementById("bystanderOptBox");
-      const nameInput = document.getElementById("pwaBystanderName");
-      const phoneInput = document.getElementById("pwaBystanderPhone");
-      if (nameInput) nameInput.value = p.fullName || "";
-      if (phoneInput) phoneInput.value = p.phone || "";
-      box.style.display = "block";
-    }
+      card.style.display = "block";
+      // Exact Android string (NO FIRETRUCK EMOJI!)
+      tvStatus.textContent = "Help is on the way!\nBFP units are deployed and heading to your location.";
 
-    function toggleBystanderInputs() {
-      const chk = document.getElementById("chkShareBystander");
-      const inputs = document.getElementById("bystanderInputs");
-      if (inputs && chk) {
-        inputs.style.display = chk.checked ? "block" : "none";
+      if (!isReportSent) {
+        reportBtn.style.display = "inline-flex";
+      } else {
+        reportBtn.style.display = "none";
       }
     }
 
-    function confirmBystanderAlert() {
-      if (!activeAlertId) return;
-      const chk = document.getElementById("chkShareBystander");
-      const updateData = {
-        reporterRole: "bystander"
-      };
+    function setResolvedState() {
+      btnSOS.disabled = false;
+      btnSOS.className = "btn-sos-hero";
+      document.getElementById("sosMainText").textContent = "SOS";
+      document.getElementById("sosMainText").style.fontSize = "46px";
+      document.getElementById("sosSubText").style.display = "none";
 
-      if (chk && chk.checked) {
-        const bName = document.getElementById("pwaBystanderName").value.trim();
-        const bPhone = document.getElementById("pwaBystanderPhone").value.trim();
-        if (bName) updateData.reporterName = bName;
-        if (bPhone) updateData.reporterPhone = bPhone;
-      }
+      const instruction = document.getElementById("tvInstruction");
+      instruction.style.display = "block";
+      instruction.style.opacity = "1";
 
-      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
-        .then(() => {
-          closeRoleModal();
-        })
-        .catch(e => {
-          console.error("Failed to update bystander details:", e);
-          closeRoleModal();
-        });
+      const card = document.getElementById("statusCard");
+      const tvStatus = document.getElementById("tvStatus");
+      const reportBtn = document.getElementById("btnOpenReport");
+
+      card.style.display = "block";
+      tvStatus.textContent = "Alert resolved by BFP.";
+      reportBtn.style.display = "none";
+
+      // Fade out after 4 seconds matching Android postDelayed 4000ms
+      setTimeout(() => {
+        card.style.display = "none";
+      }, 4000);
     }
 
-    // ── Listen for admin deploying / resolving the alert ──
+    // ── Firestore Snapshot Listener ──
     function listenForResolution(alertId) {
       if (alertListener) alertListener();
       alertListener = db.collection("sos_alerts")
@@ -1124,104 +1790,383 @@
         });
     }
 
-    function setDeployedState() {
-      const btn = document.getElementById("btnSOS");
-      const card = document.getElementById("statusCard");
-      const text = document.getElementById("statusText");
-      const dot = document.getElementById("liveDot");
-      const lbl = document.getElementById("liveLabel");
-      const reportLink = document.getElementById("btnOpenReportLink");
-      const ringOuter = document.getElementById("ringOuter");
-      const ringMid = document.getElementById("ringMid");
-
-      btn.disabled = true;
-      btn.innerHTML = "SOS<br/><span style='font-size:14px;font-weight:700;letter-spacing:1px;color:#ffedd5;'>DEPLOYED</span>";
-      btn.style.background = "radial-gradient(circle at 35% 30%, #f97316 0%, #ea580c 65%, #c2410c 100%)";
-      btn.style.borderColor = "rgba(255, 255, 255, 0.4)";
-      btn.style.color = "#ffffff";
-      btn.style.boxShadow = "0 8px 30px rgba(234, 88, 12, 0.5), inset 0 2px 6px rgba(255, 255, 255, 0.4)";
-
-      if (ringOuter) ringOuter.style.animationPlayState = "paused";
-      if (ringMid) ringMid.style.animationPlayState = "paused";
-
-      card.style.display = "block";
-      dot.className = "dot orange";
-      lbl.className = "live-label orange";
-      lbl.textContent = "RESPONDERS DEPLOYED";
-
-      text.textContent = "🚒 Help is on the way!\nBFP units are deployed and heading to your location.";
-      if (reportLink) reportLink.style.display = "inline-flex";
+    // ── Role Selection Bottom Sheet (Matches Android dialog_role_selection) ──
+    function promptRoleSelection() {
+      updateProfileDisplay();
+      document.getElementById("roleModal").classList.add("active");
     }
 
-    // ── UI States (Transparent / Unboxed) ──
-    function setSOSSentState() {
-      const btn = document.getElementById("btnSOS");
-      const card = document.getElementById("statusCard");
-      const text = document.getElementById("statusText");
-      const dot = document.getElementById("liveDot");
-      const lbl = document.getElementById("liveLabel");
-      const reportLink = document.getElementById("btnOpenReportLink");
-      const ringOuter = document.getElementById("ringOuter");
-      const ringMid = document.getElementById("ringMid");
-
-      btn.disabled = true;
-      btn.innerHTML = "SOS<br/><span style='font-size:16px;font-weight:700;letter-spacing:1px;opacity:0.85;'>SENT</span>";
-
-      if (ringOuter) ringOuter.style.animationPlayState = "paused";
-      if (ringMid) ringMid.style.animationPlayState = "paused";
-
-      card.style.display = "block";
-      dot.className = "dot";
-      lbl.className = "live-label";
-      lbl.textContent = "ALERT ACTIVE";
-
-      text.textContent = "Alert sent. Responders have been notified and dispatch is pending.";
-      if (reportLink) reportLink.style.display = "inline-flex";
+    function closeRoleModal() {
+      document.getElementById("roleModal").classList.remove("active");
     }
 
-    function setResolvedState() {
-      const btn = document.getElementById("btnSOS");
-      btn.style.background = "";
-      btn.style.borderColor = "";
-      btn.style.color = "";
-      btn.style.boxShadow = "";
-      const card = document.getElementById("statusCard");
-      const text = document.getElementById("statusText");
-      const dot = document.getElementById("liveDot");
-      const lbl = document.getElementById("liveLabel");
-      const reportLink = document.getElementById("btnOpenReportLink");
-      const ringOuter = document.getElementById("ringOuter");
-      const ringMid = document.getElementById("ringMid");
+    // ── VICTIM ROLE: Auto-submits details & profile to BFP (Matches Android autoSubmitVictimDetails) ──
+    function selectRoleVictim() {
+      if (!activeAlertId) { closeRoleModal(); return; }
+      const p = getStoredProfile();
 
-      btn.disabled = false;
-      btn.textContent = "SOS";
+      const updateData = {
+        reporterRole: "victim",
+        countOfVictims: 1,
+        reportSubmitted: true
+      };
 
-      if (ringOuter) ringOuter.style.animationPlayState = "running";
-      if (ringMid) ringMid.style.animationPlayState = "running";
+      if (p.fullName) updateData.reporterName = p.fullName;
+      if (p.phone) updateData.reporterPhone = p.phone;
 
-      card.style.display = "block";
-      dot.className = "dot green";
-      lbl.className = "live-label green";
-      lbl.textContent = "RESOLVED";
+      if (Object.keys(p).length > 0) {
+        updateData.reporterProfile = p;
 
-      text.textContent = "Help has arrived! Your alert has been resolved.";
-      if (reportLink) reportLink.style.display = "none";
+        const cond = (p.bloodType ? "Blood Type: " + p.bloodType + " | " : "") + (p.medicalConditions || "");
+        updateData.patients = [{
+          name: p.fullName || "Victim",
+          age: p.age ? parseInt(p.age) || p.age : "",
+          allergies: p.allergies || "",
+          emergencyContact: p.emergencyContact || "",
+          condition: cond
+        }];
+      }
 
-      setTimeout(() => {
-        card.style.display = "none";
-      }, 7000);
+      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
+        .then(() => {
+          isReportSent = true;
+          closeRoleModal();
+          // Hide accident report button as report is now submitted
+          document.getElementById("btnOpenReport").style.display = "none";
+        })
+        .catch(e => {
+          console.error("Victim auto-submit failed:", e);
+          closeRoleModal();
+        });
     }
 
-    // ── Init ──
-    updateTopProfileLabel();
+    // ── BYSTANDER ROLE: Opens Accident Report Sheet (Matches Android openAccidentReportSheet) ──
+    function selectRoleBystander() {
+      closeRoleModal();
+      openAccidentReportSheet();
+    }
+
+    // ── Accident Report Sheet Management (Matches Android AccidentReportSheet.java) ──
+    function openAccidentReportSheet() {
+      const p = getStoredProfile();
+      const nameInput = document.getElementById("etBystanderName");
+      const phoneInput = document.getElementById("etBystanderPhone");
+
+      if (nameInput && !nameInput.value) nameInput.value = p.fullName || "";
+      if (phoneInput && !phoneInput.value) phoneInput.value = p.phone || "";
+
+      // Reset patient cards and add first one
+      _patientCount = 0;
+      document.getElementById("patientContainer").innerHTML = "";
+      addPatientCard();
+
+      document.getElementById("accidentReportModal").classList.add("active");
+    }
+
+    function closeAccidentReportSheet() {
+      document.getElementById("accidentReportModal").classList.remove("active");
+    }
+
+    function selectChip(element, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const chips = container.querySelectorAll(".choice-chip");
+      chips.forEach(c => c.classList.remove("active"));
+      element.classList.add("active");
+    }
+
+    function getSelectedChipText(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return null;
+      const active = container.querySelector(".choice-chip.active");
+      return active ? active.textContent.trim() : null;
+    }
+
+    function toggleBystanderInputs(isChecked) {
+      const fields = document.getElementById("containerBystanderFields");
+      if (fields) fields.style.display = isChecked ? "block" : "none";
+    }
+
+    // ── Patient card counter ──
+    let _patientCount = 0;
+
+    function addPatientCard() {
+      _patientCount++;
+      const num = _patientCount;
+      const container = document.getElementById("patientContainer");
+      const cardId = "patientCard_" + num;
+
+      const card = document.createElement("div");
+      card.className = "patient-card";
+      card.id = cardId;
+      card.innerHTML = `
+        <!-- Patient card header -->
+        <div class="patient-card-header">
+          <span class="patient-number-badge">Patient ${num}</span>
+          ${num > 1 ? `<button class="btn-remove-patient" onclick="removePatientCard('${cardId}')">✕ Remove</button>` : ""}
+        </div>
+
+        <!-- Name -->
+        <label class="patient-field-label">Name</label>
+        <input type="text" class="report-input-field patient-field" placeholder="Full name" data-field="name"/>
+
+        <!-- Age + Birthdate -->
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="flex:1;">
+            <label class="patient-field-label">Age</label>
+            <input type="number" class="report-input-field patient-field" placeholder="Age" data-field="age"
+              min="0" max="120" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+          </div>
+          <div style="flex:2;">
+            <label class="patient-field-label">Birthdate</label>
+            <input type="text" class="report-input-field patient-field" placeholder="YYYY-MM-DD"
+              data-field="birthdate" maxlength="10"
+              oninput="formatBirthdateInput(this)"/>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <label class="patient-field-label">Address</label>
+        <input type="text" class="report-input-field patient-field" placeholder="Home address" data-field="address"/>
+
+        <!-- Allergies -->
+        <label class="patient-field-label">Allergies</label>
+        <input type="text" class="report-input-field patient-field" placeholder="e.g. Penicillin, Aspirin" data-field="allergies"/>
+
+        <!-- Emergency Contact -->
+        <label class="patient-field-label">Emergency Contact</label>
+        <input type="text" class="report-input-field patient-field" placeholder="Name and phone number" data-field="emergencyContact"/>
+
+        <!-- Divider -->
+        <div class="patient-card-divider"></div>
+
+        <!-- Level of Consciousness -->
+        <label class="patient-field-label">Level of Consciousness</label>
+        <div class="chip-container patient-consciousness-chips" data-field="levelOfConsciousness">
+          <div class="choice-chip" onclick="selectConsciousnessChip(this)">Alert</div>
+          <div class="choice-chip" onclick="selectConsciousnessChip(this)">Verbal</div>
+          <div class="choice-chip" onclick="selectConsciousnessChip(this)">Pain</div>
+          <div class="choice-chip" onclick="selectConsciousnessChip(this)">Unresponsive</div>
+        </div>
+
+        <!-- Condition -->
+        <label class="patient-field-label">Condition</label>
+        <textarea class="report-input-field patient-field patient-condition-textarea"
+          placeholder="Describe current condition..." data-field="condition" rows="3"></textarea>
+
+        <!-- Seizure toggle -->
+        <div class="patient-seizure-row">
+          <span style="font-size:16px;">⚡</span>
+          <span class="patient-seizure-label">Seizure</span>
+          <label class="switch-wrap" style="margin-left:auto;">
+            <input type="checkbox" class="patient-seizure-toggle" data-field="seizure"/>
+            <span class="slider"></span>
+          </label>
+        </div>
+      `;
+
+      container.appendChild(card);
+
+      // Auto-calculate age from birthdate
+      const bdInput = card.querySelector('[data-field="birthdate"]');
+      const ageInput = card.querySelector('[data-field="age"]');
+      bdInput.addEventListener("input", () => {
+        if (bdInput.value.length === 10) {
+          const age = calcAgeFromBirthdate(bdInput.value);
+          if (age >= 0 && !ageInput.value) ageInput.value = age;
+        }
+      });
+    }
+
+    function removePatientCard(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) card.remove();
+    }
+
+    function formatBirthdateInput(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (v.length > 4 && v.length <= 6) v = v.slice(0,4) + "-" + v.slice(4);
+      else if (v.length > 6) v = v.slice(0,4) + "-" + v.slice(4,6) + "-" + v.slice(6,8);
+      input.value = v;
+    }
+
+    function calcAgeFromBirthdate(bdate) {
+      try {
+        const parts = bdate.split("-");
+        if (parts.length !== 3) return -1;
+        const dob = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age >= 0 && age <= 130 ? age : -1;
+      } catch(e) { return -1; }
+    }
+
+    function selectConsciousnessChip(chip) {
+      const group = chip.parentElement;
+      group.querySelectorAll(".choice-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+    }
+
+    function collectPatients() {
+      const cards = document.querySelectorAll("#patientContainer .patient-card");
+      const patients = [];
+      cards.forEach(card => {
+        const p = {};
+        // Text fields
+        card.querySelectorAll(".patient-field").forEach(f => {
+          const field = f.getAttribute("data-field");
+          const val = f.value ? f.value.trim() : "";
+          if (field === "age") {
+            if (val) p.age = parseInt(val) || undefined;
+          } else if (val) {
+            p[field] = val;
+          }
+        });
+        // Consciousness chip
+        const activeChip = card.querySelector(".patient-consciousness-chips .choice-chip.active");
+        if (activeChip) p.levelOfConsciousness = activeChip.textContent.trim();
+        // Seizure toggle
+        const seizureTog = card.querySelector(".patient-seizure-toggle");
+        p.seizure = seizureTog ? seizureTog.checked : false;
+
+        // Only include if at least name or condition is filled
+        if (p.name || p.condition || Object.keys(p).length > 1) {
+          patients.push(p);
+        }
+      });
+      return patients;
+    }
+
+    function submitAccidentReport() {
+      if (!activeAlertId) { closeAccidentReportSheet(); return; }
+
+      const accidentType = getSelectedChipText("chipsAccidentType");
+      const natureOfInjury = getSelectedChipText("chipsNatureOfInjury");
+      const modeOfInjury = getSelectedChipText("chipsModeOfInjury");
+      const victimCountVal = document.getElementById("etVictimCount").value.trim();
+      const victimCount = victimCountVal ? parseInt(victimCountVal) || 1 : 1;
+
+      const switchBystander = document.getElementById("switchIncludeBystanderInfo");
+      const bName = document.getElementById("etBystanderName").value.trim();
+      const bPhone = document.getElementById("etBystanderPhone").value.trim();
+
+      // Collect patient cards
+      const patients = collectPatients();
+
+      const updateData = {
+        reporterRole: "bystander",
+        countOfVictims: victimCount,
+        reportSubmitted: true
+      };
+
+      if (accidentType) updateData.accidentType = accidentType;
+      if (natureOfInjury) updateData.natureOfInjury = natureOfInjury;
+      if (modeOfInjury) updateData.modeOfInjury = modeOfInjury;
+      if (patients.length > 0) updateData.patients = patients;
+
+      if (switchBystander && switchBystander.checked) {
+        if (bName) updateData.reporterName = bName;
+        if (bPhone) updateData.reporterPhone = bPhone;
+      }
+
+      db.collection("sos_alerts").doc(activeAlertId).update(updateData)
+        .then(() => {
+          isReportSent = true;
+          closeAccidentReportSheet();
+          document.getElementById("btnOpenReport").style.display = "none";
+        })
+        .catch(e => {
+          console.error("Accident report submit failed:", e);
+          closeAccidentReportSheet();
+        });
+    }
+
+    // ── Top Left Menu Popup ──
+    function toggleMenuPopup() {
+      const menu = document.getElementById("menuPopupCard");
+      const overlay = document.getElementById("menuDismissOverlay");
+      const btn = document.getElementById("btnSosMenu");
+      const isOpen = menu.classList.contains("active");
+
+      if (isOpen) {
+        menu.classList.remove("active");
+        overlay.classList.remove("active");
+        btn.classList.remove("open");
+      } else {
+        menu.classList.add("active");
+        overlay.classList.add("active");
+        btn.classList.add("open");
+      }
+    }
+
+    function closeMenuPopup() {
+      document.getElementById("menuPopupCard").classList.remove("active");
+      document.getElementById("menuDismissOverlay").classList.remove("active");
+      document.getElementById("btnSosMenu").classList.remove("open");
+    }
+
+    function handleWearableClick() {
+      closeMenuPopup();
+      if ("bluetooth" in navigator) {
+        navigator.bluetooth.requestDevice({
+          acceptAllDevices: true
+        }).then(device => {
+          document.getElementById("dotBleStatus").classList.add("active");
+          document.getElementById("tvBleBadgeText").textContent = device.name || "Wearable Linked";
+        }).catch(() => {});
+      } else {
+        alert("Web Bluetooth: Please ensure your browser supports Bluetooth Web API.");
+      }
+    }
+
+    function handleShakeSettingsClick() {
+      closeMenuPopup();
+      enableShakeDetection();
+      alert("Shake SOS is active! Shaking your device triggers an emergency alert.");
+    }
+
+    // ── Device Shake Detection ──
+    let lastX, lastY, lastZ;
+    let lastShakeTime = 0;
+    function enableShakeDetection() {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        DeviceMotionEvent.requestPermission().then(state => {
+          if (state === "granted") window.addEventListener("devicemotion", handleMotion);
+        });
+      } else {
+        window.addEventListener("devicemotion", handleMotion);
+      }
+    }
+
+    function handleMotion(e) {
+      const cur = e.accelerationIncludingGravity;
+      if (!cur) return;
+      const now = Date.now();
+      if (now - lastShakeTime < 2500) return;
+
+      if (lastX !== undefined) {
+        const delta = Math.abs(cur.x - lastX) + Math.abs(cur.y - lastY) + Math.abs(cur.z - lastZ);
+        if (delta > 32) {
+          lastShakeTime = now;
+          sendSOSAlert();
+        }
+      }
+      lastX = cur.x; lastY = cur.y; lastZ = cur.z;
+    }
+
+    // ── Init on Page Load ──
+    updateProfileDisplay();
     initLocation();
     checkExistingAlert();
+    enableShakeDetection();
   </script>
 
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js");
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
       });
     }
   </script>
