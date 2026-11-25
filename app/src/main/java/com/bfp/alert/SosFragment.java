@@ -1115,6 +1115,20 @@ public class SosFragment extends Fragment {
                             }
 
                             @Override
+                            public void onOpenProfile() {
+                                if (getActivity() instanceof MainActivity) {
+                                    ((MainActivity) getActivity()).switchToProfile();
+                                }
+                            }
+
+                            @Override
+                            public void onOpenSOS() {
+                                if (getActivity() instanceof MainActivity) {
+                                    ((MainActivity) getActivity()).switchToSOS();
+                                }
+                            }
+
+                            @Override
                             public void onCheckStatus() {
                                 checkCurrentAlertStatus();
                             }

@@ -55,6 +55,7 @@ public class VoiceAssistantDialog extends Dialog {
         default void onCheckStatus() {}
         default void onCancelSOS() {}
         default void onUpdateCondition(String conditionNotes) {}
+        default String getAppContextSummary() { return ""; }
     }
 
     // ── Fields ────────────────────────────────────────────────────
@@ -461,7 +462,8 @@ public class VoiceAssistantDialog extends Dialog {
         setStatus("Thinking...", 0xFF6B7280);
         btnMic.setEnabled(false);
 
-        assistant.processUserInput(userText,
+        String contextSummary = actionListener != null ? actionListener.getAppContextSummary() : "";
+        assistant.processUserInput(userText, contextSummary,
                 new ClaudeVoiceAssistant.AssistantCallback() {
 
                     @Override
@@ -497,28 +499,39 @@ public class VoiceAssistantDialog extends Dialog {
                             // Execute action IMMEDIATELY so screen updates right away!
                             executeAction(effectiveAction, effectiveData);
 
-                            // Speak response concurrently
-                            assistant.speak(text,
-                                    new ClaudeVoiceAssistant
-                                            .AssistantCallback() {
-                                        @Override
-                                        public void onResponse(
-                                                String t, String a,
-                                                String d) {}
-                                        @Override
-                                        public void onError(
-                                                String e) {}
-                                        @Override
-                                        public void onSpeakingStarted() {}
-                                        @Override
-                                        public void onSpeakingFinished() {
-                                            handler.post(() -> {
-                                                if (handsFreeMode) {
-                                                    scheduleListeningRestart(500);
-                                                }
-                                            });
-                                        }
-                                    });
+                            speakAndRestart(text);
+                        });
+                    }
+
+                    @Override
+                    public void onMultiToolResponse(
+                            String text,
+                            java.util.List<ClaudeVoiceAssistant.ToolCall> toolCalls) {
+                        handler.post(() -> {
+                            if (!isShowing()) return;
+                            showThinking(false);
+                            isProcessing = false;
+                            btnMic.setEnabled(true);
+
+                            tvResponse.setText(text);
+                            setStatus(
+                                    handsFreeMode
+                                            ? "I am listening for your next command."
+                                            : "Tap mic to speak",
+                                    0xFF6B7280);
+
+                            if (toolCalls != null && !toolCalls.isEmpty()) {
+                                executeToolCalls(toolCalls);
+                            } else {
+                                // Fallback: check if user speech matches a first aid guide
+                                FirstAidItem guide = FirstAidRepository.getInstance().findMatchingItem(lastUserTranscript);
+                                if (guide != null) {
+                                    boolean play = lastUserTranscript != null && (lastUserTranscript.toLowerCase().contains("video") || lastUserTranscript.toLowerCase().contains("play") || lastUserTranscript.toLowerCase().contains("watch"));
+                                    executeAction(ClaudeVoiceAssistant.ACTION_SEARCH_FIRSTAID, guide.title + (play ? "|play" : ""));
+                                }
+                            }
+
+                            speakAndRestart(text);
                         });
                     }
 
@@ -562,8 +575,148 @@ public class VoiceAssistantDialog extends Dialog {
                 });
     }
 
+    private void speakAndRestart(String text) {
+        assistant.speak(text,
+                new ClaudeVoiceAssistant.AssistantCallback() {
+                    @Override
+                    public void onResponse(String t, String a, String d) {}
+                    @Override
+                    public void onError(String e) {}
+                    @Override
+                    public void onSpeakingStarted() {}
+                    @Override
+                    public void onSpeakingFinished() {
+                        handler.post(() -> {
+                            if (handsFreeMode) {
+                                scheduleListeningRestart(500);
+                            }
+                        });
+                    }
+                });
+    }
+
     // ════════════════════════════════════════════════════════════
-    //  Execute action
+    //  Execute Multi-Tool Calls
+    // ════════════════════════════════════════════════════════════
+    private void executeToolCalls(java.util.List<ClaudeVoiceAssistant.ToolCall> toolCalls) {
+        boolean shouldDismiss = false;
+
+        for (ClaudeVoiceAssistant.ToolCall tc : toolCalls) {
+            if (tc == null || tc.name == null) continue;
+            org.json.JSONObject args = tc.args != null ? tc.args : new org.json.JSONObject();
+
+            switch (tc.name) {
+                case "send_sos": {
+                    String role = args.optString("role", "victim");
+                    String notes = args.optString("incident_notes", "");
+                    if (notes.isEmpty()) notes = lastUserTranscript;
+                    final String finalRole = role;
+                    final String finalNotes = notes;
+                    handler.postDelayed(() -> {
+                        if (actionListener != null) {
+                            actionListener.onSendSOSWithDetails(finalNotes, finalRole);
+                        }
+                    }, 300);
+                    shouldDismiss = true;
+                    break;
+                }
+                case "cancel_sos":
+                    handler.postDelayed(() -> {
+                        if (actionListener != null) actionListener.onCancelSOS();
+                    }, 200);
+                    break;
+                case "check_sos_status":
+                    handler.postDelayed(() -> {
+                        if (actionListener != null) actionListener.onCheckStatus();
+                    }, 200);
+                    break;
+                case "update_condition": {
+                    String notes = args.optString("condition_notes", lastUserTranscript);
+                    if (notes != null && !notes.isEmpty()) {
+                        handler.postDelayed(() -> {
+                            if (actionListener != null) actionListener.onUpdateCondition(notes);
+                        }, 200);
+                    }
+                    break;
+                }
+                case "navigate_to": {
+                    String screen = args.optString("screen", "").toLowerCase();
+                    handler.postDelayed(() -> {
+                        if (actionListener == null) return;
+                        if ("first_aid".equals(screen)) {
+                            actionListener.onOpenFirstAid();
+                        } else if ("profile".equals(screen)) {
+                            actionListener.onOpenProfile();
+                        } else if ("sos".equals(screen)) {
+                            actionListener.onOpenSOS();
+                        }
+                    }, 150);
+                    shouldDismiss = true;
+                    break;
+                }
+                case "open_first_aid": {
+                    String query = args.optString("query", "");
+                    boolean autoPlay = args.optBoolean("auto_play_video", false);
+                    if (!autoPlay && lastUserTranscript != null) {
+                        String lu = lastUserTranscript.toLowerCase();
+                        autoPlay = lu.contains("video") || lu.contains("play") || lu.contains("watch");
+                    }
+                    final String finalQuery = query;
+                    final boolean finalPlay = autoPlay;
+                    handler.postDelayed(() -> {
+                        if (actionListener == null) return;
+                        FirstAidItem match = FirstAidRepository.getInstance().findMatchingItem(finalQuery);
+                        if (match == null && lastUserTranscript != null && !lastUserTranscript.isEmpty()) {
+                            match = FirstAidRepository.getInstance().findMatchingItem(lastUserTranscript);
+                        }
+                        if (match != null) {
+                            actionListener.onOpenFirstAidDetail(match, finalPlay);
+                        } else {
+                            actionListener.onSearchFirstAid(finalQuery);
+                        }
+                    }, 150);
+                    shouldDismiss = true;
+                    break;
+                }
+                case "control_video": {
+                    String cmd = args.optString("command", "play").toLowerCase();
+                    handler.postDelayed(() -> {
+                        if (actionListener == null) return;
+                        if ("pause".equals(cmd)) {
+                            actionListener.onPauseVideo();
+                        } else {
+                            actionListener.onPlayVideo();
+                        }
+                    }, 100);
+                    break;
+                }
+                case "control_flashlight":
+                    setFlashlight(args.optBoolean("enabled", true));
+                    break;
+                case "control_siren":
+                    if (args.optBoolean("enabled", true)) {
+                        playSiren();
+                    } else {
+                        stopSiren();
+                    }
+                    break;
+                case "call_bfp_station":
+                    handler.postDelayed(this::callBFP, 500);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (shouldDismiss && !handsFreeMode) {
+            handler.postDelayed(this::dismiss, 700);
+        } else if (handsFreeMode) {
+            scheduleListeningRestart(1000);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Execute action (legacy fallback)
     // ════════════════════════════════════════════════════════════
     private void executeAction(String action,
                                String data) {

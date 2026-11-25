@@ -50,11 +50,26 @@ public class ClaudeVoiceAssistant {
     public static final String ACTION_UPDATE_CONDITION  = "UPDATE_CONDITION";
     public static final String ACTION_NONE              = "NONE";
 
+    // ── Tool Call Model ───────────────────────────────────────────
+    public static class ToolCall {
+        public final String name;
+        public final JSONObject args;
+
+        public ToolCall(String name, JSONObject args) {
+            this.name = name != null ? name : "";
+            this.args = args != null ? args : new JSONObject();
+        }
+    }
+
     // ── Callback ──────────────────────────────────────────────────
     public interface AssistantCallback {
         void onResponse(String spokenText,
                         String action,
                         String actionData);
+        default void onMultiToolResponse(String spokenText,
+                                         List<ToolCall> toolCalls) {
+            onResponse(spokenText, ACTION_NONE, "");
+        }
         void onError(String error);
         void onSpeakingStarted();
         void onSpeakingFinished();
@@ -154,6 +169,13 @@ public class ClaudeVoiceAssistant {
     public void processUserInput(
             String userText,
             AssistantCallback callback) {
+        processUserInput(userText, "", callback);
+    }
+
+    public void processUserInput(
+            String userText,
+            String appContextSummary,
+            AssistantCallback callback) {
 
         new Thread(() -> {
             try {
@@ -164,10 +186,13 @@ public class ClaudeVoiceAssistant {
                 // System message
                 JSONObject sysMsg = new JSONObject();
                 sysMsg.put("role", "system");
-                sysMsg.put("content", getSystemPrompt());
+                sysMsg.put("content", getSystemPrompt(appContextSummary));
                 messages.put(sysMsg);
 
-                // Add conversation history
+                // Keep history bounded to recent turns
+                while (history.size() > 10) {
+                    history.remove(0);
+                }
                 for (JSONObject msg : history) {
                     messages.put(msg);
                 }
@@ -178,13 +203,15 @@ public class ClaudeVoiceAssistant {
                 userMsg.put("content", userText);
                 messages.put(userMsg);
 
-                // Build request body
+                // Build request body with native multi-tool calling
                 JSONObject requestBody =
                         new JSONObject();
-                requestBody.put("model",      MODEL);
-                requestBody.put("max_tokens", 300);
+                requestBody.put("model",       MODEL);
+                requestBody.put("max_tokens",  450);
                 requestBody.put("temperature", 0.2);
-                requestBody.put("messages",   messages);
+                requestBody.put("messages",    messages);
+                requestBody.put("tools",       buildToolsArray());
+                requestBody.put("tool_choice", "auto");
 
                 String bodyStr = requestBody.toString();
                 Log.d(TAG, "Request: " + bodyStr);
@@ -282,6 +309,8 @@ public class ClaudeVoiceAssistant {
                     new JSONObject(responseStr);
 
             String fullText = "";
+            JSONArray rawToolCalls = null;
+            JSONObject message = null;
 
             JSONArray choices =
                     json.optJSONArray("choices");
@@ -289,15 +318,71 @@ public class ClaudeVoiceAssistant {
                     && choices.length() > 0) {
                 JSONObject choice =
                         choices.getJSONObject(0);
-                JSONObject message =
+                message =
                         choice.optJSONObject("message");
                 if (message != null) {
-                    fullText = message.optString(
-                            "content", "");
+                    fullText = message.optString("content", "");
+                    if ("null".equals(fullText)) fullText = "";
+                    rawToolCalls = message.optJSONArray("tool_calls");
                 }
             }
 
-            Log.d(TAG, "AI text: " + fullText);
+            Log.d(TAG, "AI text: " + fullText + " | tool_calls: "
+                    + (rawToolCalls != null ? rawToolCalls.length() : 0));
+
+            // ── 1. Handle native multi-tool calls ─────────────────
+            if (rawToolCalls != null && rawToolCalls.length() > 0) {
+                List<ToolCall> toolCalls = new ArrayList<>();
+                for (int i = 0; i < rawToolCalls.length(); i++) {
+                    JSONObject tc = rawToolCalls.optJSONObject(i);
+                    if (tc == null) continue;
+                    JSONObject fn = tc.optJSONObject("function");
+                    if (fn == null) continue;
+                    String fnName = fn.optString("name", "");
+                    String argsRaw = fn.optString("arguments", "{}");
+                    JSONObject argsJson;
+                    try {
+                        argsJson = new JSONObject(argsRaw);
+                    } catch (Exception ignored) {
+                        argsJson = new JSONObject();
+                    }
+                    if (!fnName.isEmpty()) {
+                        toolCalls.add(new ToolCall(fnName, argsJson));
+                    }
+                }
+
+                // Store valid assistant + tool messages in history so next turn stays schema-valid
+                if (message != null) {
+                    JSONObject assistantMsg = new JSONObject();
+                    assistantMsg.put("role", "assistant");
+                    assistantMsg.put("content", fullText.isEmpty() ? JSONObject.NULL : fullText);
+                    assistantMsg.put("tool_calls", rawToolCalls);
+                    history.add(assistantMsg);
+
+                    for (int i = 0; i < rawToolCalls.length(); i++) {
+                        JSONObject tc = rawToolCalls.optJSONObject(i);
+                        if (tc == null) continue;
+                        String tcId = tc.optString("id", "call_" + i);
+                        JSONObject toolResultMsg = new JSONObject();
+                        toolResultMsg.put("role", "tool");
+                        toolResultMsg.put("tool_call_id", tcId);
+                        toolResultMsg.put("content", "{\"status\":\"executed\"}");
+                        history.add(toolResultMsg);
+                    }
+                }
+
+                String spoken = stripActionTags(fullText);
+                if (spoken.isEmpty()) {
+                    spoken = buildSpokenSummaryFromTools(toolCalls);
+                }
+
+                final String finalSpoken = spoken;
+                final List<ToolCall> finalTools = toolCalls;
+                mainHandler.post(() -> {
+                    callback.onMultiToolResponse(finalSpoken, finalTools);
+                });
+                return;
+            }
 
             if (fullText.isEmpty()) {
                 mainHandler.post(() ->
@@ -314,7 +399,7 @@ public class ClaudeVoiceAssistant {
             assistantMsg.put("content", fullText);
             history.add(assistantMsg);
 
-            // Parse action tag
+            // Parse legacy [ACTION:...] tag if present
             String action     = ACTION_NONE;
             String actionData = "";
             String spokenText = fullText;
@@ -345,7 +430,6 @@ public class ClaudeVoiceAssistant {
                                         .toUpperCase();
                     }
 
-                    // Remove action tag from spoken text
                     spokenText = fullText
                             .substring(0, actionStart)
                             .trim();
@@ -387,13 +471,15 @@ public class ClaudeVoiceAssistant {
             Log.d(TAG, "Action: " + action
                     + " Data: " + actionData);
 
-            final String fa = action;
-            final String fd = actionData;
+            final List<ToolCall> convertedTools = new ArrayList<>();
+            if (!ACTION_NONE.equals(action)) {
+                convertedTools.add(legacyActionToToolCall(action, actionData, userText));
+            }
             final String ft = spokenText.isEmpty()
                     ? fullText : spokenText;
 
             mainHandler.post(() ->
-                    callback.onResponse(ft, fa, fd));
+                    callback.onMultiToolResponse(ft, convertedTools));
 
         } catch (Exception e) {
             Log.e(TAG, "Parse: " + e.getMessage());
@@ -654,87 +740,275 @@ public class ClaudeVoiceAssistant {
                 break;
         }
 
-        final String finalAction = action;
-        final String finalActionData = actionData;
+        final List<ToolCall> finalTools = new ArrayList<>();
+        if (!ACTION_NONE.equals(action)) {
+            finalTools.add(legacyActionToToolCall(action, actionData, userText));
+        }
+
+        // Also check secondary offline hardware/guide intents in compound sentences
+        String lu = userText.toLowerCase();
+        if (lu.contains("flashlight") && !ACTION_FLASHLIGHT_ON.equals(action) && !ACTION_FLASHLIGHT_OFF.equals(action)) {
+            boolean off = lu.contains("off") || lu.contains("patayin");
+            JSONObject fArgs = new JSONObject();
+            try { fArgs.put("enabled", !off); } catch (Exception ignored) {}
+            finalTools.add(new ToolCall("control_flashlight", fArgs));
+        }
+        if ((lu.contains("siren") || lu.contains("alarm")) && !ACTION_PLAY_SIREN.equals(action) && !ACTION_STOP_SIREN.equals(action)) {
+            boolean stop = lu.contains("stop") || lu.contains("off") || lu.contains("silence");
+            JSONObject sArgs = new JSONObject();
+            try { sArgs.put("enabled", !stop); } catch (Exception ignored) {}
+            finalTools.add(new ToolCall("control_siren", sArgs));
+        }
+
         final String finalResponse = responseText;
 
-        mainHandler.post(() -> callback.onResponse(finalResponse, finalAction, finalActionData));
+        mainHandler.post(() -> callback.onMultiToolResponse(finalResponse, finalTools));
         return true;
     }
 
+    // ── Tool Schema Definition for Groq Function Calling ──────────
+    private JSONArray buildToolsArray() {
+        JSONArray tools = new JSONArray();
+        try {
+            tools.put(makeTool("send_sos",
+                    "Dispatch an emergency SOS alert to BFP responders immediately.",
+                    new JSONObject()
+                            .put("role", new JSONObject()
+                                    .put("type", "string")
+                                    .put("enum", new JSONArray().put("victim").put("bystander"))
+                                    .put("description", "Whether the user is the affected victim or a bystander witness."))
+                            .put("incident_notes", new JSONObject()
+                                    .put("type", "string")
+                                    .put("description", "Brief description of the emergency, hazards, injuries, or location details.")),
+                    new JSONArray().put("role").put("incident_notes")));
+
+            tools.put(makeTool("cancel_sos",
+                    "Cancel the currently active SOS alert or mark it as a false alarm.",
+                    new JSONObject(), null));
+
+            tools.put(makeTool("check_sos_status",
+                    "Check the live status of the active SOS alert and whether BFP responders are en route.",
+                    new JSONObject(), null));
+
+            tools.put(makeTool("update_condition",
+                    "Update the active SOS alert with new injury, trapped status, or hazard notes.",
+                    new JSONObject()
+                            .put("condition_notes", new JSONObject()
+                                    .put("type", "string")
+                                    .put("description", "Condition or situation update to attach to the active alert.")),
+                    new JSONArray().put("condition_notes")));
+
+            tools.put(makeTool("navigate_to",
+                    "Navigate to a main screen/tab in the app.",
+                    new JSONObject()
+                            .put("screen", new JSONObject()
+                                    .put("type", "string")
+                                    .put("enum", new JSONArray().put("sos").put("first_aid").put("profile"))
+                                    .put("description", "Target screen: sos, first_aid, or profile.")),
+                    new JSONArray().put("screen")));
+
+            tools.put(makeTool("open_first_aid",
+                    "Search for or open a specific First Aid guide from the BFP database, optionally playing its video.",
+                    new JSONObject()
+                            .put("query", new JSONObject()
+                                    .put("type", "string")
+                                    .put("description", "Exact guide title or medical topic query."))
+                            .put("auto_play_video", new JSONObject()
+                                    .put("type", "boolean")
+                                    .put("description", "Set true if the user asked to watch or play the instructional video.")),
+                    new JSONArray().put("query")));
+
+            tools.put(makeTool("control_video",
+                    "Play or pause the currently open First Aid instructional video.",
+                    new JSONObject()
+                            .put("command", new JSONObject()
+                                    .put("type", "string")
+                                    .put("enum", new JSONArray().put("play").put("pause"))   
+                                    .put("description", "Video playback command.")),
+                    new JSONArray().put("command")));
+
+            tools.put(makeTool("control_flashlight",
+                    "Turn the device camera flashlight/torch on or off.",
+                    new JSONObject()
+                            .put("enabled", new JSONObject()
+                                    .put("type", "boolean")
+                                    .put("description", "True to turn flashlight on, false to turn off.")),
+                    new JSONArray().put("enabled")));
+
+            tools.put(makeTool("control_siren",
+                    "Activate or stop the loud emergency locator siren.",
+                    new JSONObject()
+                            .put("enabled", new JSONObject()
+                                    .put("type", "boolean")
+                                    .put("description", "True to sound siren, false to stop siren.")),
+                    new JSONArray().put("enabled")));
+
+            tools.put(makeTool("call_bfp_station",
+                    "Open the phone dialer to call the BFP fire station emergency hotline.",
+                    new JSONObject(), null));
+        } catch (Exception e) {
+            Log.e(TAG, "Error building tools schema", e);
+        }
+        return tools;
+    }
+
+    private JSONObject makeTool(String name,
+                                String description,
+                                JSONObject properties,
+                                JSONArray required) throws Exception {
+        JSONObject params = new JSONObject();
+        params.put("type", "object");
+        params.put("properties", properties != null ? properties : new JSONObject());
+        if (required != null && required.length() > 0) {
+            params.put("required", required);
+        }
+        JSONObject fn = new JSONObject();
+        fn.put("name", name);
+        fn.put("description", description);
+        fn.put("parameters", params);
+
+        JSONObject tool = new JSONObject();
+        tool.put("type", "function");
+        tool.put("function", fn);
+        return tool;
+    }
+
+    private ToolCall legacyActionToToolCall(String action, String actionData, String userText) {
+        JSONObject args = new JSONObject();
+        try {
+            switch (action) {
+                case ACTION_SEND_SOS_INCIDENT:
+                    args.put("role", "bystander");
+                    args.put("incident_notes", (actionData != null && !actionData.isEmpty()) ? actionData : userText);
+                    return new ToolCall("send_sos", args);
+                case ACTION_SEND_SOS_VICTIM:
+                case ACTION_SEND_SOS:
+                    args.put("role", "victim");
+                    args.put("incident_notes", (actionData != null && !actionData.isEmpty() && !"victim".equalsIgnoreCase(actionData)) ? actionData : userText);
+                    return new ToolCall("send_sos", args);
+                case ACTION_OPEN_FIRSTAID:
+                    args.put("screen", "first_aid");
+                    return new ToolCall("navigate_to", args);
+                case ACTION_OPEN_PROFILE:
+                    args.put("screen", "profile");
+                    return new ToolCall("navigate_to", args);
+                case ACTION_OPEN_SOS:
+                    args.put("screen", "sos");
+                    return new ToolCall("navigate_to", args);
+                case ACTION_SEARCH_FIRSTAID:
+                    boolean play = actionData != null && actionData.contains("|play");
+                    String q = actionData != null ? actionData.replace("|play", "").trim() : userText;
+                    args.put("query", q);
+                    args.put("auto_play_video", play);
+                    return new ToolCall("open_first_aid", args);
+                case ACTION_PLAY_VIDEO:
+                    args.put("command", "play");
+                    return new ToolCall("control_video", args);
+                case ACTION_PAUSE_VIDEO:
+                    args.put("command", "pause");
+                    return new ToolCall("control_video", args);
+                case ACTION_FLASHLIGHT_ON:
+                    args.put("enabled", true);
+                    return new ToolCall("control_flashlight", args);
+                case ACTION_FLASHLIGHT_OFF:
+                    args.put("enabled", false);
+                    return new ToolCall("control_flashlight", args);
+                case ACTION_PLAY_SIREN:
+                    args.put("enabled", true);
+                    return new ToolCall("control_siren", args);
+                case ACTION_STOP_SIREN:
+                    args.put("enabled", false);
+                    return new ToolCall("control_siren", args);
+                case ACTION_CHECK_STATUS:
+                    return new ToolCall("check_sos_status", args);
+                case ACTION_CANCEL_SOS:
+                    return new ToolCall("cancel_sos", args);
+                case ACTION_UPDATE_CONDITION:
+                    args.put("condition_notes", actionData != null ? actionData : userText);
+                    return new ToolCall("update_condition", args);
+                case ACTION_CALL_STATION:
+                    return new ToolCall("call_bfp_station", args);
+                default:
+                    return new ToolCall(action.toLowerCase(), args);
+            }
+        } catch (Exception ignored) {}
+        return new ToolCall("none", args);
+    }
+
+    private String stripActionTags(String text) {
+        if (text == null) return "";
+        return text.replaceAll("\\[ACTION:[^\\]]*\\]", "").trim();
+    }
+
+    private String buildSpokenSummaryFromTools(List<ToolCall> toolCalls) {
+        if (toolCalls == null || toolCalls.isEmpty()) {
+            return "Done.";
+        }
+        List<String> parts = new ArrayList<>();
+        for (ToolCall tc : toolCalls) {
+            switch (tc.name) {
+                case "send_sos":
+                    parts.add("Sending emergency SOS alert to BFP now");
+                    break;
+                case "cancel_sos":
+                    parts.add("Cancelling active SOS alert");
+                    break;
+                case "check_sos_status":
+                    parts.add("Checking responder status");
+                    break;
+                case "update_condition":
+                    parts.add("Updating your condition for responders");
+                    break;
+                case "navigate_to":
+                    parts.add("Opening " + tc.args.optString("screen", "screen").replace("_", " "));
+                    break;
+                case "open_first_aid":
+                    parts.add("Opening first aid guide for " + tc.args.optString("query", "your request"));
+                    break;
+                case "control_video":
+                    parts.add("play".equals(tc.args.optString("command")) ? "Playing video" : "Pausing video");
+                    break;
+                case "control_flashlight":
+                    parts.add(tc.args.optBoolean("enabled", true) ? "Turning on flashlight" : "Turning off flashlight");
+                    break;
+                case "control_siren":
+                    parts.add(tc.args.optBoolean("enabled", true) ? "Activating siren" : "Stopping siren");
+                    break;
+                case "call_bfp_station":
+                    parts.add("Calling the BFP station");
+                    break;
+            }
+        }
+        if (parts.isEmpty()) return "Done.";
+        return String.join(". ", parts) + ".";
+    }
+
     // ── System prompt ─────────────────────────────────────────────
-    private String getSystemPrompt() {
+    private String getSystemPrompt(String appContextSummary) {
         String availableGuides = FirstAidRepository.getInstance().getGuideListSummary();
+        String ctxInfo = (appContextSummary != null && !appContextSummary.trim().isEmpty())
+                ? "\nCURRENT APP STATE:\n" + appContextSummary + "\n"
+                : "";
 
-        return "You are the BFP (Bureau of Fire Protection) Emergency Voice Assistant.\n"
-                + "You assist citizens and accident victims in emergencies and help them operate the app completely hands-free.\n"
-                + "Be calm, reassuring, clear, and very brief. You understand English, Filipino (Tagalog), and Taglish.\n\n"
-
+        return "You are the BFP (Bureau of Fire Protection) Emergency Voice Assistant with full multi-tool control over the app.\n"
+                + "You assist citizens and accident victims in emergencies and help them operate the entire app hands-free.\n"
+                + "Be calm, reassuring, clear, and very brief. You understand English, Filipino (Tagalog), and Taglish.\n"
+                + ctxInfo + "\n"
                 + "RESPONSE RULES:\n"
-                + "1. Plain text only. Do not use asterisks, markdown, bullet points, numbers, or emoji.\n"
-                + "2. Keep responses very short: maximum 2 sentences.\n"
-                + "3. ALWAYS end with exactly ONE action tag from the allowed list:\n"
-                + "   [ACTION:SEND_SOS_INCIDENT|IncidentDetails]\n"
-                + "   [ACTION:SEND_SOS_VICTIM|IncidentDetails]\n"
-                + "   [ACTION:SEND_SOS]\n"
-                + "   [ACTION:OPEN_FIRSTAID]\n"
-                + "   [ACTION:SEARCH_FIRSTAID|ExactGuideTitle]\n"
-                + "   [ACTION:CALL_STATION]\n"
-                + "   [ACTION:CHECK_STATUS]\n"
-                + "   [ACTION:CANCEL_SOS]\n"
-                + "   [ACTION:FLASHLIGHT_ON]\n"
-                + "   [ACTION:FLASHLIGHT_OFF]\n"
-                + "   [ACTION:PLAY_SIREN]\n"
-                + "   [ACTION:STOP_SIREN]\n"
-                + "   [ACTION:PLAY_VIDEO]\n"
-                + "   [ACTION:PAUSE_VIDEO]\n"
-                + "   [ACTION:UPDATE_CONDITION|BriefCondition]\n"
-                + "   [ACTION:NONE]\n"
-                + "4. Never skip the action tag.\n\n"
+                + "1. Plain text only. Do not use asterisks, markdown, bullet points, or emoji.\n"
+                + "2. Keep spoken text very short: maximum 2 sentences.\n"
+                + "3. Use the provided tools to control the app directly. You can call MULTIPLE tools in a single turn whenever the user asks for multiple things (for example: send_sos + control_flashlight + open_first_aid).\n"
+                + "4. Do NOT output [ACTION:...] tags when using tool calls.\n\n"
 
                 + "CURRENT AVAILABLE FIRST AID GUIDES IN BFP DATABASE:\n"
                 + availableGuides + "\n\n"
 
-                + "CRITICAL EMERGENCY INSTRUCTION - ANY INCIDENT OR DISTRESS:\n"
-                + "Whenever the user reports ANY fire, gas leak, burning house, smoke, accident, collision, injury, hazard, trap, disaster, or says 'help', 'saklolo', 'tulong', 'nasusunog', 'emergency', or describes ANY dangerous situation:\n"
-                + "YOU MUST ALWAYS TRIGGER SOS AND EXTRACT WHAT THE USER SAID INTO THE ACTION TAG!\n"
-                + "- If user is the affected victim (e.g. 'help gas leak my house is burning', 'I am hurt', 'house is burning I am trapped'):\n"
-                + "  Confirm emergency SOS is triggered, tell them to evacuate safely, and end with: [ACTION:SEND_SOS_VICTIM|<Extracted incident what user said>]\n"
-                + "  Example: User says 'help gas leak my house is burning' -> Reply: 'Help is on the way! Please evacuate your house immediately to a safe distance. [ACTION:SEND_SOS_VICTIM|Gas leak, house is burning]'\n"
-                + "- If user is reporting an incident or fire in general ('Gas leak on Main Street', 'Car crash 2 cars'):\n"
-                + "  Confirm SOS alert is dispatched and end with: [ACTION:SEND_SOS_INCIDENT|<Extracted incident what user said>]\n\n"
-
-                + "OTHER ACTIONS:\n"
-                + "- Flashlight control ('Turn on flashlight', 'Need light', 'Buksan ang ilaw', 'Turn off flashlight'):\n"
-                + "  Confirm torch state. End with [ACTION:FLASHLIGHT_ON] or [ACTION:FLASHLIGHT_OFF].\n\n"
-
-                + "- Siren or locator alarm ('Sound siren', 'Play siren', 'Help rescuers locate me', 'Patunugin ang alarm', 'Stop siren'):\n"
-                + "  Confirm locator sound. End with [ACTION:PLAY_SIREN] or [ACTION:STOP_SIREN].\n\n"
-
-                + "- Trapped, room status, or hazard update ('I am trapped on the 2nd floor', 'Cannot walk leg broken', 'Heavy smoke outside'):\n"
-                + "  Give 1 immediate life safety instruction, reassure that condition is logged for BFP, and end with [ACTION:UPDATE_CONDITION|SituationOrNotes].\n\n"
-
-                + "- Medical symptom, injury, first aid question, or guide request (e.g. 'open burns guide and play the video', 'open CPR', 'choking', 'treat a burn', 'play video'):\n"
-                + "  * FIRST inspect the CURRENT AVAILABLE FIRST AID GUIDES list above.\n"
-                + "  * IF A GUIDE MATCHES: Give 1 immediate crucial life-saving tip (under 20 words), announce you are opening the guide, and end with [ACTION:SEARCH_FIRSTAID|ExactTitle] or [ACTION:SEARCH_FIRSTAID|ExactTitle|play] if user requested video.\n"
-                + "  * If the user says 'play video' or 'start video' while viewing a guide: reply 'Playing video now. [ACTION:PLAY_VIDEO]'\n"
-                + "  * If the user says 'pause video' or 'stop video': reply 'Video paused. [ACTION:PAUSE_VIDEO]'\n"
-                + "  * IF NO GUIDE MATCHES: You MUST state clearly: 'No corresponding first aid data found for that condition. Please contact emergency services or call the BFP hotline.' and end with [ACTION:NONE] or [ACTION:CALL_STATION]. NEVER invent guides that are not in the list.\n\n"
-
-                + "- BFP Hotline inquiry ('What is the hotline?', 'Emergency number', 'Numero ng bumbero'):\n"
-                + "  State that BFP emergency hotline is 09399337795 and national emergency is 911. Offer to call. End with [ACTION:NONE] or [ACTION:CALL_STATION].\n\n"
-
-                + "- Check responder / alert status ('Where are the responders?', 'Is BFP coming?', 'Nasaan na ang bumbero?', 'Check status'):\n"
-                + "  State you are checking status. End with [ACTION:CHECK_STATUS].\n\n"
-
-                + "- Cancel alert or false alarm ('Cancel SOS', 'False alarm', 'Kanselahin ang alert'):\n"
-                + "  Confirm cancelling SOS. End with [ACTION:CANCEL_SOS].\n\n"
-
-                + "- Call BFP fire station or emergency hotline ('Call station', 'Call BFP', 'Dial 911', 'Tawagan ang bumbero'):\n"
-                + "  Confirm calling station. End with [ACTION:CALL_STATION].\n\n"
-
-                + "- Greetings, help, or chit-chat ('Hello', 'Kamusta', 'What can you do?'):\n"
-                + "  State you can send victim SOS, turn on flashlight, trigger siren, provide first aid guides, or check responders. End with [ACTION:NONE].";
+                + "EMERGENCY & APP CONTROL RULES:\n"
+                + "- ANY fire, gas leak, burning house, smoke, crash, injury, trapped person, 'help', 'saklolo', 'tulong', 'nasusunog', or 'emergency': ALWAYS call `send_sos` immediately with `role` ('victim' or 'bystander') and extracted `incident_notes`.\n"
+                + "- If user asks for first aid / medical help (e.g. burn, CPR, choking) AND a matching guide exists in the list above: call `open_first_aid` with the exact matching title (and `auto_play_video: true` if they asked for video), and give 1 short life-saving tip.\n"
+                + "- If NO guide matches their medical question: state clearly 'No corresponding first aid data found for that condition. Please contact emergency services or call the BFP hotline.' and optionally offer `call_bfp_station`.\n"
+                + "- Hardware & media: use `control_flashlight`, `control_siren`, `control_video`, `navigate_to`, `check_sos_status`, `update_condition`, `cancel_sos`, or `call_bfp_station` as needed.\n"
+                + "- BFP hotline is 09399337795 and national emergency is 911.";
     }
 
     public void clearHistory() {
