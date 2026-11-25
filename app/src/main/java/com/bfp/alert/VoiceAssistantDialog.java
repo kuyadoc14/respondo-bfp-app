@@ -402,14 +402,21 @@ public class VoiceAssistantDialog extends Dialog {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent
                         .LANGUAGE_MODEL_FREE_FORM);
+        // Use fil-PH so Android recognizes Tagalog, Taglish, and English words together
         intent.putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE,
-                Locale.ENGLISH);
+                "fil-PH");
+        intent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
+                "fil-PH");
+        intent.putExtra(
+                RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE,
+                false);
         intent.putExtra(
                 RecognizerIntent.EXTRA_PARTIAL_RESULTS,
                 true);
         intent.putExtra(
-                RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+                RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         intent.putExtra(
                 RecognizerIntent
                         .EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,

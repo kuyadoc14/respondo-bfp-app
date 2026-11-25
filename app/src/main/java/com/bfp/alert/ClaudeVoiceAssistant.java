@@ -127,6 +127,7 @@ public class ClaudeVoiceAssistant {
                 || text.isEmpty()) return;
         lastSpoken = text;
         tts.stop();
+        applyBestTtsLocale(text);
 
         tts.setOnUtteranceProgressListener(
                 new UtteranceProgressListener() {
@@ -154,6 +155,35 @@ public class ClaudeVoiceAssistant {
                 TextToSpeech.QUEUE_FLUSH,
                 null,
                 "utt_" + System.currentTimeMillis());
+    }
+
+    private void applyBestTtsLocale(String text) {
+        if (tts == null || text == null) return;
+        String lower = text.toLowerCase(Locale.ROOT);
+        boolean looksFilipino = lower.contains(" ang ") || lower.contains(" mga ")
+                || lower.contains(" po") || lower.contains(" na ")
+                || lower.contains(" sa ") || lower.contains("tulong")
+                || lower.contains("sunog") || lower.contains("bumbero")
+                || lower.contains("kumusta") || lower.contains("kamusta");
+        if (looksFilipino) {
+            Locale fil = new Locale("fil", "PH");
+            int res = tts.isLanguageAvailable(fil);
+            if (res >= TextToSpeech.LANG_AVAILABLE) {
+                tts.setLanguage(fil);
+                return;
+            }
+            Locale tl = new Locale("tl", "PH");
+            if (tts.isLanguageAvailable(tl) >= TextToSpeech.LANG_AVAILABLE) {
+                tts.setLanguage(tl);
+                return;
+            }
+        }
+        Locale def = Locale.getDefault();
+        if (tts.isLanguageAvailable(def) >= TextToSpeech.LANG_AVAILABLE) {
+            tts.setLanguage(def);
+        } else {
+            tts.setLanguage(Locale.ENGLISH);
+        }
     }
 
     public void stopSpeaking() {
@@ -498,33 +528,41 @@ public class ClaudeVoiceAssistant {
         String lowerAi   = text.toLowerCase();
         this.lastDetectedGuideTitle = null;
 
-        if (lowerUser.contains("flashlight on") || lowerUser.contains("turn on flashlight") || lowerUser.contains("open flashlight") || lowerUser.contains("buksan ang ilaw")) {
+        if (lowerUser.contains("flashlight on") || lowerUser.contains("turn on flashlight") || lowerUser.contains("open flashlight")
+                || lowerUser.contains("buksan ang ilaw") || lowerUser.contains("buksan ang flashlight") || lowerUser.contains("ilaw on")) {
             return ACTION_FLASHLIGHT_ON;
         }
-        if (lowerUser.contains("flashlight off") || lowerUser.contains("turn off flashlight") || lowerUser.contains("patayin ang ilaw")) {
+        if (lowerUser.contains("flashlight off") || lowerUser.contains("turn off flashlight")
+                || lowerUser.contains("patayin ang ilaw") || lowerUser.contains("patayin ang flashlight") || lowerUser.contains("isara ang ilaw")) {
             return ACTION_FLASHLIGHT_OFF;
         }
-        if (lowerUser.contains("siren") || lowerUser.contains("alarm")) {
-            if (lowerUser.contains("stop") || lowerUser.contains("off") || lowerUser.contains("silence")) {
+        if (lowerUser.contains("siren") || lowerUser.contains("sirena") || lowerUser.contains("alarm")) {
+            if (lowerUser.contains("stop") || lowerUser.contains("off") || lowerUser.contains("silence")
+                    || lowerUser.contains("patayin") || lowerUser.contains("itigil") || lowerUser.contains("ihinto")) {
                 return ACTION_STOP_SIREN;
             }
             return ACTION_PLAY_SIREN;
         }
-        if (lowerUser.contains("cancel") || lowerUser.contains("false alarm") || lowerUser.contains("kanselahin")) {
+        if (lowerUser.contains("cancel") || lowerUser.contains("false alarm") || lowerUser.contains("kanselahin") || lowerUser.contains("ikansela")) {
             return ACTION_CANCEL_SOS;
         }
-        if (lowerUser.contains("responder") || lowerUser.contains("status") || lowerUser.contains("en route") || lowerUser.contains("deployed")) {
+        if (lowerUser.contains("responder") || lowerUser.contains("status") || lowerUser.contains("en route") || lowerUser.contains("deployed")
+                || lowerUser.contains("nasaan") || lowerUser.contains("papunta na")) {
             return ACTION_CHECK_STATUS;
         }
-        if (lowerUser.contains("call") && (lowerUser.contains("station") || lowerUser.contains("bfp") || lowerUser.contains("911") || lowerUser.contains("dial"))) {
+        if ((lowerUser.contains("call") || lowerUser.contains("tawagan") || lowerUser.contains("tawag"))
+                && (lowerUser.contains("station") || lowerUser.contains("bfp") || lowerUser.contains("bumbero") || lowerUser.contains("911") || lowerUser.contains("dial"))) {
             return ACTION_CALL_STATION;
         }
 
         // 0. Video playback controls
-        if (lowerUser.contains("pause video") || lowerUser.contains("pause the video") || lowerUser.contains("stop video")) {
+        if (lowerUser.contains("pause video") || lowerUser.contains("pause the video") || lowerUser.contains("stop video")
+                || lowerUser.contains("ihinto ang video") || lowerUser.contains("itigil ang video") || lowerUser.contains("i-pause")) {
             return ACTION_PAUSE_VIDEO;
         }
-        if (lowerUser.contains("play video") || lowerUser.contains("play the video") || lowerUser.contains("start video") || lowerUser.contains("watch video") || lowerUser.contains("resume video")) {
+        if (lowerUser.contains("play video") || lowerUser.contains("play the video") || lowerUser.contains("start video")
+                || lowerUser.contains("watch video") || lowerUser.contains("resume video")
+                || lowerUser.contains("i-play ang video") || lowerUser.contains("panoorin ang video") || lowerUser.contains("patugtugin ang video")) {
             FirstAidItem guideMatch = FirstAidRepository.getInstance().findMatchingItem(lowerUser);
             if (guideMatch != null) {
                 this.lastDetectedGuideTitle = guideMatch.title + "|play";
@@ -534,13 +572,16 @@ public class ClaudeVoiceAssistant {
         }
 
         // 1. Navigation intents
-        if (lowerUser.contains("open first aid") || lowerUser.contains("first aid panel") || lowerUser.equals("first aid") || lowerUser.contains("first aid guides")) {
+        if (lowerUser.contains("open first aid") || lowerUser.contains("first aid panel") || lowerUser.equals("first aid")
+                || lowerUser.contains("first aid guides") || lowerUser.contains("buksan ang first aid")) {
             return ACTION_OPEN_FIRSTAID;
         }
-        if (lowerUser.contains("open profile") || lowerUser.contains("go to profile") || lowerUser.contains("my profile") || lowerUser.contains("profile panel")) {
+        if (lowerUser.contains("open profile") || lowerUser.contains("go to profile") || lowerUser.contains("my profile")
+                || lowerUser.contains("profile panel") || lowerUser.contains("buksan ang profile")) {
             return ACTION_OPEN_PROFILE;
         }
-        if (lowerUser.contains("open sos") || lowerUser.contains("go to sos") || lowerUser.contains("back to sos") || lowerUser.contains("radar screen") || lowerUser.contains("sos panel")) {
+        if (lowerUser.contains("open sos") || lowerUser.contains("go to sos") || lowerUser.contains("back to sos")
+                || lowerUser.contains("radar screen") || lowerUser.contains("sos panel") || lowerUser.contains("bumalik sa sos")) {
             return ACTION_OPEN_SOS;
         }
 
@@ -992,7 +1033,10 @@ public class ClaudeVoiceAssistant {
 
         return "You are the BFP (Bureau of Fire Protection) Emergency Voice Assistant with full multi-tool control over the app.\n"
                 + "You assist citizens and accident victims in emergencies and help them operate the entire app hands-free.\n"
-                + "Be calm, reassuring, clear, and very brief. You understand English, Filipino (Tagalog), and Taglish.\n"
+                + "Be calm, reassuring, clear, and very brief.\n"
+                + "LANGUAGE FLEXIBILITY:\n"
+                + "- Understand ANY language or dialect the user speaks (English, Filipino/Tagalog, Taglish, Bisaya/Cebuano, Ilocano, Hiligaynon, Spanish, etc.).\n"
+                + "- ALWAYS reply in the SAME language or dialect the user used (for example, reply in Tagalog if they spoke Tagalog, Bisaya if they spoke Bisaya, English if they spoke English, Taglish if they mixed both).\n"
                 + ctxInfo + "\n"
                 + "RESPONSE RULES:\n"
                 + "1. Plain text only. Do not use asterisks, markdown, bullet points, or emoji.\n"

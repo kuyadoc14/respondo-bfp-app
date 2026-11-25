@@ -176,9 +176,45 @@ public class FirstAidRepository {
         if (s == null) return "";
         return s.toLowerCase()
                 .replaceAll("['\".,?!;:()\\/\\-]", " ")
-                .replaceAll("\\b(open|show|display|search|find|view|watch|read|go to|the|a|an|please|can you|i want to|guide|guides|tutorial|first aid for|first aid|how to treat|how to do|how to|treatment for|treatment|and|play|video)\\b", " ")
+                .replaceAll("\\b(open|show|display|search|find|view|watch|read|go to|the|a|an|please|can you|i want to|guide|guides|tutorial|first aid for|first aid|how to treat|how to do|how to|treatment for|treatment|and|play|video|buksan|ipakita|tingnan|panoorin|paano|gamutin|lunas|para sa|yung|ang|ng|sa|po|naman|kung|may|ako|siya)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private String mapTagalogMedicalSynonyms(String q) {
+        if (q == null || q.isEmpty()) return "";
+        String lower = q.toLowerCase();
+        if (lower.contains("paso") || lower.contains("napaso") || lower.contains("lapnos") || lower.contains("banli")) {
+            return lower + " burn burns";
+        }
+        if (lower.contains("nabulunan") || lower.contains("nasamid") || lower.contains("nabilaukan") || lower.contains("bara sa lalamunan")) {
+            return lower + " choking";
+        }
+        if (lower.contains("hindi humihinga") || lower.contains("walang pulso") || lower.contains("atake sa puso") || lower.contains("huminto ang paghinga")) {
+            return lower + " cpr cardiac";
+        }
+        if (lower.contains("dugo") || lower.contains("dumudugo") || lower.contains("sugat") || lower.contains("hiwa")) {
+            return lower + " bleeding wound";
+        }
+        if (lower.contains("bali") || lower.contains("nabali") || lower.contains("pilay")) {
+            return lower + " fracture sprain";
+        }
+        if (lower.contains("kagat") || lower.contains("ahas") || lower.contains("nakagat")) {
+            return lower + " bite snake";
+        }
+        if (lower.contains("nahimatay") || lower.contains("walang malay") || lower.contains("hinimatay")) {
+            return lower + " fainting unconscious";
+        }
+        if (lower.contains("nalunod") || lower.contains("nalulunod")) {
+            return lower + " drowning";
+        }
+        if (lower.contains("lagnat")) {
+            return lower + " fever";
+        }
+        if (lower.contains("kombulsyon")) {
+            return lower + " seizure";
+        }
+        return lower;
     }
 
     private String stemWord(String w) {
@@ -196,7 +232,7 @@ public class FirstAidRepository {
         if (query == null || query.trim().isEmpty()) return null;
         String rawLower = query.trim().toLowerCase();
         String cleaned = cleanQuery(query);
-        String q = cleaned.isEmpty() ? rawLower : cleaned;
+        String q = mapTagalogMedicalSynonyms(cleaned.isEmpty() ? rawLower : cleaned);
 
         synchronized (cachedItems) {
             // 1. Exact match on title with cleaned or raw query

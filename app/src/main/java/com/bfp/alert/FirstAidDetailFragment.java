@@ -322,13 +322,52 @@ public class FirstAidDetailFragment extends Fragment {
         if (shouldAutoPlay) {
             exoPlayer.setPlayWhenReady(true);
             exoPlayer.play();
+            playerView.postDelayed(() -> {
+                scrollToVideoCentered();
+                playerView.showController();
+            }, 220);
         }
+    }
+
+    private void scrollToVideoCentered() {
+        View root = getView();
+        if (root == null) return;
+        android.widget.ScrollView scrollView = root.findViewById(R.id.detailScrollView);
+        View videoTarget = root.findViewById(R.id.videoGuideCard);
+        if (videoTarget == null || videoTarget.getVisibility() != View.VISIBLE) {
+            videoTarget = root.findViewById(R.id.exoPlayerView);
+        }
+        if (scrollView == null || videoTarget == null || videoTarget.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        final View target = videoTarget;
+        scrollView.post(() -> {
+            try {
+                View content = scrollView.getChildAt(0);
+                if (content instanceof android.view.ViewGroup) {
+                    android.graphics.Rect rect = new android.graphics.Rect();
+                    target.getDrawingRect(rect);
+                    ((android.view.ViewGroup) content).offsetDescendantRectToMyCoords(target, rect);
+                    int targetCenterY = rect.top + (target.getHeight() / 2);
+                    int scrollY = Math.max(0, targetCenterY - (scrollView.getHeight() / 2));
+                    scrollView.smoothScrollTo(0, scrollY);
+                } else {
+                    scrollView.smoothScrollTo(0, target.getTop());
+                }
+                target.requestFocus();
+            } catch (Exception ignored) {}
+        });
     }
 
     public void playVideo() {
         if (exoPlayer != null) {
             exoPlayer.setPlayWhenReady(true);
             exoPlayer.play();
+            scrollToVideoCentered();
+            if (getView() != null) {
+                PlayerView pv = getView().findViewById(R.id.exoPlayerView);
+                if (pv != null) pv.showController();
+            }
             if (getContext() != null) {
                 Toast.makeText(getContext(), "▶ Playing video", Toast.LENGTH_SHORT).show();
             }
