@@ -1,7 +1,11 @@
 package com.bfp.alert;
 
 import android.Manifest;
+import android.app.Activity;
 import android.graphics.Typeface;
+import android.location.Location;
+import android.location.LocationManager;
+import android.provider.Settings;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.AbsoluteSizeSpan;
@@ -11,6 +15,7 @@ import android.util.TypedValue;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.os.Build;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -31,6 +36,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -39,8 +47,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -68,6 +81,28 @@ public class SosFragment extends Fragment {
 
     private FirebaseFirestore          db;
     private FusedLocationProviderClient locationClient;
+
+    private String pendingSosRole = null;
+    private String pendingSosNotes = null;
+    private final ActivityResultLauncher<IntentSenderRequest> locationSettingsLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
+                if (!isAdded() || getContext() == null) return;
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    // User accepted turning on device location — proceed immediately
+                    String roleToSend = pendingSosRole;
+                    String notesToSend = pendingSosNotes;
+                    pendingSosRole = null;
+                    pendingSosNotes = null;
+                    fetchLocationAndDispatchSOS(roleToSend, notesToSend);
+                } else {
+                    pendingSosRole = null;
+                    pendingSosNotes = null;
+                    resetSOSButtonToIdle();
+                    Toast.makeText(requireContext(),
+                            "Location must be turned ON before sending an SOS alert.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
 
     private Button       btnSOS;
     private View         ringOuter;
@@ -533,69 +568,201 @@ public class SosFragment extends Fragment {
             return;
         }
 
-        sLastSosDispatchTime = now;
         btnSOS.setEnabled(false);
         btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
         btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        btnSOS.setText(formatSOSButtonText("SOS", "LOCATING..."));
+
+        ensureLocationSettingsAndSend(role, incidentNotes);
+    }
+
+    private void ensureLocationSettingsAndSend(String role, String incidentNotes) {
+        if (!isAdded() || getContext() == null) return;
+
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+                .setMinUpdateIntervalMillis(2000)
+                .build();
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest)
+                .setAlwaysShow(true);
+
+        LocationServices.getSettingsClient(requireActivity())
+                .checkLocationSettings(builder.build())
+                .addOnSuccessListener(response -> {
+                    if (!isAdded() || getContext() == null) return;
+                    fetchLocationAndDispatchSOS(role, incidentNotes);
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded() || getContext() == null) return;
+                    if (e instanceof ResolvableApiException) {
+                        try {
+                            pendingSosRole = role;
+                            pendingSosNotes = incidentNotes;
+                            ResolvableApiException resolvable = (ResolvableApiException) e;
+                            locationSettingsLauncher.launch(
+                                    new IntentSenderRequest.Builder(resolvable.getResolution()).build());
+                        } catch (Exception sendEx) {
+                            Log.e(TAG, "Failed to launch location resolution: " + sendEx.getMessage());
+                            resetSOSButtonToIdle();
+                            showEnableLocationDialog();
+                        }
+                    } else {
+                        resetSOSButtonToIdle();
+                        showEnableLocationDialog();
+                    }
+                });
+    }
+
+    private void fetchLocationAndDispatchSOS(String role, String incidentNotes) {
+        if (!isAdded() || getContext() == null) return;
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            resetSOSButtonToIdle();
+            return;
+        }
+
+        btnSOS.setEnabled(false);
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         btnSOS.setText(formatSOSButtonText("SOS", "SENDING..."));
 
-        locationClient.getLastLocation()
-                .addOnSuccessListener(location -> {
+        CancellationTokenSource cts = new CancellationTokenSource();
+        locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.getToken())
+                .addOnSuccessListener(currLoc -> {
                     if (!isAdded() || getContext() == null) return;
-                    String userId = getOrCreateUserId();
-
-                    Map<String, Object> alert = new HashMap<>();
-                    alert.put("userId",    userId);
-                    alert.put("latitude",  location != null ? location.getLatitude()  : 0.0);
-                    alert.put("longitude", location != null ? location.getLongitude() : 0.0);
-                    alert.put("timestamp", FieldValue.serverTimestamp());
-                    alert.put("status",    "active");
-                    alert.put("deviceToken", "");
-
-                    String finalRole = role;
-                    if (incidentNotes != null && !incidentNotes.trim().isEmpty()) {
-                        alert.put("incidentNotes", incidentNotes.trim());
-                        alert.put("description", incidentNotes.trim());
-                        alert.put("accidentType", detectIncidentType(incidentNotes));
-                        if (finalRole == null || finalRole.isEmpty()) {
-                            finalRole = "victim";
-                        }
+                    if (isValidLocation(currLoc)) {
+                        dispatchAlertWithLocation(currLoc.getLatitude(), currLoc.getLongitude(), role, incidentNotes);
+                    } else {
+                        locationClient.getLastLocation()
+                                .addOnSuccessListener(lastLoc -> {
+                                    if (!isAdded() || getContext() == null) return;
+                                    if (isValidLocation(lastLoc)) {
+                                        dispatchAlertWithLocation(lastLoc.getLatitude(), lastLoc.getLongitude(), role, incidentNotes);
+                                    } else {
+                                        resetSOSButtonToIdle();
+                                        showLocationUnavailableDialog();
+                                    }
+                                })
+                                .addOnFailureListener(err -> {
+                                    if (!isAdded() || getContext() == null) return;
+                                    resetSOSButtonToIdle();
+                                    showLocationUnavailableDialog();
+                                });
                     }
-
-                    if (finalRole != null && !finalRole.isEmpty()) {
-                        alert.put("reporterRole", finalRole);
-                    }
-
-                    final String effectiveRole = finalRole;
-
-                    db.collection("sos_alerts")
-                            .add(alert)
-                            .addOnSuccessListener(ref -> {
-                                if (!isAdded()) return;
-                                sAlertId = ref.getId();
-                                saveAlertId(sAlertId);
-                                setSOSSentState();
-                                attachLiveListener(sAlertId);
-
-                                if ("victim".equalsIgnoreCase(effectiveRole) || (incidentNotes != null && !incidentNotes.trim().isEmpty())) {
-                                    autoSubmitVictimDetails(sAlertId, null, incidentNotes);
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded() || getContext() == null) return;
+                    locationClient.getLastLocation()
+                            .addOnSuccessListener(lastLoc -> {
+                                if (!isAdded() || getContext() == null) return;
+                                if (isValidLocation(lastLoc)) {
+                                    dispatchAlertWithLocation(lastLoc.getLatitude(), lastLoc.getLongitude(), role, incidentNotes);
                                 } else {
-                                    promptRoleSelection(sAlertId);
+                                    resetSOSButtonToIdle();
+                                    showLocationUnavailableDialog();
                                 }
                             })
-                            .addOnFailureListener(e -> {
-                                if (!isAdded()) return;
-                                btnSOS.setEnabled(true);
-                                btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
-                                btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
-                                btnSOS.setText("SOS");
-                                Toast.makeText(
-                                                requireContext(),
-                                                "Failed: " + e.getMessage(),
-                                                Toast.LENGTH_SHORT)
-                                        .show();
+                            .addOnFailureListener(err -> {
+                                if (!isAdded() || getContext() == null) return;
+                                resetSOSButtonToIdle();
+                                showLocationUnavailableDialog();
                             });
                 });
+    }
+
+    private boolean isValidLocation(Location loc) {
+        return loc != null && !(loc.getLatitude() == 0.0 && loc.getLongitude() == 0.0);
+    }
+
+    private void dispatchAlertWithLocation(double lat, double lng, String role, String incidentNotes) {
+        if (!isAdded() || getContext() == null) return;
+        sLastSosDispatchTime = System.currentTimeMillis();
+        String userId = getOrCreateUserId();
+
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("userId",    userId);
+        alert.put("latitude",  lat);
+        alert.put("longitude", lng);
+        alert.put("timestamp", FieldValue.serverTimestamp());
+        alert.put("status",    "active");
+        alert.put("deviceToken", "");
+
+        String finalRole = role;
+        if (incidentNotes != null && !incidentNotes.trim().isEmpty()) {
+            alert.put("incidentNotes", incidentNotes.trim());
+            alert.put("description", incidentNotes.trim());
+            alert.put("accidentType", detectIncidentType(incidentNotes));
+            if (finalRole == null || finalRole.isEmpty()) {
+                finalRole = "victim";
+            }
+        }
+
+        if (finalRole != null && !finalRole.isEmpty()) {
+            alert.put("reporterRole", finalRole);
+        }
+
+        final String effectiveRole = finalRole;
+
+        db.collection("sos_alerts")
+                .add(alert)
+                .addOnSuccessListener(ref -> {
+                    if (!isAdded()) return;
+                    sAlertId = ref.getId();
+                    saveAlertId(sAlertId);
+                    setSOSSentState();
+                    attachLiveListener(sAlertId);
+
+                    if ("victim".equalsIgnoreCase(effectiveRole) || (incidentNotes != null && !incidentNotes.trim().isEmpty())) {
+                        autoSubmitVictimDetails(sAlertId, null, incidentNotes);
+                    } else {
+                        promptRoleSelection(sAlertId);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    sLastSosDispatchTime = 0;
+                    resetSOSButtonToIdle();
+                    Toast.makeText(
+                                    requireContext(),
+                                    "Failed: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT)
+                            .show();
+                });
+    }
+
+    private void resetSOSButtonToIdle() {
+        if (btnSOS == null) return;
+        btnSOS.setEnabled(true);
+        btnSOS.animate().scaleX(1.0f).scaleY(1.0f).translationY(0f).setDuration(100).start();
+        btnSOS.setTextSize(TypedValue.COMPLEX_UNIT_SP, 46);
+        btnSOS.setText("SOS");
+    }
+
+    private void showEnableLocationDialog() {
+        if (!isAdded() || getContext() == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Location Required")
+                .setMessage("Your device location is turned off. Please turn on Location Services so BFP responders can locate you, then try again.")
+                .setPositiveButton("Open Location Settings", (d, w) -> {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    } catch (Exception ignored) {}
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showLocationUnavailableDialog() {
+        if (!isAdded() || getContext() == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Unable to Detect Location")
+                .setMessage("Could not detect your GPS coordinates. Please make sure Location is turned ON (try moving near a window or outdoors) and tap SOS again.")
+                .setPositiveButton("Location Settings", (d, w) -> {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    } catch (Exception ignored) {}
+                })
+                .setNegativeButton("OK", null)
+                .show();
     }
 
     private String detectIncidentType(String notes) {

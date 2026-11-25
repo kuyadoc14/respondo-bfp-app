@@ -99,6 +99,59 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
+       DEPLOY RESPONDERS CONFIRMATION MODAL
+       ══════════════════════════════════════════════════════════════ -->
+  <div id="deployModalOverlay" class="deploy-modal-overlay" onclick="handleDeployOverlayClick(event)">
+    <div class="deploy-modal-card" role="dialog" aria-modal="true" aria-labelledby="deployModalTitle">
+      <!-- Close Button -->
+      <button type="button" class="deploy-modal-close" onclick="closeDeployModal()" aria-label="Close dialog">✕</button>
+
+      <!-- Header with BFP Dispatch Emblem -->
+      <div class="deploy-modal-header">
+        <div class="deploy-modal-icon-badge">
+          <svg viewBox="0 0 24 24" class="deploy-badge-svg">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="deploy-header-badge">DISPATCH CONFIRMATION</div>
+          <h3 id="deployModalTitle" class="deploy-modal-title">Deploy BFP Responders?</h3>
+          <p class="deploy-modal-sub">Citizen user will receive immediate assurance notification.</p>
+        </div>
+      </div>
+
+      <!-- Incident Triage Snapshot Card -->
+      <div class="deploy-triage-card">
+        <div class="deploy-triage-row">
+          <span class="deploy-triage-label">INCIDENT TYPE</span>
+          <span id="deployIncidentTypeBadge" class="badge-incident badge-fire">FIRE</span>
+        </div>
+        <div class="deploy-triage-row">
+          <span class="deploy-triage-label">REPORTER / ROLE</span>
+          <span id="deployReporterText" class="deploy-triage-val">Citizen · Victim</span>
+        </div>
+        <div class="deploy-triage-row">
+          <span class="deploy-triage-label">SCENE LOCATION</span>
+          <span id="deployLocationText" class="deploy-triage-val">Coordinates locked</span>
+        </div>
+        <div class="deploy-triage-row" id="deployVictimsRow">
+          <span class="deploy-triage-label">PERSONS INVOLVED</span>
+          <span id="deployVictimsText" class="deploy-triage-val">1 Person</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="deploy-modal-actions">
+        <button type="button" class="btn-deploy-cancel" onclick="closeDeployModal()">Cancel</button>
+        <button type="button" id="btnConfirmDeployAction" class="btn-deploy-confirm" onclick="executeDeployAlert()">
+          <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:currentColor;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          <span>Confirm Deployment</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
        ACCIDENT & PATIENT REPORT MODAL
        ══════════════════════════════════════════════════════════════ -->
   <div id="reportModalOverlay" onclick="handleModalOverlayClick(event)">
@@ -1338,19 +1391,134 @@
     }
 
     // ── Alert Deploy / Resolve / Delete ──
+    let pendingDeployAlertId = null;
+
     function deployAlert(id) {
-      if (!confirm("Deploy BFP Responders to this emergency? Citizen user will receive immediate assurance notification.")) return;
-      db.collection("sos_alerts").doc(id)
+      openDeployModal(id);
+    }
+
+    function openDeployModal(id) {
+      pendingDeployAlertId = id;
+      const alert = allAlerts.find(a => a.id === id);
+
+      // Populate Incident Type Chip
+      const typeBadge = document.getElementById("deployIncidentTypeBadge");
+      const accType = alert && alert.accidentType ? alert.accidentType : "Emergency SOS";
+      typeBadge.textContent = accType.toUpperCase();
+
+      const lowerType = (accType || "").toLowerCase();
+      let badgeClass = "badge-fire";
+      if (lowerType.includes("medical")) badgeClass = "badge-medical";
+      else if (lowerType.includes("vehicle")) badgeClass = "badge-vehicle";
+      else if (!lowerType.includes("fire")) badgeClass = "badge-other";
+      typeBadge.className = "badge-incident " + badgeClass;
+
+      // Populate Reporter & Role
+      let reporterStr = "Citizen User";
+      if (alert && alert.reporterName) {
+        reporterStr = alert.reporterName;
+      } else if (alert && alert.reporterProfile && alert.reporterProfile.fullName) {
+        reporterStr = alert.reporterProfile.fullName;
+      }
+      const roleStr = alert && alert.reporterRole ? (alert.reporterRole === "victim" ? "Victim" : "Bystander") : "Citizen";
+      document.getElementById("deployReporterText").textContent = `${reporterStr} · ${roleStr}`;
+
+      // Populate Location
+      let locStr = "Coordinates locked";
+      if (alert && alert.address) {
+        locStr = alert.address;
+      } else if (alert && alert.latitude && alert.longitude) {
+        locStr = `${Number(alert.latitude).toFixed(4)}° N, ${Number(alert.longitude).toFixed(4)}° E`;
+      }
+      document.getElementById("deployLocationText").textContent = locStr;
+
+      // Populate Victims Count
+      const vCount = alert && alert.countOfVictims ? parseInt(alert.countOfVictims) : 1;
+      document.getElementById("deployVictimsText").textContent = `${vCount} ${vCount > 1 ? "Persons" : "Person"}`;
+
+      const btnConfirm = document.getElementById("btnConfirmDeployAction");
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = `<svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:currentColor;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg><span>Confirm Deployment</span>`;
+
+      document.getElementById("deployModalOverlay").classList.add("show");
+    }
+
+    function closeDeployModal() {
+      pendingDeployAlertId = null;
+      document.getElementById("deployModalOverlay").classList.remove("show");
+    }
+
+    function handleDeployOverlayClick(e) {
+      if (e.target.id === "deployModalOverlay") {
+        closeDeployModal();
+      }
+    }
+
+    function executeDeployAlert() {
+      if (!pendingDeployAlertId) return;
+
+      const btnConfirm = document.getElementById("btnConfirmDeployAction");
+      btnConfirm.disabled = true;
+      btnConfirm.innerHTML = `<span>Deploying Responders...</span>`;
+
+      const alertId = pendingDeployAlertId;
+      db.collection("sos_alerts").doc(alertId)
         .update({
           status: "deployed",
           deployedAt: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
-          if (currentModalAlertId === id) {
-            openReportModal(id);
+          closeDeployModal();
+          showBfpToast("Responders Deployed", "Status updated to EN ROUTE. Citizen notified.", "success");
+          if (currentModalAlertId === alertId) {
+            openReportModal(alertId);
+          }
+          if (typeof infoWindow !== "undefined" && infoWindow) {
+            infoWindow.close();
           }
         })
-        .catch(err => alert("Deploy error: " + err.message));
+        .catch(err => {
+          btnConfirm.disabled = false;
+          btnConfirm.innerHTML = `<svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:currentColor;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg><span>Confirm Deployment</span>`;
+          showBfpToast("Deploy Failed", err.message, "error");
+        });
+    }
+
+    function showBfpToast(title, message, type = "success") {
+      const container = document.getElementById("bfpToastContainer");
+      if (!container) return;
+
+      const toast = document.createElement("div");
+      toast.className = `bfp-toast bfp-toast-${type}`;
+
+      let iconSvg = "";
+      if (type === "success") {
+        iconSvg = `<svg viewBox="0 0 24 24" class="bfp-toast-svg" style="fill:#10B981;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+      } else if (type === "error") {
+        iconSvg = `<svg viewBox="0 0 24 24" class="bfp-toast-svg" style="fill:#EF4444;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+      } else {
+        iconSvg = `<svg viewBox="0 0 24 24" class="bfp-toast-svg" style="fill:#F59E0B;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`;
+      }
+
+      toast.innerHTML = `
+        <div class="bfp-toast-icon">${iconSvg}</div>
+        <div class="bfp-toast-text">
+          <div class="bfp-toast-title">${escapeHtml(title)}</div>
+          <div class="bfp-toast-desc">${escapeHtml(message)}</div>
+        </div>
+        <button class="bfp-toast-close" onclick="this.parentElement.remove()" aria-label="Close">✕</button>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.add("show");
+      });
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 4200);
     }
 
     function resolveAlert(id) {
@@ -1360,11 +1528,15 @@
           resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
         })
         .then(() => {
+          showBfpToast("Incident Resolved", "Emergency alert marked as resolved by BFP.", "success");
           if (currentModalAlertId === id) {
             closeReportModal();
           }
         })
-        .catch(err => console.error("Resolve error:", err.message));
+        .catch(err => {
+          console.error("Resolve error:", err.message);
+          showBfpToast("Resolve Error", err.message, "error");
+        });
     }
 
     function askDelete(id) {
@@ -1764,14 +1936,10 @@
     }
 
     function deployAlertFromMap(id) {
-      if (!confirm("Deploy BFP Responders to this incident?")) return;
-      db.collection("sos_alerts").doc(id)
-        .update({
-          status: "deployed",
-          deployedAt: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => infoWindow.close())
-        .catch(err => alert("Deploy failed: " + err.message));
+      if (typeof infoWindow !== "undefined" && infoWindow) {
+        infoWindow.close();
+      }
+      openDeployModal(id);
     }
 
     function resolveAlertFromMap(id) {
@@ -1780,16 +1948,22 @@
           status: "resolved",
           resolvedAt: firebase.firestore.FieldValue.serverTimestamp()
         })
-        .then(() => infoWindow.close())
-        .catch(err => alert("Failed: " + err.message));
+        .then(() => {
+          if (typeof infoWindow !== "undefined" && infoWindow) {
+            infoWindow.close();
+          }
+          showBfpToast("Incident Resolved", "Emergency alert marked as resolved by BFP.", "success");
+        })
+        .catch(err => {
+          showBfpToast("Resolve Failed", err.message, "error");
+        });
     }
 
     function deleteAlertFromMap(id) {
-      if (!confirm("Delete this resolved alert?")) return;
-      db.collection("sos_alerts").doc(id)
-        .delete()
-        .then(() => infoWindow.close())
-        .catch(err => alert("Failed: " + err.message));
+      if (typeof infoWindow !== "undefined" && infoWindow) {
+        infoWindow.close();
+      }
+      askDelete(id);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -2368,6 +2542,9 @@
       });
     }
   </script>
+
+  <!-- BFP In-App Toast Notification Container -->
+  <div id="bfpToastContainer" class="bfp-toast-container" aria-live="polite"></div>
 
 </body>
 

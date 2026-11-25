@@ -1452,6 +1452,29 @@
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════════
+         LOCATION REQUIRED MODAL (Blocks 0.00 coordinate SOS dispatch)
+         ══════════════════════════════════════════════════════════════ -->
+    <div id="locationRequiredModal" class="profile-modal-backdrop">
+      <div class="profile-modal-card" style="max-width:360px;">
+        <div class="profile-header-title" style="color:#EF4444;">
+          <svg viewBox="0 0 24 24" fill="#EF4444" style="width:22px;height:22px;flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <span>Location Must Be Turned On</span>
+        </div>
+        <div id="locationErrorDesc" class="profile-header-sub" style="margin-bottom:14px;color:#E5E7EB;line-height:1.5;">
+          Your device location is turned off or unavailable. Respondo BFP requires your GPS coordinates so responders can find you.
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 14px;font-size:12px;color:#9CA3AF;line-height:1.5;margin-bottom:16px;">
+          <strong style="color:#FFF;display:block;margin-bottom:4px;">How to enable:</strong>
+          1. Turn ON <strong>Location / GPS</strong> in your phone's quick settings.<br>
+          2. Allow <strong>Location Access</strong> for this browser when prompted.<br>
+          3. Tap <strong>Retry &amp; Send SOS</strong> below.
+        </div>
+        <button class="btn-profile-save" onclick="retryLocationAndSendSOS()">Retry &amp; Send SOS</button>
+        <button class="btn-profile-cancel" onclick="closeLocationModal()">Cancel</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Firebase Scripts -->
@@ -1604,9 +1627,31 @@
         });
     }
 
-    // ── Send SOS with Anti-Spam Cooldown ──
+    // ── Send SOS with Anti-Spam Cooldown & Mandatory Location Check ──
     let lastSosDispatchTime = 0;
     const SOS_COOLDOWN_MS = 15000;
+
+    function isValidCoords(coords) {
+      return coords &&
+        typeof coords.lat === "number" &&
+        typeof coords.lng === "number" &&
+        !(coords.lat === 0 && coords.lng === 0);
+    }
+
+    function openLocationModal(reasonMsg) {
+      const desc = document.getElementById("locationErrorDesc");
+      if (desc && reasonMsg) desc.textContent = reasonMsg;
+      document.getElementById("locationRequiredModal").classList.add("active");
+    }
+
+    function closeLocationModal() {
+      document.getElementById("locationRequiredModal").classList.remove("active");
+    }
+
+    function retryLocationAndSendSOS() {
+      closeLocationModal();
+      sendSOSAlert();
+    }
 
     function sendSOSAlert() {
       const now = Date.now();
@@ -1616,30 +1661,63 @@
         return;
       }
 
+      if (!navigator.geolocation) {
+        openLocationModal("Geolocation is not supported by your browser. Please use a browser with GPS/Location support.");
+        return;
+      }
+
       setSendingState();
 
-      if (!userCoords) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      // Always verify live location so we never send 0.00 coordinates when GPS is off
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const freshCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          if (!isValidCoords(freshCoords)) {
+            userCoords = null;
+            setIdleState();
+            openLocationModal("Unable to detect valid GPS coordinates. Please make sure Location / GPS is turned on and try again.");
+            return;
+          }
+          userCoords = freshCoords;
+          saveAlertToFirestore();
+        },
+        err => {
+          // If we already had a valid cached coordinate from this session and it only timed out, we could check,
+          // but if location is turned off (PERMISSION_DENIED or POSITION_UNAVAILABLE), block SOS and prompt user.
+          if (err && err.code === 3 && isValidCoords(userCoords)) {
             saveAlertToFirestore();
-          },
-          () => saveAlertToFirestore(),
-          { enableHighAccuracy: true, timeout: 6000 }
-        );
-      } else {
-        saveAlertToFirestore();
-      }
+            return;
+          }
+          userCoords = null;
+          setIdleState();
+          let msg = "Your device location is turned off or unavailable. Please turn on Location / GPS and try again.";
+          if (err && err.code === 1) {
+            msg = "Location permission was denied or turned off. Please enable Location Services on your device and allow location access in your browser, then tap Retry.";
+          } else if (err && err.code === 2) {
+            msg = "Your device location is turned off or GPS signal is unavailable. Please turn on Location / GPS on your phone and tap Retry.";
+          } else if (err && err.code === 3) {
+            msg = "Location detection timed out. Please make sure Location / GPS is turned ON and tap Retry.";
+          }
+          openLocationModal(msg);
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 }
+      );
     }
 
     function saveAlertToFirestore() {
+      if (!isValidCoords(userCoords)) {
+        setIdleState();
+        openLocationModal("Location coordinates are required before sending an SOS alert. Please turn on Location / GPS and try again.");
+        return;
+      }
+
       lastSosDispatchTime = Date.now();
       const userId = getUserId();
 
       db.collection("sos_alerts").add({
         userId: userId,
-        latitude: userCoords ? userCoords.lat : 0,
-        longitude: userCoords ? userCoords.lng : 0,
+        latitude: userCoords.lat,
+        longitude: userCoords.lng,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         status: "active",
         source: "pwa",
@@ -1653,6 +1731,7 @@
           promptRoleSelection();
         })
         .catch(err => {
+          lastSosDispatchTime = 0;
           setIdleState();
           alert("Failed to send: " + err.message);
         });
