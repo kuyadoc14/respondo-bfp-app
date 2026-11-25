@@ -110,7 +110,8 @@
       <div class="deploy-modal-header">
         <div class="deploy-modal-icon-badge">
           <svg viewBox="0 0 24 24" class="deploy-badge-svg">
-            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+            <path
+              d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
           </svg>
         </div>
         <div>
@@ -144,7 +145,9 @@
       <div class="deploy-modal-actions">
         <button type="button" class="btn-deploy-cancel" onclick="closeDeployModal()">Cancel</button>
         <button type="button" id="btnConfirmDeployAction" class="btn-deploy-confirm" onclick="executeDeployAlert()">
-          <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:currentColor;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:currentColor;">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+          </svg>
           <span>Confirm Deployment</span>
         </button>
       </div>
@@ -204,8 +207,7 @@
         </div>
         <div class="header-titles">
           <h1>
-            Respondo BFP
-            <span class="badge-live-dot">Live</span>
+            RESPONDO
           </h1>
           <p>Bureau of Fire Protection • Emergency Operations</p>
         </div>
@@ -508,6 +510,7 @@
     let markers = {};   // alertId → google.maps.Marker
     let infoWindow = null;
     let mapInitialized = false;
+    let pendingPopupAlertId = null;
     let alertAudioContext = null;
     let activeAlertAudio = null;
     let generatedAlertNodes = [];
@@ -862,26 +865,42 @@
       db.collection("sos_alerts")
         .orderBy("timestamp", "desc")
         .onSnapshot(snapshot => {
-          const hasNewActiveAlert = snapshot.docChanges().some(change => {
-            if (change.type !== "added") return false;
+          const newlyAddedActiveIds = new Set();
+          snapshot.docChanges().forEach(change => {
+            if (change.type !== "added") return;
 
             const alert = change.doc.data();
-            if (alert.status !== "active") return false;
-            if (hasLoadedAlerts) return true;
+            if (alert.status !== "active") return;
+            if (hasLoadedAlerts) {
+              newlyAddedActiveIds.add(change.doc.id);
+              return;
+            }
 
             const alertDate = parseTimestamp(alert.timestamp);
-            return alertDate && alertDate.getTime() >= appLoadedAt;
+            if (alertDate && alertDate.getTime() >= appLoadedAt) {
+              newlyAddedActiveIds.add(change.doc.id);
+            }
           });
+          const hasNewActiveAlert = newlyAddedActiveIds.size > 0;
 
           allAlerts = [];
           snapshot.forEach(doc => {
             allAlerts.push({ id: doc.id, ...doc.data() });
           });
 
+          const newestAddedAlert = hasNewActiveAlert
+            ? allAlerts.find(a => newlyAddedActiveIds.has(a.id) && a.latitude != null && a.longitude != null)
+            : null;
+          const newAlertIdToPopup = newestAddedAlert ? newestAddedAlert.id : null;
+
           updateStats();
           applyFilter();
 
-          if (mapInitialized) updateMapMarkers();
+          if (mapInitialized) {
+            updateMapMarkers(newAlertIdToPopup);
+          } else if (newAlertIdToPopup) {
+            pendingPopupAlertId = newAlertIdToPopup;
+          }
           if (heatmapReady) updateHeatmap();
           updateHeatmapStats();
           updateMapSidebar();
@@ -1563,149 +1582,425 @@
 
     // ── Excel Multi-Sheet Export ──
     function exportExcel() {
+      if (!allAlerts || allAlerts.length === 0) {
+        alert("No emergency alerts available to export.");
+        return;
+      }
+
       const wb = XLSX.utils.book_new();
 
-      // Sheet 1: Alerts Summary
+      // Helpers
+      function formatTs(val) {
+        const d = parseTimestamp(val);
+        return d ? d.toLocaleString() : "";
+      }
+
+      function formatSource(s) {
+        if (!s) return "Unspecified";
+        if (s === "android_app") return "Android App";
+        if (s === "esp32_wearable") return "ESP32 Wearable";
+        if (s === "web_sos") return "Web SOS Portal";
+        if (s === "voice_assistant") return "Voice Assistant";
+        return s;
+      }
+
+      function formatStatus(st) {
+        if (!st) return "";
+        if (st === "active") return "Active";
+        if (st === "deployed") return "Deployed";
+        if (st === "resolved") return "Resolved";
+        if (st === "flagged_spam") return "Flagged Spam";
+        return st;
+      }
+
+      function formatRole(r) {
+        if (!r) return "Transmitter";
+        if (r === "victim") return "Victim";
+        if (r === "bystander") return "Bystander";
+        return r;
+      }
+
+      // Robust patient extractor for an alert
+      function getAlertPatients(a, alertNo) {
+        const results = [];
+        const timeStr = formatTs(a.timestamp);
+        const statusStr = formatStatus(a.status);
+        const accidentTypeStr = a.accidentType || "General Emergency";
+
+        // 1. Direct patients array
+        let rawPatients = [];
+        if (Array.isArray(a.patients)) {
+          rawPatients = a.patients;
+        } else if (typeof a.patients === "string" && a.patients.trim().startsWith("[")) {
+          try { rawPatients = JSON.parse(a.patients); } catch (e) { }
+        } else if (a.patients && typeof a.patients === "object") {
+          rawPatients = Object.values(a.patients);
+        }
+
+        if (rawPatients.length > 0) {
+          rawPatients.forEach((p, idx) => {
+            if (!p || typeof p !== "object") return;
+            const pName = p.name || p.fullName || p.patientName || ("Patient " + (idx + 1));
+            const pAge = (p.age != null && p.age !== "") ? p.age : "";
+            const pBirthdate = p.birthdate || p.dob || "";
+            const pPhone = p.phone || p.phoneNumber || "";
+            const pAddress = p.address || "";
+            const pBlood = p.bloodType || p.blood_type || (a.reporterProfile ? (a.reporterProfile.bloodType || a.reporterProfile.blood_type || "") : "");
+            const pAllergies = p.allergies || "";
+            const pContact = p.emergencyContact || p.emergency_contact || (a.reporterProfile ? (a.reporterProfile.emergencyContact || "") : "");
+            const pConscious = p.levelOfConsciousness || p.consciousness || "—";
+            const pCond = p.condition || p.medicalConditions || a.natureOfInjury || "—";
+            const pSeizure = (p.seizure === true || p.seizure === "true" || p.seizure === "Yes") ? "Yes" : "No";
+
+            results.push({
+              alertNo: alertNo,
+              alertId: a.id || "",
+              time: timeStr,
+              status: statusStr,
+              accidentType: accidentTypeStr,
+              patientNo: idx + 1,
+              name: pName,
+              age: pAge,
+              birthdate: pBirthdate,
+              phone: pPhone,
+              address: pAddress,
+              bloodType: pBlood,
+              allergies: pAllergies,
+              emergencyContact: pContact,
+              levelOfConsciousness: pConscious,
+              condition: pCond,
+              seizure: pSeizure
+            });
+          });
+        }
+
+        // 2. If no patients in a.patients, but alert is from a Victim or has reporterProfile:
+        if (results.length === 0) {
+          const prof = (a.reporterProfile && typeof a.reporterProfile === "object") ? a.reporterProfile : {};
+          const isVictim = a.reporterRole === "victim" || (!a.reporterRole && (prof.fullName || prof.bloodType || prof.allergies));
+
+          if (isVictim || prof.fullName || prof.bloodType || prof.allergies || prof.medicalConditions) {
+            const vName = prof.fullName || prof.name || a.reporterName || "Victim (Caller)";
+            const vAge = prof.age || "";
+            const vBirthdate = prof.birthdate || "";
+            const vPhone = prof.phone || a.reporterPhone || "";
+            const vAddress = prof.address || "";
+            const vBlood = prof.bloodType || prof.blood_type || "";
+            const vAllergies = prof.allergies || "";
+            let vContact = prof.emergencyContact || prof.emergency_contact || "";
+            if (prof.emergencyContactName) {
+              vContact = prof.emergencyContactName + (vContact ? (" (" + vContact + ")") : "");
+            }
+            let vCond = prof.medicalConditions || a.natureOfInjury || a.description || "Personal Emergency SOS";
+            if (vBlood && !vCond.includes(vBlood)) {
+              vCond = vCond + " [Blood: " + vBlood + "]";
+            }
+
+            results.push({
+              alertNo: alertNo,
+              alertId: a.id || "",
+              time: timeStr,
+              status: statusStr,
+              accidentType: accidentTypeStr,
+              patientNo: 1,
+              name: vName,
+              age: vAge,
+              birthdate: vBirthdate,
+              phone: vPhone,
+              address: vAddress,
+              bloodType: vBlood,
+              allergies: vAllergies,
+              emergencyContact: vContact,
+              levelOfConsciousness: "Alert",
+              condition: vCond,
+              seizure: "No"
+            });
+          }
+        }
+
+        // 3. Fallback if casualty count > 0:
+        if (results.length === 0) {
+          const count = Number(a.countOfVictims) || 0;
+          if (count > 0) {
+            for (let i = 1; i <= count; i++) {
+              results.push({
+                alertNo: alertNo,
+                alertId: a.id || "",
+                time: timeStr,
+                status: statusStr,
+                accidentType: accidentTypeStr,
+                patientNo: i,
+                name: "Casualty #" + i,
+                age: "",
+                birthdate: "",
+                phone: "",
+                address: "",
+                bloodType: "",
+                allergies: "",
+                emergencyContact: "",
+                levelOfConsciousness: "—",
+                condition: a.natureOfInjury || a.incidentNotes || "Reported casualty at scene",
+                seizure: "—"
+              });
+            }
+          }
+        }
+
+        return results;
+      }
+
+      function getPatientSummary(patients) {
+        if (!patients || patients.length === 0) return "No individual casualties filed";
+        return patients.map(p => {
+          const parts = [p.name];
+          if (p.age) parts.push(p.age + "yo");
+          if (p.bloodType) parts.push("Blood: " + p.bloodType);
+          if (p.levelOfConsciousness && p.levelOfConsciousness !== "—") parts.push("AVPU: " + p.levelOfConsciousness);
+          if (p.seizure === "Yes") parts.push("Seizure: Yes");
+          if (p.condition && p.condition !== "—") parts.push(p.condition);
+          return parts.join(" | ");
+        }).join("; ");
+      }
+
+      // Collect all patients across all alerts for Sheet 2
+      const allPatientsRegistry = [];
+
+      // ── Sheet 1: Alerts Summary (Clean & Complete Layout) ──
       const summaryHeaders = [
-        "No", "Date & Time", "Latitude", "Longitude",
-        "User ID", "Reporter Name", "Reporter Role", "Reporter Phone",
-        "Blood Type", "Status", "Accident Type",
-        "Count of Victims", "Nature of Injury",
-        "Mode of Injury", "No. of Patients"
+        "No",
+        "Date & Time",
+        "Status",
+        "Accident Type",
+        "Latitude",
+        "Longitude",
+        "Source",
+        "Reporter Role",
+        "Reporter Name",
+        "Reporter Phone",
+        "Victims Count",
+        "Documented Patients",
+        "Patients Data (Clinical & Personal)",
+        "Nature of Injury",
+        "Mode of Injury",
+        "Voice Notes",
+        "Resolution Notes"
       ];
 
       const summaryRows = allAlerts.map((a, i) => {
-        const d = parseTimestamp(a.timestamp);
-        const time = d ? d.toLocaleString() : "";
+        const pts = getAlertPatients(a, i + 1);
+        pts.forEach(p => allPatientsRegistry.push(p));
+
+        const patientSummary = getPatientSummary(pts);
         const profile = a.reporterProfile || {};
+        const rName = a.reporterName || (profile.fullName || "");
+        const rPhone = a.reporterPhone || (profile.phone || "");
+
         return [
           i + 1,
-          time,
+          formatTs(a.timestamp),
+          formatStatus(a.status),
+          a.accidentType || "General Emergency",
           a.latitude ?? "",
           a.longitude ?? "",
-          a.userId ?? "",
-          a.reporterName ?? "",
-          a.reporterRole ?? "",
-          a.reporterPhone ?? "",
-          profile.bloodType ?? "",
-          a.status ?? "",
-          a.accidentType ?? "",
-          a.countOfVictims ?? "",
+          formatSource(a.source),
+          formatRole(a.reporterRole),
+          rName,
+          rPhone,
+          a.countOfVictims ?? (pts.length || ""),
+          pts.length,
+          patientSummary,
           a.natureOfInjury ?? "",
           a.modeOfInjury ?? "",
-          a.patients ? a.patients.length : 0
+          a.incidentNotes ?? "",
+          a.resolvedReason ?? ""
         ];
       });
 
-      const summaryData = [summaryHeaders, ...summaryRows];
-      const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-
+      const ws1 = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryRows]);
       ws1["!cols"] = [
-        { wch: 5 }, { wch: 22 }, { wch: 12 }, { wch: 12 },
-        { wch: 28 }, { wch: 10 }, { wch: 16 }, { wch: 16 },
-        { wch: 20 }, { wch: 20 }, { wch: 14 }
+        { wch: 6 },   // No
+        { wch: 22 },  // Date & Time
+        { wch: 18 },  // Status
+        { wch: 16 },  // Accident Type
+        { wch: 12 },  // Latitude
+        { wch: 12 },  // Longitude
+        { wch: 16 },  // Source
+        { wch: 16 },  // Reporter Role
+        { wch: 22 },  // Reporter Name
+        { wch: 16 },  // Reporter Phone
+        { wch: 14 },  // Victims Count
+        { wch: 18 },  // Documented Patients
+        { wch: 45 },  // Patients Data (Clinical & Personal)
+        { wch: 24 },  // Nature of Injury
+        { wch: 20 },  // Mode of Injury
+        { wch: 26 },  // Voice Notes
+        { wch: 24 }   // Resolution Notes
       ];
-
       XLSX.utils.book_append_sheet(wb, ws1, "Alerts");
 
-      // Sheet 2: Patient Records
-      const hasPatients = allAlerts.some(a => a.patients && a.patients.length > 0);
-      if (hasPatients) {
-        const patientHeaders = [
-          "Alert No", "Alert Date", "Alert Status",
-          "Accident Type", "Patient No",
-          "Name", "Age", "Birthdate", "Address",
-          "Allergies", "Emergency Contact",
-          "Level of Consciousness", "Condition",
-          "Seizure"
-        ];
+      // ── Sheet 2: Patient Records (Dedicated Clinical Triage Registry) ──
+      const patientHeaders = [
+        "Alert No",
+        "Alert Date",
+        "Alert Status",
+        "Accident Type",
+        "Patient No",
+        "Name",
+        "Age",
+        "Birthdate",
+        "Phone",
+        "Address",
+        "Blood Type",
+        "Allergies",
+        "Emergency Contact",
+        "Level of Consciousness",
+        "Condition",
+        "Seizure"
+      ];
 
-        const patientRows = [];
-        allAlerts.forEach((a, alertIdx) => {
-          if (!a.patients || a.patients.length === 0) return;
-          const d = parseTimestamp(a.timestamp);
-          const time = d ? d.toLocaleString() : "";
-          a.patients.forEach((p, patIdx) => {
-            patientRows.push([
-              alertIdx + 1,
-              time,
-              a.status ?? "",
-              a.accidentType ?? "",
-              patIdx + 1,
-              p.name ?? "",
-              p.age ?? "",
-              p.birthdate ?? "",
-              p.address ?? "",
-              p.allergies ?? "",
-              p.emergencyContact ?? "",
-              p.levelOfConsciousness ?? "",
-              p.condition ?? "",
-              p.seizure === true ? "Yes" : p.seizure === false ? "No" : ""
-            ]);
-          });
-        });
+      const patientRows = allPatientsRegistry.map(p => [
+        p.alertNo,
+        p.time,
+        p.status,
+        p.accidentType,
+        p.patientNo,
+        p.name,
+        p.age,
+        p.birthdate,
+        p.phone,
+        p.address,
+        p.bloodType,
+        p.allergies,
+        p.emergencyContact,
+        p.levelOfConsciousness,
+        p.condition,
+        p.seizure
+      ]);
 
-        const ws2 = XLSX.utils.aoa_to_sheet([patientHeaders, ...patientRows]);
-        ws2["!cols"] = [
-          { wch: 10 }, { wch: 22 }, { wch: 10 }, { wch: 16 },
-          { wch: 10 }, { wch: 20 }, { wch: 6 }, { wch: 14 },
-          { wch: 28 }, { wch: 18 }, { wch: 22 }, { wch: 22 },
-          { wch: 24 }, { wch: 8 }
-        ];
-        XLSX.utils.book_append_sheet(wb, ws2, "Patient Records");
-      }
+      const ws2 = XLSX.utils.aoa_to_sheet([patientHeaders, ...patientRows]);
+      ws2["!cols"] = [
+        { wch: 10 },  // Alert No
+        { wch: 22 },  // Alert Date
+        { wch: 18 },  // Alert Status
+        { wch: 16 },  // Accident Type
+        { wch: 12 },  // Patient No
+        { wch: 22 },  // Name
+        { wch: 8 },   // Age
+        { wch: 14 },  // Birthdate
+        { wch: 16 },  // Phone
+        { wch: 28 },  // Address
+        { wch: 12 },  // Blood Type
+        { wch: 20 },  // Allergies
+        { wch: 24 },  // Emergency Contact
+        { wch: 24 },  // Level of Consciousness
+        { wch: 28 },  // Condition
+        { wch: 10 }   // Seizure
+      ];
+      XLSX.utils.book_append_sheet(wb, ws2, "Patient Records");
 
-      // Sheet 3: Summary Statistics
+      // ── Sheet 3: Summary Statistics (Executive Metrics) ──
       const active = allAlerts.filter(a => a.status === "active").length;
+      const deployed = allAlerts.filter(a => a.status === "deployed").length;
       const resolved = allAlerts.filter(a => a.status === "resolved").length;
-      const totalPatients = allAlerts.reduce((sum, a) => sum + (a.patients ? a.patients.length : 0), 0);
+      const spam = allAlerts.filter(a => a.status === "flagged_spam").length;
+      const totalCasualties = allAlerts.reduce((sum, a) => sum + (Number(a.countOfVictims) || 0), 0);
 
       const typeCounts = {};
+      const roleCounts = {};
+      const avpuCounts = { "Alert": 0, "Voice / Verbal": 0, "Pain": 0, "Unresponsive": 0 };
+      let seizureCount = 0;
+
       allAlerts.forEach(a => {
-        if (!a.accidentType) return;
-        typeCounts[a.accidentType] = (typeCounts[a.accidentType] || 0) + 1;
+        if (a.accidentType) {
+          typeCounts[a.accidentType] = (typeCounts[a.accidentType] || 0) + 1;
+        }
+        const r = formatRole(a.reporterRole);
+        roleCounts[r] = (roleCounts[r] || 0) + 1;
+      });
+
+      allPatientsRegistry.forEach(p => {
+        const c = (p.levelOfConsciousness || "").toLowerCase();
+        if (c.includes("alert")) avpuCounts["Alert"]++;
+        else if (c.includes("voice") || c.includes("verbal")) avpuCounts["Voice / Verbal"]++;
+        else if (c.includes("pain")) avpuCounts["Pain"]++;
+        else if (c.includes("unresponsive")) avpuCounts["Unresponsive"]++;
+
+        if (p.seizure === "Yes") seizureCount++;
       });
 
       const statsData = [
-        ["BFP Alert Dashboard — Export Report"],
+        ["BFP EMERGENCY RESPONSE & DISPATCH REPORT"],
         ["Generated", new Date().toLocaleString()],
         [""],
-        ["OVERVIEW", ""],
-        ["Total Alerts", allAlerts.length],
-        ["Active Alerts", active],
-        ["Resolved", resolved],
-        ["Total Patients", totalPatients],
+        ["OVERVIEW", "COUNT"],
+        ["Total Emergency Alerts", allAlerts.length],
+        ["Active Alerts (Pending Dispatch)", active],
+        ["Responders Deployed", deployed],
+        ["Resolved Emergencies", resolved],
+        ["Flagged as Spam", spam],
+        ["Total Reported Casualties", totalCasualties],
+        ["Total Documented Patients", allPatientsRegistry.length],
         [""],
-        ["ALERTS BY TYPE", "Count"],
-        ...Object.entries(typeCounts).map(([type, count]) => [type, count])
+        ["ALERTS BY ACCIDENT TYPE", "COUNT"],
+        ...Object.entries(typeCounts).map(([type, count]) => [type, count]),
+        [""],
+        ["ALERTS BY REPORTER ROLE", "COUNT"],
+        ...Object.entries(roleCounts).map(([role, count]) => [role, count]),
+        [""],
+        ["PATIENT TRIAGE BY CONSCIOUSNESS (AVPU)", "COUNT"],
+        ...Object.entries(avpuCounts).map(([level, count]) => [level, count]),
+        ["Patients with Seizure Reported", seizureCount]
       ];
 
       const ws3 = XLSX.utils.aoa_to_sheet(statsData);
-      ws3["!cols"] = [{ wch: 28 }, { wch: 16 }];
+      ws3["!cols"] = [{ wch: 36 }, { wch: 16 }];
       XLSX.utils.book_append_sheet(wb, ws3, "Summary");
 
-      // Sheet 4: Heatmap Coordinates
-      const heatmapHeaders = ["Alert No", "Date & Time", "Latitude", "Longitude", "Status", "Accident Type", "Victims", "Nature of Injury"];
+      // ── Sheet 4: Heatmap Coordinates (GIS Spatial Data) ──
+      const heatmapHeaders = [
+        "Alert No",
+        "Date & Time",
+        "Latitude",
+        "Longitude",
+        "Status",
+        "Accident Type",
+        "Victims",
+        "Nature of Injury",
+        "Patients Summary"
+      ];
+
       const heatmapRows = allAlerts.filter(a => a.latitude != null && a.longitude != null).map((a, i) => {
-        const d = parseTimestamp(a.timestamp);
+        const pts = getAlertPatients(a, i + 1);
+        const pSummary = pts.map(p => p.name + " (" + p.condition + ")").join("; ");
         return [
           i + 1,
-          d ? d.toLocaleString() : "",
+          formatTs(a.timestamp),
           a.latitude,
           a.longitude,
-          a.status ?? "",
-          a.accidentType ?? "",
-          a.countOfVictims ?? 0,
-          a.natureOfInjury ?? ""
+          formatStatus(a.status),
+          a.accidentType || "General Emergency",
+          a.countOfVictims || pts.length,
+          a.natureOfInjury ?? "",
+          pSummary
         ];
       });
 
       const ws4 = XLSX.utils.aoa_to_sheet([heatmapHeaders, ...heatmapRows]);
-      ws4["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 8 }, { wch: 20 }];
+      ws4["!cols"] = [
+        { wch: 8 },   // Alert No
+        { wch: 22 },  // Date & Time
+        { wch: 13 },  // Latitude
+        { wch: 13 },  // Longitude
+        { wch: 16 },  // Status
+        { wch: 16 },  // Accident Type
+        { wch: 10 },  // Victims
+        { wch: 22 },  // Nature of Injury
+        { wch: 38 }   // Patients Summary
+      ];
       XLSX.utils.book_append_sheet(wb, ws4, "Heatmap Data");
 
       const dateStr = new Date().toISOString().split("T")[0];
-      XLSX.writeFile(wb, `BFP_Alert_Report_${dateStr}.xlsx`);
+      XLSX.writeFile(wb, "BFP_Alert_Report_" + dateStr + ".xlsx");
     }
 
     function exportPDF() {
@@ -1756,38 +2051,47 @@
       google.maps.event.addListenerOnce(googleMap, "idle", () => {
         infoWindow = new google.maps.InfoWindow();
         mapInitialized = true;
-        updateMapMarkers();
+        updateMapMarkers(pendingPopupAlertId);
+        pendingPopupAlertId = null;
         updateMapSidebar();
       });
     }
 
     function markerIcon(status) {
-      const isDeployed = status === "deployed";
-      const isActive = status === "active" || (!isDeployed && status !== "resolved");
+      const normalized = String(status || "").toLowerCase();
+      const isDeployed = normalized === "deployed";
+      const isResolved = normalized === "resolved";
       return {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 9,
-        fillColor: isDeployed ? "#f59e0b" : (isActive ? "#ef4444" : "#10b981"),
+        fillColor: isResolved ? "#10b981" : (isDeployed ? "#f59e0b" : "#ef4444"),
         fillOpacity: 1,
         strokeColor: "#ffffff",
         strokeWeight: 2
       };
     }
 
-    function updateMapMarkers() {
+    function updateMapMarkers(popupAlertId = null) {
       if (!googleMap) return;
       const currentIds = new Set();
 
-      allAlerts.forEach(alert => {
+      allAlerts.forEach((alert, idx) => {
         if (alert.latitude == null || alert.longitude == null) return;
         currentIds.add(alert.id);
 
-        const isActive = alert.status === "active";
+        const normalizedStatus = String(alert.status || "").toLowerCase();
+        const isActive = normalizedStatus === "active";
+        const isDeployed = normalizedStatus === "deployed";
         const pos = { lat: alert.latitude, lng: alert.longitude };
         const dateObj = parseTimestamp(alert.timestamp);
         const time = dateObj ? dateObj.toLocaleString() : "—";
         const type = alert.accidentType;
         const victims = alert.countOfVictims;
+
+        // Ensure active alerts overlay deployed/resolved, and newer alerts overlay older ones
+        const statusPriority = isActive ? 200000 : (isDeployed ? 100000 : 0);
+        const zIndex = statusPriority + Math.max(0, allAlerts.length - idx);
+        const markerTitle = (type ? type + " - " : "") + (isActive ? "Active Alert" : (isDeployed ? "En Route" : "Resolved"));
 
         let incidentSnippet = "";
         if (type || victims != null) {
@@ -1798,7 +2102,6 @@
             </div>`;
         }
 
-        const isDeployed = alert.status === "deployed";
         const statusColor = isActive ? "#ef4444" : (isDeployed ? "#f59e0b" : "#10b981");
         const statusLabel = isActive ? "Active Emergency" : (isDeployed ? "Responders En Route" : "Resolved Scene");
 
@@ -1833,14 +2136,20 @@
 
         if (markers[alert.id]) {
           markers[alert.id].setPosition(pos);
-          markers[alert.id].setIcon(markerIcon(isActive));
+          markers[alert.id].setIcon(markerIcon(alert.status));
+          markers[alert.id].setZIndex(zIndex);
+          markers[alert.id].setTitle(markerTitle);
           markers[alert.id]._infoContent = infoContent;
+          if (infoWindow && infoWindow.getAnchor && infoWindow.getAnchor() === markers[alert.id]) {
+            infoWindow.setContent(infoContent);
+          }
         } else {
           const marker = new google.maps.Marker({
             position: pos,
             map: googleMap,
-            icon: markerIcon(isActive),
-            title: (type ? type + " - " : "") + (isActive ? "Active Alert" : "Resolved"),
+            icon: markerIcon(alert.status),
+            title: markerTitle,
+            zIndex: zIndex,
             animation: google.maps.Animation.DROP
           });
           marker._infoContent = infoContent;
@@ -1861,6 +2170,18 @@
           delete markers[id];
         }
       });
+
+      // Auto-open InfoWindow immediately when a new active alert arrives
+      if (popupAlertId && markers[popupAlertId]) {
+        const targetMarker = markers[popupAlertId];
+        googleMap.panTo(targetMarker.getPosition());
+        if (googleMap.getZoom() < 12) googleMap.setZoom(13);
+        if (infoWindow) {
+          infoWindow.setContent(targetMarker._infoContent);
+          infoWindow.open(googleMap, targetMarker);
+        }
+        return;
+      }
 
       // Pan to latest active alert
       const latest = allAlerts.find(a => a.status === "active" && a.latitude != null);
